@@ -1,0 +1,13 @@
+^appveyor\.yml$
+^codecov\.yml$
+^Meta$
+^doc$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.Rhistory
+LICENSE
+^\README.md
+.travis.yml
+README.rst
+^\.github$

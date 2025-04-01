@@ -1,0 +1,25 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# macOS
+*.DS_Store
+
+# RStudio files
+.Rproj.user/
+.Ruserdata
+*~
+*.png
+*.pdf
+.Rproj
+*.Rproj
+inst/doc
+
+*.mzML
+
+data.zip
+/doc/
+/Meta/

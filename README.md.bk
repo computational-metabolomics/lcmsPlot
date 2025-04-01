@@ -1,0 +1,36 @@
+# lcmsPlot
+
+`lcmsPlot` is an R package designed for visualising
+Liquid Chromatography-Mass Spectrometry (LC-MS) data with high-quality plots
+suitable for publication. The package enables users to generate and
+customise chromatograms, mass traces, spectra, and more with fine-tuned
+aesthetics and annotation options.
+
+## Installation
+
+To install this package:
+
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("lcmsPlot")
+```
+
+To install the development version:
+
+```
+if (!require("remotes", quietly = TRUE))
+    install.packages("remotes")
+
+remotes::install_github("computational-metabolomics/lcmsPlot")
+```
+
+## TODO
+
+- Naming - S4 NEEDED?
+- Rename feature (grouped peaks?)
+- Add base plots backend
+- Compatibility with xcms, MSnbase
+- Naming of package
+- Find a way to download mzML data: subset mzML
