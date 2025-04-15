@@ -13,7 +13,8 @@ Authors@R: c(
         c("Ralf","Johannes", "Maria"),
         "Weber",
         role=c("aut"),
-        email="r.j.weber@bham.ac.uk"))
+        email="r.j.weber@bham.ac.uk",
+        comment = c(ORCID = "0000-0002-8796-4771")))
 Maintainer: Ossama Edbali <oedbali@bham.ac.uk>
 Description: lcmsPlot is an R package designed for visualising
     Liquid Chromatography-Mass Spectrometry (LC-MS) data with high-quality plots

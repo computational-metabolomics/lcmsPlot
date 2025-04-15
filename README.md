@@ -1,2 +1,27 @@
 # lcmsPlot
-lcmsPlot: An R Bioconductor package for plotting and interacting with LC-MS data, featuring chromatograms, mass spectra, and more.
+
+`lcmsPlot` is an R package designed for visualising
+Liquid Chromatography-Mass Spectrometry (LC-MS) data with high-quality plots
+suitable for publication. The package enables users to generate and
+customise chromatograms, mass traces, spectra, and more with fine-tuned
+aesthetics and annotation options.
+
+## Installation
+
+To install this package:
+
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("lcmsPlot")
+```
+
+To install the development version:
+
+```
+if (!require("remotes", quietly = TRUE))
+    install.packages("remotes")
+
+remotes::install_github("computational-metabolomics/lcmsPlot")
+```
