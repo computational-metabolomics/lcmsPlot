@@ -1,9 +1,9 @@
-plot_single_dataset <- function(datasets, peakly_obj, plot_config) {
+plot_single_dataset <- function(datasets, obj, plot_config) {
   dataset_name <- names(datasets)
 
   plt <- plot_config[[dataset_name]](
     data = datasets[[1]],
-    options = peakly_obj@options,
+    options = obj@options,
     single = TRUE
   )
 
@@ -11,11 +11,11 @@ plot_single_dataset <- function(datasets, peakly_obj, plot_config) {
   return(plt)
 }
 
-plot_multiple_datasets <- function(datasets, peakly_obj, plot_config) {
+plot_multiple_datasets <- function(datasets, obj, plot_config) {
   datasets_plots <- lapply(names(datasets), function (ds_name) {
     plot_config[[ds_name]](
       data = datasets[[ds_name]],
-      options = peakly_obj@options
+      options = obj@options
     )
   })
 
@@ -23,11 +23,11 @@ plot_multiple_datasets <- function(datasets, peakly_obj, plot_config) {
   return(plt)
 }
 
-plot_multiple_faceted_datasets <- function(datasets, peakly_obj, plot_config) {
-  facets_options <- peakly_obj@options$facets
+plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
+  facets_options <- obj@options$facets
   facets <- facets_options$facets
 
-  all_plots <- peakly_obj@.data@metadata %>%
+  all_plots <- obj@data@processed_data_info %>%
     group_by(!!!syms(facets)) %>%
     group_map(~ {
       metadata_df = .y
@@ -39,7 +39,7 @@ plot_multiple_faceted_datasets <- function(datasets, peakly_obj, plot_config) {
       datasets_plots <- lapply(names(datasets_subset), function (ds_name) {
         plot_config[[ds_name]](
           data = datasets_subset[[ds_name]],
-          options = peakly_obj@options
+          options = obj@options
         )
       })
 
@@ -75,11 +75,11 @@ plot_multiple_faceted_datasets <- function(datasets, peakly_obj, plot_config) {
   return(plt)
 }
 
-plot_multiple_gridded_datasets <- function(datasets, peakly_obj, plot_config) {
-  grid_options <- peakly_obj@options$facets
+plot_multiple_gridded_datasets <- function(datasets, obj, plot_config) {
+  grid_options <- obj@options$facets
   facets <- facets_options$facets
 
-  all_plots <- peakly_obj@.data@metadata %>%
+  all_plots <- obj@data@processed_data_info %>%
     group_by(!!!syms(facets)) %>%
     group_map(~ {
       metadata_df = .y
@@ -91,7 +91,7 @@ plot_multiple_gridded_datasets <- function(datasets, peakly_obj, plot_config) {
       datasets_plots <- lapply(names(datasets_subset), function (ds_name) {
         plot_config[[ds_name]](
           data = datasets_subset[[ds_name]],
-          options = peakly_obj@options
+          options = obj@options
         )
       })
 

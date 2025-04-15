@@ -1,4 +1,5 @@
 default_options <- list(
+  sample_id_column = "sample_id",
   chromatograms = list(
     show = TRUE,
     highlight_peaks = FALSE

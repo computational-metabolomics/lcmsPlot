@@ -42,13 +42,14 @@ Collate:
     'io-raw-data.R'
     'options.R'
     'processing-xcms.R'
+    'data-adapters.R'
     'plot-units.R'
     'plot-chromatogram.R'
     'plot-mass-trace.R'
     'plot-variants.R'
     'plot.R'
-    'PeaklyChromatogramContainer-class.R'
-    'Peakly-class.R'
+    'lcmsPlotDataContainer-class.R'
+    'lcmsPlot-class.R'
 VignetteBuilder: knitr
 URL: https://computational-metabolomics.github.io/lcmsPlot/
 RoxygenNote: 7.3.2

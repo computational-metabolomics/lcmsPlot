@@ -1,5 +1,5 @@
 ---
-title: "Basic plotting with peakly"
+title: "Basic plotting with lcmsPlot"
 output:
   BiocStyle::html_document:
     toc: true
@@ -23,19 +23,19 @@ knitr::opts_chunk$set(
 )
 
 suppressPackageStartupMessages({
-  library(peakly)
   library(dplyr)
   library(ggplot2)
   library(openxlsx)
   library(xcms)
   library(BiocStyle)
+  library(lcmsPlot)
 })
 ```
 
 # Load data
 
 ```{r}
-xdata <- readRDS(system.file("extdata", "xdata.rds", package = "peakly"))
+xdata <- readRDS(system.file("extdata", "xdata.rds", package = "lcmsPlot"))
 ```
 
 # Plot chromatograms in the same panel
@@ -57,89 +57,89 @@ lcmsPlot(xdata, 'sample_id') +
 # Plot chromatograms in the same panel with mass trace
 
 ```{r}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = 'M70T581',
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                          'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
                        ppm = 5,
                        rt_tol = 10,
                        highlight_peaks = TRUE) +
-  peakly::mass_trace() +
-  peakly::arrange(group_by = 'sample_id') +
-  peakly::labels(title = "Feature M70T581", legend = "Sample") +
-  peakly::legend(position = "bottom")
+  mass_trace() +
+  arrange(group_by = 'sample_id') +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom")
 ```
 
 # Plot faceted chromatograms
 
 ```{r}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = c('M70T581', 'M85T587_1'),
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                          'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
                        ppm = 5,
                        rt_tol = 10,
                        highlight_peaks = TRUE) +
-  peakly::facets(facets = c('feature_id', 'sample_id'))
+  facets(facets = c('feature_id', 'sample_id'))
 ```
 
 # Plot faceted chromatograms with mass traces (1)
 
 ```{r}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = c('M70T581', 'M85T587_1'),
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                          'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
                        ppm = 5,
                        rt_tol = 10,
                        highlight_peaks = TRUE) +
-  peakly::mass_trace() +
-  peakly::facets(facets = c('feature_id', 'sample_id'))
+  mass_trace() +
+  facets(facets = c('feature_id', 'sample_id'))
 ```
 
 # Plot faceted chromatograms with mass traces (2) 
 
 ```{r, fig.width=7, fig.height=4}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = c('M70T581', 'M85T587_1'),
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                          'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
                        ppm = 5,
                        rt_tol = 10,
                        highlight_peaks = TRUE) +
-  peakly::mass_trace() +
-  peakly::arrange(group_by = "sample_id") +
-  peakly::facets(facets = 'feature_id', ncol = 2) +
-  peakly::labels(legend = "Sample")
+  mass_trace() +
+  arrange(group_by = "sample_id") +
+  facets(facets = 'feature_id', ncol = 2) +
+  labels(legend = "Sample")
 ```
 
 # Plot chromatograms in grid layout
 
 ```{r}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = c('M70T581', 'M85T587_1'),
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                          'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
                        ppm = 5,
                        rt_tol = 10,
                        highlight_peaks = TRUE) +
-  peakly::grid(rows = 'feature_id', cols = 'sample_id')
+  grid(rows = 'feature_id', cols = 'sample_id')
 ```
 
 # Plot chromatograms using ranges
 
 ```{r}
-peakly(xdata, 'sample_id') +
-  peakly::chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
                        sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                        ppm = 5,
                        rt_tol = 10) +
-  peakly::facets(facets = "feature_id", ncol = 2)
+  facets(facets = "feature_id", ncol = 2)
 ```
 
 
