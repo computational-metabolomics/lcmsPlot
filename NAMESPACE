@@ -3,6 +3,7 @@
 S3method(get_detected_peaks,XCMSnExp)
 S3method(get_grouped_peaks,XCMSnExp)
 S3method(get_metadata,XCMSnExp)
+S3method(get_metadata,character)
 export("%>%")
 export(arrange)
 export(chromatogram)

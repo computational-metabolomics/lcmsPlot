@@ -4,7 +4,7 @@
 \alias{lcmsPlot}
 \title{Create a lcmsPlotClass object}
 \usage{
-lcmsPlot(dataset, sample_id_column = "sample_id")
+lcmsPlot(dataset, sample_id_column = "sample_id", metadata = NULL)
 }
 \arguments{
 \item{dataset}{An object of type XCMSnExp or MsExperiment}

@@ -131,15 +131,41 @@ lcmsPlot(xdata, 'sample_id') +
   grid(rows = 'feature_id', cols = 'sample_id')
 ```
 
-# Plot chromatograms using ranges
+# Plot chromatograms from raw files
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
   chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
-                       sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                       ppm = 5,
-                       rt_tol = 10) +
-  facets(facets = "feature_id", ncol = 2)
+               ppm = 5,
+               rt_tol = 10) +
+  arrange(group_by = "sample_id") +
+  facets(facets = "feature_id", ncol = 2) +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
 ```
 
+# Plot chromatograms from raw files and metadata
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+metadata <- data.frame(
+  sample_type = c("T1", "T2"),
+  sample_id = c("S62", "S64")
+)
+
+lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
+               ppm = 5,
+               rt_tol = 10) +
+  grid(rows = 'feature_id', cols = 'sample_type')
+```
 
