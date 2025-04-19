@@ -4,7 +4,13 @@
 \alias{chromatogram}
 \title{Define the chromatograms to plot}
 \usage{
-chromatogram(features, sample_ids, ppm, rt_tol, highlight_peaks = FALSE)
+chromatogram(
+  features,
+  sample_ids = NULL,
+  ppm = 10,
+  rt_tol = 10,
+  highlight_peaks = FALSE
+)
 }
 \arguments{
 \item{features}{A vector of feature IDs to plot (TODO: change)}

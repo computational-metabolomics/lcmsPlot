@@ -4,13 +4,13 @@
 #' @param sample_id_column Which column should be used as the sample ID
 #' @returns A lcmsPlotClass object
 #' @export
-lcmsPlot <- function(dataset, sample_id_column = "sample_id") {
+lcmsPlot <- function(dataset, sample_id_column = "sample_id", metadata = NULL) {
   opts <- default_options
   opts$sample_id_column <- sample_id_column
 
   new("lcmsPlotClass",
       options = opts,
-      data = create_data_container_from_obj(dataset, sample_id_column),
+      data = create_data_container_from_obj(dataset, sample_id_column, metadata),
       plot = NULL)
 }
 
@@ -87,12 +87,16 @@ setMethod(
 #' @export
 chromatogram <- function(
   features,
-  sample_ids,
-  ppm,
-  rt_tol,
+  sample_ids = NULL,
+  ppm = 10,
+  rt_tol = 10,
   highlight_peaks = FALSE
 ) {
   function(obj) {
+    if (is.null(sample_ids)) {
+      sample_ids <- obj@data@metadata$sample_id
+    }
+
     if (is.character(features)) {
       obj@data <- create_chromatograms_from_features(
         obj@data,

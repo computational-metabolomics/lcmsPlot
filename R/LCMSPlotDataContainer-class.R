@@ -1,11 +1,14 @@
+# TODO: add validation to all slots
+
 #' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
 #'
 #' @param data_obj ...
 #' @param sample_id_column ...
-create_data_container_from_obj <- function(data_obj, sample_id_column) {
+#' @param metadata ...
+create_data_container_from_obj <- function(data_obj, sample_id_column, metadata) {
   new("lcmsPlotDataContainer",
       data_obj = data_obj,
-      metadata = get_metadata(data_obj, sample_id_column),
+      metadata = get_metadata(data_obj, sample_id_column, metadata),
       chromatograms = data.frame(),
       mass_traces = data.frame(),
       processed_data_info = data.frame())
@@ -115,11 +118,13 @@ setMethod(
 
         data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
-        processed_data_info <- rbind(processed_data_info, data.frame(
-          sample_id = sample$sample_id,
-          feature_id = feature$name,
-          peak_rt_min = peak$rtmin,
-          peak_rt_max = peak$rtmax
+        processed_data_info <- rbind(processed_data_info, cbind(
+          sample,
+          data.frame(
+            feature_id = feature$name,
+            peak_rt_min = peak$rtmin,
+            peak_rt_max = peak$rtmax
+          )
         ))
 
         chromatograms <- rbind(chromatograms, data.frame(
@@ -183,9 +188,9 @@ setMethod(
 
         data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
-        processed_data_info <- rbind(processed_data_info, data.frame(
-          sample_id = sample$sample_id,
-          feature_id = feature_id
+        processed_data_info <- rbind(processed_data_info, cbind(
+          sample,
+          data.frame(feature_id = feature_id)
         ))
 
         chromatograms <- rbind(chromatograms, data.frame(
