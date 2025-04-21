@@ -86,18 +86,24 @@ setMethod(
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 chromatogram <- function(
-  features,
+  features = NULL,
   sample_ids = NULL,
   ppm = 10,
   rt_tol = 10,
-  highlight_peaks = FALSE
+  highlight_peaks = FALSE,
+  aggregation_fun = "max"
 ) {
   function(obj) {
     if (is.null(sample_ids)) {
       sample_ids <- obj@data@metadata$sample_id
     }
 
-    if (is.character(features)) {
+    if (is.null(features)) {
+      obj@data <- create_full_rt_chromatograms(
+        obj@data,
+        sample_ids,
+        aggregation_fun)
+    } else if (is.character(features)) {
       obj@data <- create_chromatograms_from_features(
         obj@data,
         features,

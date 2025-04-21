@@ -5,11 +5,12 @@
 \title{Define the chromatograms to plot}
 \usage{
 chromatogram(
-  features,
+  features = NULL,
   sample_ids = NULL,
   ppm = 10,
   rt_tol = 10,
-  highlight_peaks = FALSE
+  highlight_peaks = FALSE,
+  aggregation_fun = "max"
 )
 }
 \arguments{

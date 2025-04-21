@@ -40,6 +40,22 @@ setClass(
   )
 )
 
+.create_bpc_tic <- function(raw_data, aggregation_fun) {
+  hdr <- mzR::header(raw_data)
+  ms1_header <- hdr[hdr$msLevel == 1, ]
+  rt <- ms1_header$retentionTime
+
+  if (aggregation_fun == "max") {
+    bpi <- ms1_header$basePeakIntensity
+  } else {
+    bpi <- ms1_header$totIonCurrent
+  }
+
+  return(list(
+    chromatograms = data.frame(rt = rt, intensity = bpi)
+  ))
+}
+
 .create_chromatogram <- function(raw_data, mz_range, rt_range) {
   hdr <- mzR::header(raw_data)
   scans_in_rt <- hdr[hdr$retentionTime >= rt_range[1] & hdr$retentionTime <= rt_range[2], ]
@@ -209,6 +225,53 @@ setMethod(
 
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
+    obj@processed_data_info <- processed_data_info
+
+    return(obj)
+  }
+)
+
+#' Creates a lcmsPlotDataContainer from raw sample files
+#'
+#' @param obj A lcmsPlotDataContainer object
+#' @param sample_ids The sample IDs to select
+#' @param aggregation_fun Specify the function to be used to aggregate intensity
+#' values across the mz value range for the same retention time.
+#' Allowed values are "sum" (the default), "max"
+#' @returns A lcmsPlotDataContainer object
+#' @export
+setGeneric(
+  "create_full_rt_chromatograms",
+  function(obj, sample_ids, aggregation_fun) standardGeneric("create_full_rt_chromatograms")
+)
+
+#' @rdname create_full_rt_chromatograms
+setMethod(
+  f = "create_full_rt_chromatograms",
+  signature = c("lcmsPlotDataContainer", "character", "character"),
+  definition = function(obj, sample_ids, aggregation_fun) {
+    metadata <- obj@metadata %>% filter(sample_id %in% sample_ids)
+    raw_data <- io_utils$get_raw_data(metadata$sample_path)
+
+    chromatograms <- data.frame()
+    processed_data_info <- data.frame()
+
+    for (i in 1:nrow(metadata)) {
+      sample <- metadata[i,]
+      raw_obj <- raw_data[[sample$sample_path]]
+
+      data <- .create_bpc_tic(raw_obj, aggregation_fun)
+
+      processed_data_info <- rbind(processed_data_info, sample)
+
+      chromatograms <- rbind(chromatograms, data.frame(
+        rt = data$chromatograms$rt,
+        intensity = data$chromatograms$intensity,
+        metadata_index = nrow(processed_data_info)
+      ))
+    }
+
+    obj@chromatograms <- chromatograms
     obj@processed_data_info <- processed_data_info
 
     return(obj)

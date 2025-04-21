@@ -43,7 +43,10 @@ legend_title <- function(options) {
 
 faceting <- function(options, single) {
   if (single & !is.null(options$facets$facets)) {
-    return(facet_wrap(as.formula(paste("~", paste(options$facets$facets, collapse = "+")))))
+    return(facet_wrap(
+      as.formula(paste("~", paste(options$facets$facets, collapse = "+"))),
+      ncol = options$facets$ncol,
+      nrow = options$facets$nrow))
   } else {
     return(NULL)
   }
