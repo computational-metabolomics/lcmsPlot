@@ -169,3 +169,28 @@ lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
   grid(rows = 'feature_id', cols = 'sample_type')
 ```
 
+# Plot base peak chromatogram (BPC)
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  facets(facets = "sample_id", ncol = 1)
+```
+
+# Plot total ion chromatogram (TIC)
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
+  facets(facets = "sample_id", ncol = 1)
+```
