@@ -85,10 +85,26 @@ lcmsPlot(xdata, 'sample_id') +
   facets(facets = c('feature_id', 'sample_id'))
 ```
 
+# Plot faceted chromatograms with RT lines
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+                       sample_ids = c(
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+                       ppm = 5,
+                       rt_tol = 10) +
+  facets(facets = 'sample_id') +
+  rt_line(intercept = 580, line_type = 'solid', color = 'red') +
+  rt_line(intercept = 575, line_type = 'dashed', color = 'blue') +
+  rt_line(intercept = 587, line_type = 'dashed', color = 'blue')
+```
+
 # Plot faceted chromatograms with mass traces (1)
 
 ```{r}
-obj = lcmsPlot(xdata, 'sample_id') +
+lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
@@ -98,8 +114,6 @@ obj = lcmsPlot(xdata, 'sample_id') +
                        highlight_peaks = TRUE) +
   mass_trace() +
   facets(facets = c('feature_id', 'sample_id'))
-
-obj
 ```
 
 # Plot faceted chromatograms with mass traces (2) 

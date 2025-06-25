@@ -45,6 +45,12 @@ highlight_peaks <- function(dataset, options) {
   }
 }
 
+rt_lines <- function(options) {
+  lapply(options$rt_lines, function (rt_line_obj) {
+    geom_vline(xintercept = rt_line_obj$intercept, color = rt_line_obj$color, linetype = rt_line_obj$line_type)
+  })
+}
+
 legend_title <- function(options) {
   if (!is.null(options$labels$legend)) {
     return(guides(

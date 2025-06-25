@@ -1,6 +1,7 @@
 plot_chromatogram <- function(dataset, options, single = FALSE) {
   extra_layers <- list(
     highlight_peaks(dataset, options),
+    rt_lines(options),
     legend_title(options),
     faceting(options, single),
     grid_layout(options, single)
