@@ -1,4 +1,4 @@
-plot_mass_trace <- function(data, options, single = FALSE) {
+plot_mass_trace <- function(dataset, options, single = FALSE) {
   extra_layers <- list(
     legend_title(options),
     faceting(options, single)
@@ -6,7 +6,7 @@ plot_mass_trace <- function(data, options, single = FALSE) {
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
 
   p <- ggplot(
-    data = data,
+    data = dataset$data_df,
     mapping = build_aes(x = sym("rt"), y = sym("mz"), options)
   ) +
     geom_point(show.legend = single) +

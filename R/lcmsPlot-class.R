@@ -60,9 +60,9 @@ setMethod(
     dataset_types <- c("chromatograms", "mass_traces")
     datasets <- lapply(dataset_types, function(dataset_name) {
       if (object@options[[dataset_name]]$show) {
-        dataset <- slot(object@data, dataset_name)
-        dataset <- merge_by_index(dataset, object@data@processed_data_info, index_col = 'metadata_index')
-        return(dataset)
+        data_df <- slot(object@data, dataset_name)
+        data_df <- merge_by_index(data_df, object@data@processed_data_info, index_col = 'metadata_index')
+        return(list(data_df = data_df, detected_peaks = object@data@detected_peaks))
       } else {
         return(NULL)
       }
@@ -119,6 +119,8 @@ chromatogram <- function(
         sample_ids,
         ppm,
         rt_tol)
+
+      obj@options$chromatograms$highlight_peaks <- highlight_peaks
     }
 
     return(obj)

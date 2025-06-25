@@ -88,7 +88,7 @@ lcmsPlot(xdata, 'sample_id') +
 # Plot faceted chromatograms with mass traces (1)
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
+obj = lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
                          'Human_Plasma_HILP_Ch1_Col1_scIC_062',
@@ -98,6 +98,8 @@ lcmsPlot(xdata, 'sample_id') +
                        highlight_peaks = TRUE) +
   mass_trace() +
   facets(facets = c('feature_id', 'sample_id'))
+
+obj
 ```
 
 # Plot faceted chromatograms with mass traces (2) 
@@ -130,6 +132,10 @@ lcmsPlot(xdata, 'sample_id') +
                        highlight_peaks = TRUE) +
   grid(rows = 'feature_id', cols = 'sample_id')
 ```
+
+# Plot chromatograms in grid layout with mass traces
+
+TODO
 
 # Plot chromatograms from raw files
 

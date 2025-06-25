@@ -11,7 +11,8 @@ create_data_container_from_obj <- function(data_obj, sample_id_column, metadata)
       metadata = get_metadata(data_obj, sample_id_column, metadata),
       chromatograms = data.frame(),
       mass_traces = data.frame(),
-      processed_data_info = data.frame())
+      processed_data_info = data.frame(),
+      detected_peaks = data.frame())
 }
 
 #' lcmsPlotDataContainer class
@@ -29,14 +30,16 @@ setClass(
     metadata = "data.frame",
     chromatograms = "data.frame",
     mass_traces = "data.frame",
-    processed_data_info = "data.frame"
+    processed_data_info = "data.frame",
+    detected_peaks = "data.frame"
   ),
   prototype = list(
     data_obj = NULL,
     metadata = NULL,
     chromatograms = NULL,
     mass_traces = NULL,
-    processed_data_info = NULL
+    processed_data_info = NULL,
+    detected_peaks = NULL
   )
 )
 
@@ -95,12 +98,6 @@ setGeneric(
   function(obj, feature_ids, sample_ids, ppm, rt_tol) standardGeneric("create_chromatograms_from_features")
 )
 
-# obj@data,
-# features,
-# sample_ids,
-# ppm,
-# rt_tol
-
 #' @rdname create_chromatograms_from_features
 setMethod(
   f = "create_chromatograms_from_features",
@@ -108,8 +105,9 @@ setMethod(
   definition = function(obj, feature_ids, sample_ids, ppm, rt_tol) {
     metadata <- obj@metadata %>% filter(sample_id %in% sample_ids)
     raw_data <- io_utils$get_raw_data(metadata$sample_path)
-    detected_peaks <- get_detected_peaks(obj@data_obj)
+    all_detected_peaks <- get_detected_peaks(obj@data_obj)
     grouped_peaks <- get_grouped_peaks(obj@data_obj) %>% filter(name %in% feature_ids)
+    detected_peaks <- data.frame()
 
     chromatograms <- data.frame()
     mass_traces <- data.frame()
@@ -119,23 +117,25 @@ setMethod(
       feature <- grouped_peaks[i,]
       rtr <- c(feature$rt - rt_tol, feature$rt + rt_tol)
       peak_indices <- as.numeric(unlist(strsplit(feature %>% pull(peakidx), ',')))
-      peaks <- detected_peaks %>%
+      peaks <- all_detected_peaks %>%
         filter(
           row_number() %in% peak_indices,
           sample %in% metadata$sample_index
-        )
+        ) %>%
+        left_join(metadata, by = c("sample" = "sample_index")) # TODO: check this, too specific
+
+      detected_peaks <- rbind(detected_peaks, peaks)
 
       for (j in seq_len(nrow(peaks))) {
         peak <- peaks[j,]
-        mzdev <- peak$mz * (ppm / 1000000)
-        mzr <- c(peak$mz - mzdev, peak$mz + mzdev)
-        sample <- metadata %>% filter(sample_index == peak$sample)
-        raw_obj <- raw_data[[sample$sample_path]]
+        mzr <- get_mz_range(peak$mz, ppm)
+        sample_metadata <- metadata %>% filter(sample_index == peak$sample)
+        raw_obj <- raw_data[[sample_metadata$sample_path]]
 
         data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
         processed_data_info <- rbind(processed_data_info, cbind(
-          sample,
+          sample_metadata,
           data.frame(
             feature_id = feature$name,
             peak_rt_min = peak$rtmin,
@@ -160,6 +160,7 @@ setMethod(
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
+    obj@detected_peaks = detected_peaks
 
     return(obj)
   }
@@ -186,26 +187,43 @@ setMethod(
   definition = function(obj, features, sample_ids, ppm, rt_tol) {
     metadata <- obj@metadata %>% filter(sample_id %in% sample_ids)
     raw_data <- io_utils$get_raw_data(metadata$sample_path)
+    all_detected_peaks <- get_detected_peaks(obj@data_obj)
 
     chromatograms <- data.frame()
     mass_traces <- data.frame()
     processed_data_info <- data.frame()
+    detected_peaks <- data.frame()
 
     for (i in 1:nrow(features)) {
       feature <- features[i,]
       feature_id <- paste0('M', round(feature['mz']), 'T', round(feature['rt']))
-      mzdev <- feature['mz'] * (ppm / 1000000)
-      mzr <- c(feature['mz'] - mzdev, feature['mz'] + mzdev)
+      mzr <- get_mz_range(feature['mz'], ppm)
       rtr <- c(feature['rt'] - rt_tol, feature['rt'] + rt_tol)
 
       for (j in 1:nrow(metadata)) {
-        sample <- metadata[j,]
-        raw_obj <- raw_data[[sample$sample_path]]
+        sample_metadata <- metadata[j,]
+        raw_obj <- raw_data[[sample_metadata$sample_path]]
 
         data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
+        if (!is.null(all_detected_peaks)) {
+          peaks <- all_detected_peaks %>%
+            filter(
+              sample %in% sample_metadata$sample_index,
+              mz >= mzr[1],
+              mz <= mzr[2],
+              rt >= rtr[1],
+              rt <= rtr[2]
+            ) %>%
+            left_join(metadata, by = c("sample" = "sample_index")) # TODO: check this, too specific
+        } else {
+          peaks <- data.frame()
+        }
+
+        detected_peaks <- rbind(detected_peaks, peaks)
+
         processed_data_info <- rbind(processed_data_info, cbind(
-          sample,
+          sample_metadata,
           data.frame(feature_id = feature_id)
         ))
 
@@ -226,6 +244,7 @@ setMethod(
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
+    obj@detected_peaks <- detected_peaks
 
     return(obj)
   }

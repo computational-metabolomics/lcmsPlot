@@ -27,3 +27,8 @@ merge_by_index <- function(a, b, index_col) {
 remove_null_elements <- function(lst) {
   return(lst[!sapply(lst, is.null)])
 }
+
+get_mz_range <- function(mz, ppm = 5) {
+  mzdev <- mz * (ppm / 1000000)
+  return(c(mz - mzdev, mz + mzdev))
+}

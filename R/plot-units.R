@@ -18,11 +18,26 @@ highlight_peaks_aes <- function(ymax, options) {
   return(do.call(aes, p_aes))
 }
 
-highlight_peaks <- function(data, options) {
+highlight_peaks <- function(dataset, options) {
   if (options$chromatograms$highlight_peaks) {
+    highlight_df <- dataset$detected_peaks %>%
+      group_by(sample_id) %>%
+      mutate(peak_id = row_number()) %>%
+      ungroup() %>%
+      rowwise() %>%
+      do({
+        peak <- .
+        subset <- dataset$data_df %>%
+          filter(sample_id == peak$sample_id) %>%
+          filter(rt >= peak$rtmin, rt <= peak$rtmax) %>%
+          mutate(peak_id = peak$peak_id)
+        subset
+      }) %>%
+      bind_rows()
+
     return(geom_ribbon(
-      data = subset(data, rt >= peak_rt_min & rt <= peak_rt_max),
-      mapping = highlight_peaks_aes(ymax = "intensity", options),
+      data = highlight_df,
+      aes(ymin = 0, ymax = intensity, fill = factor(sample_id)), # TODO: check this, should it be peak or sample?
       alpha = 0.3
     ))
   } else {

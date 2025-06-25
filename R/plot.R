@@ -1,18 +1,22 @@
+is_facet <- function (o) !is.null(o$facets$facets)
+
+is_grid <- function (o) !is.null(o$grid$rows) | !is.null(o$grid$cols)
+
 plot_variants <- list(
   list(
     condition = function(datasets, options) length(datasets) == 1,
     variant = plot_single_dataset
   ),
   list(
-    condition = function(datasets, options) is.null(options$facets$facets),
+    condition = function(datasets, options) !is_facet(options) & !is_grid(options),
     variant = plot_multiple_datasets
   ),
   list(
-    condition = function(datasets, options) !is.null(options$facets$facets),
+    condition = function(datasets, options) is_facet(options),
     variant = plot_multiple_faceted_datasets
   ),
   list(
-    condition = function(datasets, options) !is.null(options$grid$rows) | !is.null(options$grid$cols),
+    condition = function(datasets, options) is_grid(options),
     variant = plot_multiple_gridded_datasets
   )
 )

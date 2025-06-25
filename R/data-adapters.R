@@ -41,6 +41,11 @@ get_detected_peaks <- function(obj) {
 }
 
 #' @export
+get_detected_peaks.character <- function(obj) {
+  return(NULL)
+}
+
+#' @export
 get_detected_peaks.XCMSnExp <- function(obj) {
   as.data.frame(chromPeaks(obj))
 }
