@@ -215,3 +215,15 @@ legend <- function(position = NULL)  {
     return(obj)
   }
 }
+
+rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
+  function(obj) {
+    rt_line_obj <- list(
+      intercept = intercept,
+      line_type = line_type,
+      color = color
+    )
+    obj@options$rt_lines <- append(obj@options$rt_lines, list(rt_line_obj))
+    return(obj)
+  }
+}

@@ -25,5 +25,6 @@ default_options <- list(
   ),
   legend = list(
     position = "right"
-  )
+  ),
+  rt_lines = list()
 )
