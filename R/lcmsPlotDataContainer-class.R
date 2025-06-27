@@ -11,6 +11,7 @@ create_data_container_from_obj <- function(data_obj, sample_id_column, metadata)
       metadata = get_metadata(data_obj, sample_id_column, metadata),
       chromatograms = data.frame(),
       mass_traces = data.frame(),
+      spectra = data.frame(),
       processed_data_info = data.frame(),
       detected_peaks = data.frame())
 }
@@ -30,6 +31,7 @@ setClass(
     metadata = "data.frame",
     chromatograms = "data.frame",
     mass_traces = "data.frame",
+    spectra = "data.frame",
     processed_data_info = "data.frame",
     detected_peaks = "data.frame"
   ),
@@ -38,6 +40,7 @@ setClass(
     metadata = NULL,
     chromatograms = NULL,
     mass_traces = NULL,
+    spectra = NULL,
     processed_data_info = NULL,
     detected_peaks = NULL
   )
@@ -82,6 +85,31 @@ setClass(
     chromatograms = chr,
     mass_traces = mass_traces
   ))
+}
+
+.create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
+  hdr <- mzR::header(raw_data)
+
+  ms_level_indices <- which(hdr$msLevel == ms_level)
+
+  if (length(ms_level_indices) == 0) {
+    # TODO: rethink this
+    stop("No scans found with the specified MS level.")
+  }
+
+  rt_diffs <- abs(hdr$retentionTime[ms_level_indices] - rt)
+
+  closest_index <- ms_level_indices[which.min(rt_diffs)]
+
+  spectrum_data <- mzR::peaks(raw_data, closest_index)
+
+  spectrum_df <- data.frame(
+    mz = spectrum_data[, 1],
+    intensity = spectrum_data[, 2],
+    rt = hdr$retentionTime[closest_index]
+  )
+
+  return(spectrum_df)
 }
 
 #' Creates a lcmsPlotDataContainer from a features matrix
@@ -276,12 +304,12 @@ setMethod(
     processed_data_info <- data.frame()
 
     for (i in 1:nrow(metadata)) {
-      sample <- metadata[i,]
-      raw_obj <- raw_data[[sample$sample_path]]
+      sample_metadata <- metadata[i,]
+      raw_obj <- raw_data[[sample_metadata$sample_path]]
 
       data <- .create_bpc_tic(raw_obj, aggregation_fun)
 
-      processed_data_info <- rbind(processed_data_info, sample)
+      processed_data_info <- rbind(processed_data_info, sample_metadata)
 
       chromatograms <- rbind(chromatograms, data.frame(
         rt = data$chromatograms$rt,
@@ -292,6 +320,68 @@ setMethod(
 
     obj@chromatograms <- chromatograms
     obj@processed_data_info <- processed_data_info
+
+    return(obj)
+  }
+)
+
+
+
+#' Creates/updates am lcmsPlotDataContainer from spectra
+#'
+#' @param obj A lcmsPlotDataContainer object
+#' @param options ...
+#' @returns A lcmsPlotDataContainer object
+#' @export
+setGeneric(
+  "create_spectra",
+  function(obj, options) standardGeneric("create_spectra")
+)
+
+#' @rdname create_spectra
+setMethod(
+  f = "create_spectra",
+  signature = c("lcmsPlotDataContainer", "list"),
+  definition = function(obj, options) {
+    metadata <- obj@metadata %>% filter(sample_id %in% options$sample_ids)
+
+    all_spectra <- data.frame()
+
+    for (i in seq_len(nrow(metadata))) {
+      sample_metadata <- metadata[i,]
+      raw_obj <- mzR::openMSfile(sample_metadata$sample_path)
+
+      if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
+        spectra <- .create_spectrum_from_closest_scan_to_rt(raw_obj, options$spectra$rt, options$spectra$ms_level)
+      } else if (options$spectra$mode == "closest_apex") {
+        spectra <- obj@detected_peaks %>%
+          filter(sample_id == sample_metadata$sample_id) %>%
+          pull(rt) %>%
+          lapply(function (rt) .create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
+          do.call(rbind, .)
+      } else if (options$spectra$mode == "across_peak") {
+        spectra <- expanded_peaks <- obj@detected_peaks %>%
+          rowwise() %>%
+          mutate(intervals = list(seq(rtmin, rtmax, by = options$spectra$interval))) %>%
+          tidyr::unnest(intervals) %>%
+          mutate(rt_interval = intervals) %>%
+          select(sample_id, rt, rtmin, rtmax, rt_interval) %>%
+          pull(rt_interval) %>%
+          lapply(function (rt) .create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
+          do.call(rbind, .)
+
+      } else {
+        # TODO: throw an error
+      }
+
+      spectra <- spectra %>%
+        mutate(metadata_index = i) # TODO: check processed_data_info
+      all_spectra <- rbind(all_spectra, spectra)
+
+      mzR::close(raw_obj)
+    }
+
+    obj@spectra <- all_spectra
 
     return(obj)
   }

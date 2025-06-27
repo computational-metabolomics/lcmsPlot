@@ -18,16 +18,16 @@ highlight_peaks_aes <- function(ymax, options) {
   return(do.call(aes, p_aes))
 }
 
-highlight_peaks <- function(dataset, options) {
+highlight_peaks <- function(dataset, detected_peaks, options) {
   if (options$chromatograms$highlight_peaks) {
-    highlight_df <- dataset$detected_peaks %>%
+    highlight_df <- detected_peaks %>%
       group_by(sample_id) %>%
       mutate(peak_id = row_number()) %>%
       ungroup() %>%
       rowwise() %>%
       do({
         peak <- .
-        subset <- dataset$data_df %>%
+        subset <- dataset %>%
           filter(sample_id == peak$sample_id) %>%
           filter(rt >= peak$rtmin, rt <= peak$rtmax) %>%
           mutate(peak_id = peak$peak_id)
@@ -37,12 +37,22 @@ highlight_peaks <- function(dataset, options) {
 
     return(geom_ribbon(
       data = highlight_df,
-      aes(ymin = 0, ymax = intensity, fill = factor(sample_id)), # TODO: check this, should it be peak or sample?
-      alpha = 0.3
+      aes(
+        ymin = 0,
+        ymax = intensity,
+        group = peak_id,
+        fill = factor(sample_id),
+        colour = factor(sample_id)), # TODO: check this, should it be peak or sample?
+      alpha = 0.3,
+      linetype = 1
     ))
   } else {
     return(NULL)
   }
+}
+
+highlight_spectra_scans <- function(dataset, options) {
+  geom_vline(data = dataset, aes(xintercept = rt), color = "black", linetype = "dashed")
 }
 
 rt_lines <- function(options) {

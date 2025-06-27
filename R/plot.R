@@ -24,7 +24,8 @@ plot_variants <- list(
 run_matching_plot_variant <- function(datasets, obj) {
   plot_config <- list(
     chromatograms = plot_chromatogram,
-    mass_traces = plot_mass_trace
+    mass_traces = plot_mass_trace,
+    spectra = plot_spectrum
   )
 
   for (variant in plot_variants) {
