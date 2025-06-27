@@ -7,6 +7,13 @@ default_options <- list(
   mass_traces = list(
     show = FALSE
   ),
+  spectra = list(
+    show = FALSE,
+    mode = 'closest_apex', # One of: closest, closest_apex, across_peak
+    ms_level = 1,
+    rt = NULL, # For mode=closest
+    interval = 3 # mode=across_peak
+  ),
   facets = list(
     facets = NULL,
     ncol = NULL,
@@ -26,5 +33,8 @@ default_options <- list(
   legend = list(
     position = "right"
   ),
-  rt_lines = list()
+  rt_lines = list(),
+  layout = list(
+    design = NULL
+  )
 )

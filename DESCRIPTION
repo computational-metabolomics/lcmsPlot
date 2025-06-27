@@ -47,6 +47,7 @@ Collate:
     'plot-units.R'
     'plot-chromatogram.R'
     'plot-mass-trace.R'
+    'plot-spectrum.R'
     'plot-variants.R'
     'plot.R'
     'lcmsPlotDataContainer-class.R'

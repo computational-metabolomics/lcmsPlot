@@ -1,8 +1,11 @@
 plot_single_dataset <- function(datasets, obj, plot_config) {
   dataset_name <- names(datasets)
 
+  # TODO: standardise interface
   plt <- plot_config[[dataset_name]](
-    data = datasets[[1]],
+    datasets = datasets,
+    dataset_type = names(datasets)[[1]],
+    supporting_datasets = list(detected_peaks = obj@data@detected_peaks),
     options = obj@options,
     single = TRUE
   )
@@ -14,12 +17,16 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
 plot_multiple_datasets <- function(datasets, obj, plot_config) {
   datasets_plots <- lapply(names(datasets), function (ds_name) {
     plot_config[[ds_name]](
-      data = datasets[[ds_name]],
+      datasets = datasets,
+      dataset_type = ds_name,
+      supporting_datasets = list(detected_peaks = obj@data@detected_peaks),
       options = obj@options
     )
   })
+  names(datasets_plots) <- toupper(substr(names(datasets), 1, 1))
 
-  plt <- patchwork::wrap_plots(datasets_plots, ncol = 1)
+  # TODO: allow to change columns/rows layout (also below)
+  plt <- patchwork::wrap_plots(datasets_plots, ncol = 1, design = obj@options$layout$design)
   return(plt)
 }
 
@@ -33,15 +40,14 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
       metadata_df = .y
 
       datasets_subset <- lapply(datasets, function (ds) {
-        list(
-          data_df = ds$data_df %>% filter(across(all_of(facets), ~ . == metadata_df[[cur_column()]])),
-          detected_peaks = ds$detected_peaks
-        )
+        ds$data_df %>% filter(across(all_of(facets), ~ . == metadata_df[[cur_column()]]))
       })
 
       datasets_plots <- lapply(names(datasets_subset), function (ds_name) {
         plot_config[[ds_name]](
-          data = datasets_subset[[ds_name]],
+          datasets = datasets_subset,
+          dataset_type = ds_name,
+          supporting_datasets = list(detected_peaks = obj@data@detected_peaks),
           options = obj@options
         )
       })
@@ -52,7 +58,7 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
         ggtitle(plot_title) +
         theme(plot.title = element_text(size = 9, hjust = 0.5))
 
-      combined_plot <- patchwork::wrap_plots(datasets_plots, ncol = 1) +
+      combined_plot <- patchwork::wrap_plots(datasets_plots, ncol = 1, design = obj@options$layout$design) +
         patchwork::plot_layout(axes = "collect")
 
       list(

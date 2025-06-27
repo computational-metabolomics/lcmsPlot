@@ -1,6 +1,9 @@
-plot_chromatogram <- function(dataset, options, single = FALSE) {
+plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, options, single = FALSE) {
+  dataset <- datasets[[dataset_type]]
+
   extra_layers <- list(
-    highlight_peaks(dataset, options),
+    highlight_peaks(dataset, supporting_datasets$detected_peaks, options),
+    highlight_spectra_scans(datasets$spectra, options),
     rt_lines(options),
     legend_title(options),
     faceting(options, single),
@@ -9,7 +12,7 @@ plot_chromatogram <- function(dataset, options, single = FALSE) {
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
 
   p <- ggplot(
-    data = dataset$data_df,
+    data = dataset,
     mapping = build_aes(x = "rt", y = "intensity", options)
   ) +
     geom_line() +

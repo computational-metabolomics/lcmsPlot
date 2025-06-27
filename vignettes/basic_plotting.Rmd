@@ -38,6 +38,47 @@ suppressPackageStartupMessages({
 xdata <- readRDS(system.file("extdata", "xdata.rds", package = "lcmsPlot"))
 ```
 
+# Plot base peak chromatogram (BPC)
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  facets(facets = "sample_id", ncol = 1)
+```
+
+# Plot base peak chromatogram (BPC) overlapped
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  arrange(group_by = "sample_id") +
+  labels(title = "Base peak chromatograms", legend = "Sample") +
+  legend(position = "bottom")
+```
+
+# Plot total ion chromatogram (TIC)
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
+  facets(facets = "sample_id", ncol = 1)
+```
+
 # Plot chromatograms in the same panel
 
 ```{r}
@@ -189,43 +230,43 @@ lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
   grid(rows = 'feature_id', cols = 'sample_type')
 ```
 
-# Plot base peak chromatogram (BPC)
+# Plot chromatograms with spectra
 
 ```{r}
-raw_files <- c(
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
-)
-
-lcmsPlot(raw_files) +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  facets(facets = "sample_id", ncol = 1)
-```
-
-# Plot base peak chromatogram (BPC) overlapped
-
-```{r}
-raw_files <- c(
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
-)
-
-lcmsPlot(raw_files) +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  arrange(group_by = "sample_id") +
-  labels(title = "Base peak chromatograms", legend = "Sample") +
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE) +
+  # arrange(group_by = 'sample_id') +
+  spectra(rt = 580, mode = "closest", ms_level = 1) +
+  labels(title = "Feature M70T581", legend = "Sample") +
   legend(position = "bottom")
 ```
 
-# Plot total ion chromatogram (TIC)
+```{r, fig.height=3}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 40,
+               highlight_peaks = TRUE) +
+  spectra(mode = "closest_apex", ms_level = 1) +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom") +
+  layout(design = "C\nS\nS")
+```
 
-```{r}
-raw_files <- c(
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
-)
-
-lcmsPlot(raw_files) +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
-  facets(facets = "sample_id", ncol = 1)
+```{r, fig.height=5, fig.width=3}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 40,
+               highlight_peaks = TRUE) +
+  spectra(mode = "across_peak", ms_level = 1) +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom") +
+  layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
 ```

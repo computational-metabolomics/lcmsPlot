@@ -57,12 +57,12 @@ setMethod(
   f = "show",
   signature = "lcmsPlotClass",
   function(object) {
-    dataset_types <- c("chromatograms", "mass_traces")
+    dataset_types <- c("chromatograms", "mass_traces", "spectra")
     datasets <- lapply(dataset_types, function(dataset_name) {
       if (object@options[[dataset_name]]$show) {
         data_df <- slot(object@data, dataset_name)
         data_df <- merge_by_index(data_df, object@data@processed_data_info, index_col = 'metadata_index')
-        return(list(data_df = data_df, detected_peaks = object@data@detected_peaks))
+        return(data_df)
       } else {
         return(NULL)
       }
@@ -97,6 +97,8 @@ chromatogram <- function(
     if (is.null(sample_ids)) {
       sample_ids <- obj@data@metadata$sample_id
     }
+
+    obj@options$sample_ids <- sample_ids
 
     if (is.null(features)) {
       obj@data <- create_full_rt_chromatograms(
@@ -134,6 +136,26 @@ chromatogram <- function(
 mass_trace <- function() {
   function(obj) {
     obj@options$mass_traces$show <- TRUE
+    return(obj)
+  }
+}
+
+spectra <- function(sample_ids = NULL, mode = 'closest_apex', ms_level = 1, rt = NULL, interval = 3) {
+  function(obj) {
+    obj@options$spectra <- list(
+      show = TRUE,
+      mode = mode,
+      ms_level = ms_level,
+      rt = rt,
+      interval = interval
+    )
+
+    if (!is.null(sample_ids)) {
+      obj@options$sample_ids <- sample_ids
+    }
+
+    obj@data <- create_spectra(obj@data, obj@options)
+
     return(obj)
   }
 }
@@ -216,6 +238,12 @@ legend <- function(position = NULL)  {
   }
 }
 
+#' Define an vertical line across a retention time value
+#'
+#' @param intercept The x-axis intercept
+#' @param line_type The line type
+#' @param color The line color
+#' @export
 rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
   function(obj) {
     rt_line_obj <- list(
@@ -224,6 +252,19 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
       color = color
     )
     obj@options$rt_lines <- append(obj@options$rt_lines, list(rt_line_obj))
+    return(obj)
+  }
+}
+
+#' Define the plot layout
+#'
+#' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design)
+#' @export
+layout <- function(design = NULL) {
+  function(obj) {
+    obj@options$layout = list(
+      design = design
+    )
     return(obj)
   }
 }
