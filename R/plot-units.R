@@ -21,9 +21,9 @@ highlight_peaks_aes <- function(ymax, options) {
 highlight_peaks <- function(dataset, detected_peaks, options) {
   if (options$chromatograms$highlight_peaks) {
     highlight_df <- detected_peaks %>%
-      group_by(sample_id) %>%
+      # group_by(sample_id) %>%
       mutate(peak_id = row_number()) %>%
-      ungroup() %>%
+      # ungroup() %>%
       rowwise() %>%
       do({
         peak <- .
@@ -35,28 +35,68 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
       }) %>%
       bind_rows()
 
-    return(geom_ribbon(
+    common_args <- list(
       data = highlight_df,
-      aes(
-        ymin = 0,
-        ymax = intensity,
-        group = peak_id,
-        fill = factor(sample_id),
-        colour = factor(sample_id)), # TODO: check this, should it be peak or sample?
       alpha = 0.3,
       linetype = 1
-    ))
+    )
+
+    highlight_peaks_color <- options$chromatograms$highlight_peaks_color
+
+    if (is.null(highlight_peaks_color)) {
+      gr <- do.call(geom_ribbon, c(
+        common_args,
+        list(mapping = aes(
+          ymin = 0,
+          ymax = intensity,
+          group = peak_id,
+          fill = sample_id,
+          colour = sample_id
+        ))
+      ))
+    } else {
+      gr <- do.call(geom_ribbon, c(
+        common_args,
+        list(
+          mapping = aes(
+            ymin = 0,
+            ymax = intensity,
+            group = peak_id
+          ),
+          fill = highlight_peaks_color,
+          colour = highlight_peaks_color
+        )
+      ))
+    }
+
+    return(gr)
+
+    # return(geom_ribbon(
+    #   data = highlight_df,
+    #   aes(
+    #     ymin = 0,
+    #     ymax = intensity,
+    #     group = peak_id,
+    #     fill = factor(sample_id),
+    #     colour = factor(sample_id)), # TODO: check this, should it be peak or sample?
+    #   alpha = 0.3,
+    #   linetype = 1
+    # ))
   } else {
     return(NULL)
   }
 }
 
 highlight_spectra_scans <- function(dataset, options) {
-  geom_vline(data = dataset, aes(xintercept = rt), color = "black", linetype = "dashed")
+  if (options$spectra$show) {
+    geom_vline(data = dataset, aes(xintercept = rt), color = "black", linetype = "dashed")
+  } else {
+    NULL
+  }
 }
 
 rt_lines <- function(options) {
-  lapply(options$rt_lines, function (rt_line_obj) {
+  lines <- lapply(options$rt_lines, function (rt_line_obj) {
     geom_vline(xintercept = rt_line_obj$intercept, color = rt_line_obj$color, linetype = rt_line_obj$line_type)
   })
 }

@@ -57,11 +57,19 @@ setMethod(
   f = "show",
   signature = "lcmsPlotClass",
   function(object) {
-    dataset_types <- c("chromatograms", "mass_traces", "spectra")
+    # TODO: do validation on data types
+    dataset_types <- c("chromatograms", "mass_traces", "spectra", "intensity_maps")
     datasets <- lapply(dataset_types, function(dataset_name) {
       if (object@options[[dataset_name]]$show) {
         data_df <- slot(object@data, dataset_name)
-        data_df <- merge_by_index(data_df, object@data@processed_data_info, index_col = 'metadata_index')
+
+        if (nrow(obj@data@processed_data_info) > 0) {
+          metadata_to_merge <- obj@data@processed_data_info
+        } else {
+          metadata_to_merge <- object@data@metadata
+        }
+
+        data_df <- merge_by_index(data_df, metadata_to_merge, index_col = 'metadata_index')
         return(data_df)
       } else {
         return(NULL)
@@ -91,6 +99,7 @@ chromatogram <- function(
   ppm = 10,
   rt_tol = 10,
   highlight_peaks = FALSE,
+  highlight_peaks_color = NULL,
   aggregation_fun = "max"
 ) {
   function(obj) {
@@ -114,6 +123,7 @@ chromatogram <- function(
         rt_tol)
 
       obj@options$chromatograms$highlight_peaks <- highlight_peaks
+      obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     } else {
       obj@data <- create_chromatograms_from_raw(
         obj@data,
@@ -123,6 +133,7 @@ chromatogram <- function(
         rt_tol)
 
       obj@options$chromatograms$highlight_peaks <- highlight_peaks
+      obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     }
 
     return(obj)
@@ -155,6 +166,21 @@ spectra <- function(sample_ids = NULL, mode = 'closest_apex', ms_level = 1, rt =
     }
 
     obj@data <- create_spectra(obj@data, obj@options)
+
+    return(obj)
+  }
+}
+
+intensity_map <- function(mz_range, rt_range, density = FALSE) {
+  function(obj) {
+    obj@options$intensity_maps <- list(
+      show = TRUE,
+      mz_range = mz_range,
+      rt_range = rt_range,
+      density = density
+    )
+
+    obj@data <- create_intensity_map(obj@data, obj@options)
 
     return(obj)
   }

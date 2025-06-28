@@ -1,8 +1,9 @@
 default_options <- list(
   sample_id_column = "sample_id",
   chromatograms = list(
-    show = TRUE,
-    highlight_peaks = FALSE
+    show = FALSE,
+    highlight_peaks = FALSE,
+    highlight_peaks_color = NULL
   ),
   mass_traces = list(
     show = FALSE
@@ -13,6 +14,12 @@ default_options <- list(
     ms_level = 1,
     rt = NULL, # For mode=closest
     interval = 3 # mode=across_peak
+  ),
+  intensity_maps = list(
+    show = FALSE,
+    mz_range = NULL,
+    rt_range = NULL,
+    density = FALSE
   ),
   facets = list(
     facets = NULL,

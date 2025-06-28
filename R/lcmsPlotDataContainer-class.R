@@ -1,4 +1,5 @@
 # TODO: add validation to all slots
+# TODO: define what a dataset entails (e.g., metadata_index)
 
 #' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
 #'
@@ -12,6 +13,7 @@ create_data_container_from_obj <- function(data_obj, sample_id_column, metadata)
       chromatograms = data.frame(),
       mass_traces = data.frame(),
       spectra = data.frame(),
+      intensity_maps = data.frame(),
       processed_data_info = data.frame(),
       detected_peaks = data.frame())
 }
@@ -32,6 +34,7 @@ setClass(
     chromatograms = "data.frame",
     mass_traces = "data.frame",
     spectra = "data.frame",
+    intensity_maps = "data.frame",
     processed_data_info = "data.frame",
     detected_peaks = "data.frame"
   ),
@@ -41,6 +44,7 @@ setClass(
     chromatograms = NULL,
     mass_traces = NULL,
     spectra = NULL,
+    intensity_maps = NULL,
     processed_data_info = NULL,
     detected_peaks = NULL
   )
@@ -166,6 +170,7 @@ setMethod(
           sample_metadata,
           data.frame(
             feature_id = feature$name,
+            # TODO: remove these
             peak_rt_min = peak$rtmin,
             peak_rt_max = peak$rtmax
           )
@@ -325,8 +330,6 @@ setMethod(
   }
 )
 
-
-
 #' Creates/updates am lcmsPlotDataContainer from spectra
 #'
 #' @param obj A lcmsPlotDataContainer object
@@ -382,6 +385,65 @@ setMethod(
     }
 
     obj@spectra <- all_spectra
+
+    return(obj)
+  }
+)
+
+#' Creates an lcmsPlotDataContainer from an intensity map
+#'
+#' @param obj A lcmsPlotDataContainer object
+#' @param options ...
+#' @returns A lcmsPlotDataContainer object
+#' @export
+setGeneric(
+  "create_intensity_map",
+  function(obj, options) standardGeneric("create_intensity_map")
+)
+
+#' @rdname create_intensity_map
+setMethod(
+  f = "create_intensity_map",
+  signature = c("lcmsPlotDataContainer", "list"),
+  definition = function(obj, options) {
+    intensity_maps <- data.frame()
+
+    for (i in seq_len(nrow(obj@metadata))) {
+      sample_metadata <- obj@metadata[i,]
+      ms <- mzR::openMSfile(sample_metadata$sample_path)
+      hdr <- mzR::header(ms)
+
+      rt_range <- options$intensity_maps$rt_range
+      mz_range <- options$intensity_maps$mz_range
+
+      idx <- which(hdr$retentionTime >= rt_range[1] & hdr$retentionTime <= rt_range[2])
+
+      scans <- lapply(idx, function(i) {
+        pk <- mzR::peaks(ms, i)
+        if (nrow(pk) > 0) {
+          pk <- pk[pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ]
+          if (nrow(pk) > 0) {
+            data.frame(rt = rep(hdr$retentionTime[i], nrow(pk)),
+                       mz = pk[,1],
+                       intensity = pk[,2])
+          }
+        }
+      })
+      df <- do.call(rbind, scans)
+
+      mzR::close(ms)
+
+      intensity_map <- df %>%
+        mutate(rt = round(rt, 1),
+               mz = round(mz, 1)) %>%
+        group_by(rt, mz) %>%
+        summarize(intensity = sum(intensity), .groups = 'drop') %>%
+        mutate(metadata_index = i)
+
+      intensity_maps <- rbind(intensity_maps, intensity_map)
+    }
+
+    obj@intensity_maps <- intensity_maps
 
     return(obj)
   }

@@ -38,7 +38,9 @@ suppressPackageStartupMessages({
 xdata <- readRDS(system.file("extdata", "xdata.rds", package = "lcmsPlot"))
 ```
 
-# Plot base peak chromatogram (BPC)
+# Samples summary
+
+## Plot base peak chromatogram (BPC)
 
 ```{r}
 raw_files <- c(
@@ -51,7 +53,7 @@ lcmsPlot(raw_files) +
   facets(facets = "sample_id", ncol = 1)
 ```
 
-# Plot base peak chromatogram (BPC) overlapped
+## Plot base peak chromatogram (BPC) overlapped
 
 ```{r}
 raw_files <- c(
@@ -66,7 +68,7 @@ lcmsPlot(raw_files) +
   legend(position = "bottom")
 ```
 
-# Plot total ion chromatogram (TIC)
+## Plot total ion chromatogram (TIC)
 
 ```{r}
 raw_files <- c(
@@ -77,6 +79,19 @@ raw_files <- c(
 lcmsPlot(raw_files) +
   chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
   facets(facets = "sample_id", ncol = 1)
+```
+
+## Intensity maps
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  intensity_map(mz_range = c(100, 105), rt_range = c(0, 200), density = TRUE) +
+  facets(facets = "sample_id", ncol = 2)
 ```
 
 # Plot chromatograms in the same panel
@@ -117,13 +132,15 @@ lcmsPlot(xdata, 'sample_id') +
 ```{r}
 lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10,
-                       highlight_peaks = TRUE) +
-  facets(facets = c('feature_id', 'sample_id'))
+               sample_ids = c('Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                              'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = "#121212") +
+  facets(facets = c('feature_id', 'sample_id')) +
+  labels(legend = "Sample") +
+  legend(position = "bottom")
 ```
 
 # Plot faceted chromatograms with RT lines
@@ -147,19 +164,20 @@ lcmsPlot(xdata, 'sample_id') +
 ```{r}
 lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10,
-                       highlight_peaks = TRUE) +
+               sample_ids = c(
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = '#343434') +
   mass_trace() +
   facets(facets = c('feature_id', 'sample_id'))
 ```
 
 # Plot faceted chromatograms with mass traces (2) 
 
-```{r, fig.width=7, fig.height=4}
+```{r}
 lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
                        sample_ids = c(
@@ -171,7 +189,8 @@ lcmsPlot(xdata, 'sample_id') +
   mass_trace() +
   arrange(group_by = "sample_id") +
   facets(facets = 'feature_id', ncol = 2) +
-  labels(legend = "Sample")
+  labels(legend = "Sample") +
+  legend(position = "bottom")
 ```
 
 # Plot chromatograms in grid layout
@@ -179,12 +198,13 @@ lcmsPlot(xdata, 'sample_id') +
 ```{r}
 lcmsPlot(xdata, 'sample_id') +
   chromatogram(features = c('M70T581', 'M85T587_1'),
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10,
-                       highlight_peaks = TRUE) +
+               sample_ids = c(
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = '#f00') +
   grid(rows = 'feature_id', cols = 'sample_id')
 ```
 
