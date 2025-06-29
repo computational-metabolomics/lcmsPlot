@@ -1,8 +1,9 @@
-#' Create a lcmsPlotClass object
+#' Create an lcmsPlotClass object
 #'
-#' @param dataset An object of type XCMSnExp or MsExperiment
+#' @param dataset An object of type XCMSnExp, MsExperiment, or character
 #' @param sample_id_column Which column should be used as the sample ID
-#' @returns A lcmsPlotClass object
+#' @param metadata The metadata in case it's not provided in the dataset object
+#' @returns An lcmsPlotClass object
 #' @export
 lcmsPlot <- function(dataset, sample_id_column = "sample_id", metadata = NULL) {
   opts <- default_options
@@ -86,11 +87,12 @@ setMethod(
 
 #' Define the chromatograms to plot
 #'
-#' @param features A vector of feature IDs to plot (TODO: change)
-#' @param sample_ids A vector of sample IDs to plot
+#' @param features A character vector or a matrix of mz and rt representing features to plot
+#' @param sample_ids A character vector of sample IDs to plot
 #' @param ppm The ppm error for the chromatograms
 #' @param rt_tol The RT tolerance for the chromatograms
 #' @param highlight_peaks Whether to highlight the picked peaks
+#' @param highlight_peaks_color The color of the highlighted peaks. By default it colors by sample.
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 chromatogram <- function(
@@ -115,7 +117,7 @@ chromatogram <- function(
         sample_ids,
         aggregation_fun)
     } else if (is.character(features)) {
-      obj@data <- create_chromatograms_from_features(
+      obj@data <- create_chromatograms_from_feature_ids(
         obj@data,
         features,
         sample_ids,
@@ -125,7 +127,7 @@ chromatogram <- function(
       obj@options$chromatograms$highlight_peaks <- highlight_peaks
       obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     } else {
-      obj@data <- create_chromatograms_from_raw(
+      obj@data <- create_chromatograms_from_features(
         obj@data,
         features,
         sample_ids,
@@ -151,6 +153,15 @@ mass_trace <- function() {
   }
 }
 
+#' Define the spectra to plot
+#'
+#' @param sample_ids The sample IDs to consider. If NULL it will use the chromatogram ones.
+#' @param mode The method to choose the scan. One of: closest, closest_apex, across_peak.
+#' @param ms_level The MS level to consider for the scan.
+#' @param rt The RT to consider - mode=closest
+#' @param interval The RT interval to consider - mode=across_peak
+#' @returns A function that takes and returns a lcmsPlotClass object
+#' @export
 spectra <- function(sample_ids = NULL, mode = 'closest_apex', ms_level = 1, rt = NULL, interval = 3) {
   function(obj) {
     obj@options$spectra <- list(
@@ -171,6 +182,13 @@ spectra <- function(sample_ids = NULL, mode = 'closest_apex', ms_level = 1, rt =
   }
 }
 
+#' Define a 2D intensity map
+#'
+#' @param mz_range The m/z range of the map
+#' @param rt_range The RT range of the map
+#' @param density Whether to show a density or a point-cloud plot
+#' @returns A function that takes and returns a lcmsPlotClass object
+#' @export
 intensity_map <- function(mz_range, rt_range, density = FALSE) {
   function(obj) {
     obj@options$intensity_maps <- list(
@@ -200,27 +218,11 @@ arrange <- function(group_by) {
   }
 }
 
-#' Define the arrangement of chromatograms
+#' Define plot's faceting
 #'
-#' @param rows ...
-#' @param cols ...
-#' @returns A function that takes and returns a lcmsPlotClass object
-#' @export
-grid <- function(rows, cols) {
-  function(obj) {
-    obj@options$grid <- list(
-      rows = rows,
-      cols = cols
-    )
-    return(obj)
-  }
-}
-
-#' Define the arrangement of chromatograms
-#'
-#' @param facets ...
-#' @param ncol ...
-#' @param nrow ...
+#' @param facets The facet factors from the sample metadata
+#' @param ncol The number of columns
+#' @param nrow The number of rows
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 facets <- function(facets, ncol = NULL, nrow = NULL) {
@@ -229,6 +231,22 @@ facets <- function(facets, ncol = NULL, nrow = NULL) {
       facets = facets,
       ncol = ncol,
       nrow = nrow
+    )
+    return(obj)
+  }
+}
+
+#' Define a gridded plot
+#'
+#' @param rows The factors that represent rows
+#' @param cols The factors that represent columns
+#' @returns A function that takes and returns a lcmsPlotClass object
+#' @export
+grid <- function(rows, cols) {
+  function(obj) {
+    obj@options$grid <- list(
+      rows = rows,
+      cols = cols
     )
     return(obj)
   }
@@ -264,7 +282,7 @@ legend <- function(position = NULL)  {
   }
 }
 
-#' Define an vertical line across a retention time value
+#' Define a vertical line across a retention time value
 #'
 #' @param intercept The x-axis intercept
 #' @param line_type The line type

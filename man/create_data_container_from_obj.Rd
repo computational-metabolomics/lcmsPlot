@@ -7,11 +7,11 @@
 create_data_container_from_obj(data_obj, sample_id_column, metadata)
 }
 \arguments{
-\item{data_obj}{...}
+\item{data_obj}{The data object (e.g., XCMSnExp)}
 
-\item{sample_id_column}{...}
+\item{sample_id_column}{The sample ID column}
 
-\item{metadata}{...}
+\item{metadata}{The sample metadata}
 }
 \description{
 Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)

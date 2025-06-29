@@ -3,9 +3,9 @@
 
 #' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
 #'
-#' @param data_obj ...
-#' @param sample_id_column ...
-#' @param metadata ...
+#' @param data_obj The data object (e.g., XCMSnExp)
+#' @param sample_id_column The sample ID column
+#' @param metadata The sample metadata
 create_data_container_from_obj <- function(data_obj, sample_id_column, metadata) {
   new("lcmsPlotDataContainer",
       data_obj = data_obj,
@@ -20,11 +20,17 @@ create_data_container_from_obj <- function(data_obj, sample_id_column, metadata)
 
 #' lcmsPlotDataContainer class
 #'
-#' @slot rts The chromatogram retention time points
-#' @slot mzs The mass trace masses
-#' @slot intensities The chromatogram intensities
-#' @slot sample_ids The sample IDs
-#' @slot metadata The metadata for each chromatogram point
+#' @slot data_obj The data object. One of:
+#' - XCMSnExp
+#' - MsExperiment
+#' - character: vector of sample paths
+#' @slot metadata The sample metadata
+#' @slot chromatograms The chromatograms
+#' @slot mass_traces The mass traces
+#' @slot spectra The spectra
+#' @slot intensity_maps The 2D intensity maps
+#' @slot processed_data_info Additional information attached to datasets
+#' @slot detected_peaks The detected peaks
 #' @export
 setClass(
   "lcmsPlotDataContainer",
@@ -116,23 +122,23 @@ setClass(
   return(spectrum_df)
 }
 
-#' Creates a lcmsPlotDataContainer from a features matrix
+#' Creates a lcmsPlotDataContainer from feature IDs
 #'
 #' @param obj A lcmsPlotDataContainer object
-#' @param feature_ids ...
-#' @param sample_ids ...
+#' @param feature_ids The feature IDs
+#' @param sample_ids The sample IDs
 #' @param ppm The ppm error for the chromatograms
 #' @param rt_tol The RT tolerance for the chromatograms
 #' @returns A lcmsPlotDataContainer object
 #' @export
 setGeneric(
-  "create_chromatograms_from_features",
-  function(obj, feature_ids, sample_ids, ppm, rt_tol) standardGeneric("create_chromatograms_from_features")
+  "create_chromatograms_from_feature_ids",
+  function(obj, feature_ids, sample_ids, ppm, rt_tol) standardGeneric("create_chromatograms_from_feature_ids")
 )
 
-#' @rdname create_chromatograms_from_features
+#' @rdname create_chromatograms_from_feature_ids
 setMethod(
-  f = "create_chromatograms_from_features",
+  f = "create_chromatograms_from_feature_ids",
   signature = c("lcmsPlotDataContainer", "character", "character", "numeric", "numeric"),
   definition = function(obj, feature_ids, sample_ids, ppm, rt_tol) {
     metadata <- obj@metadata %>% filter(sample_id %in% sample_ids)
@@ -190,6 +196,8 @@ setMethod(
       }
     }
 
+    io_utils$close_raw_data(raw_data)
+
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
@@ -199,9 +207,9 @@ setMethod(
   }
 )
 
-#' Creates a lcmsPlotDataContainer from raw sample files
+#' Creates a lcmsPlotDataContainer from a features matrix
 #'
-#' @param raw_data A list of mzR objects
+#' @param obj A lcmsPlotDataContainer object
 #' @param features A matrix of entries with mz and rt values
 #' @param sample_ids The sample IDs to select
 #' @param ppm The ppm error for the chromatograms
@@ -209,13 +217,13 @@ setMethod(
 #' @returns A lcmsPlotDataContainer object
 #' @export
 setGeneric(
-  "create_chromatograms_from_raw",
-  function(obj, features, sample_ids, ppm, rt_tol) standardGeneric("create_chromatograms_from_raw")
+  "create_chromatograms_from_features",
+  function(obj, features, sample_ids, ppm, rt_tol) standardGeneric("create_chromatograms_from_features")
 )
 
-#' @rdname create_chromatograms_from_raw
+#' @rdname create_chromatograms_from_features
 setMethod(
-  f = "create_chromatograms_from_raw",
+  f = "create_chromatograms_from_features",
   signature = c("lcmsPlotDataContainer", "matrix", "character", "numeric", "numeric"),
   definition = function(obj, features, sample_ids, ppm, rt_tol) {
     metadata <- obj@metadata %>% filter(sample_id %in% sample_ids)
@@ -274,6 +282,8 @@ setMethod(
       }
     }
 
+    io_utils$close_raw_data(raw_data)
+
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
@@ -283,7 +293,7 @@ setMethod(
   }
 )
 
-#' Creates a lcmsPlotDataContainer from raw sample files
+#' Creates a lcmsPlotDataContainer from BPC or TIC data
 #'
 #' @param obj A lcmsPlotDataContainer object
 #' @param sample_ids The sample IDs to select
@@ -330,10 +340,10 @@ setMethod(
   }
 )
 
-#' Creates/updates am lcmsPlotDataContainer from spectra
+#' Creates/updates an lcmsPlotDataContainer from spectra
 #'
 #' @param obj A lcmsPlotDataContainer object
-#' @param options ...
+#' @param options The lcmsPlot options
 #' @returns A lcmsPlotDataContainer object
 #' @export
 setGeneric(
@@ -393,7 +403,7 @@ setMethod(
 #' Creates an lcmsPlotDataContainer from an intensity map
 #'
 #' @param obj A lcmsPlotDataContainer object
-#' @param options ...
+#' @param options The lcmsPlot options
 #' @returns A lcmsPlotDataContainer object
 #' @export
 setGeneric(

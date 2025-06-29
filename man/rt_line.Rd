@@ -2,7 +2,7 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{rt_line}
 \alias{rt_line}
-\title{Define an vertical line across a retention time value}
+\title{Define a vertical line across a retention time value}
 \usage{
 rt_line(intercept, line_type = "dashed", color = "black")
 }
@@ -14,5 +14,5 @@ rt_line(intercept, line_type = "dashed", color = "black")
 \item{color}{The line color}
 }
 \description{
-Define an vertical line across a retention time value
+Define a vertical line across a retention time value
 }

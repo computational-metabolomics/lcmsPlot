@@ -2,18 +2,20 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{lcmsPlot}
 \alias{lcmsPlot}
-\title{Create a lcmsPlotClass object}
+\title{Create an lcmsPlotClass object}
 \usage{
 lcmsPlot(dataset, sample_id_column = "sample_id", metadata = NULL)
 }
 \arguments{
-\item{dataset}{An object of type XCMSnExp or MsExperiment}
+\item{dataset}{An object of type XCMSnExp, MsExperiment, or character}
 
 \item{sample_id_column}{Which column should be used as the sample ID}
+
+\item{metadata}{The metadata in case it's not provided in the dataset object}
 }
 \value{
-A lcmsPlotClass object
+An lcmsPlotClass object
 }
 \description{
-Create a lcmsPlotClass object
+Create an lcmsPlotClass object
 }

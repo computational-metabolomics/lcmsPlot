@@ -10,19 +10,22 @@ chromatogram(
   ppm = 10,
   rt_tol = 10,
   highlight_peaks = FALSE,
+  highlight_peaks_color = NULL,
   aggregation_fun = "max"
 )
 }
 \arguments{
-\item{features}{A vector of feature IDs to plot (TODO: change)}
+\item{features}{A character vector or a matrix of mz and rt representing features to plot}
 
-\item{sample_ids}{A vector of sample IDs to plot}
+\item{sample_ids}{A character vector of sample IDs to plot}
 
 \item{ppm}{The ppm error for the chromatograms}
 
 \item{rt_tol}{The RT tolerance for the chromatograms}
 
 \item{highlight_peaks}{Whether to highlight the picked peaks}
+
+\item{highlight_peaks_color}{The color of the highlighted peaks. By default it colors by sample.}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object

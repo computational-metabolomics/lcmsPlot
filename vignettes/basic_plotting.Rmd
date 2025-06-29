@@ -290,3 +290,17 @@ lcmsPlot(xdata, 'sample_id') +
   legend(position = "bottom") +
   layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
 ```
+
+# Plot standalone spectra
+
+```{r}
+sample_ids = c(
+  'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+  'Human_Plasma_HILP_Ch1_Col1_scIC_064'
+)
+
+lcmsPlot(xdata, 'sample_id') +
+  spectra(sample_ids = sample_ids, rt = 580, mode = "closest", ms_level = 1) +
+  legend(position = "bottom")
+```
+

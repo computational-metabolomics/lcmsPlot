@@ -2,20 +2,20 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{facets}
 \alias{facets}
-\title{Define the arrangement of chromatograms}
+\title{Define plot's faceting}
 \usage{
 facets(facets, ncol = NULL, nrow = NULL)
 }
 \arguments{
-\item{facets}{...}
+\item{facets}{The facet factors from the sample metadata}
 
-\item{ncol}{...}
+\item{ncol}{The number of columns}
 
-\item{nrow}{...}
+\item{nrow}{The number of rows}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object
 }
 \description{
-Define the arrangement of chromatograms
+Define plot's faceting
 }

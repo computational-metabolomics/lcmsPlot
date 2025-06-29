@@ -3,7 +3,7 @@
 \name{create_spectra}
 \alias{create_spectra}
 \alias{create_spectra,lcmsPlotDataContainer,list-method}
-\title{Creates/updates am lcmsPlotDataContainer from spectra}
+\title{Creates/updates an lcmsPlotDataContainer from spectra}
 \usage{
 create_spectra(obj, options)
 
@@ -12,11 +12,11 @@ create_spectra(obj, options)
 \arguments{
 \item{obj}{A lcmsPlotDataContainer object}
 
-\item{options}{...}
+\item{options}{The lcmsPlot options}
 }
 \value{
 A lcmsPlotDataContainer object
 }
 \description{
-Creates/updates am lcmsPlotDataContainer from spectra
+Creates/updates an lcmsPlotDataContainer from spectra
 }

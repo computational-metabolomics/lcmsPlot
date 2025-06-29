@@ -17,21 +17,4 @@ xcms_utils <- list(
       relocate(name, namecustom) %>%
       select(-idsDeco)
   }
-
-  # get_xraw_list_from_files = function(sample_paths) {
-  #   xraw_list <- list()
-  #
-  #   for (sample_path in sample_paths) {
-  #     xraw_list[[sample_path]] <- xcms::xcmsRaw(sample_path)
-  #   }
-  #
-  #   return(xraw_list)
-  # },
-  #
-  # get_xraw_list = function(directory) {
-  #   sample_paths <- list.files(directory, full.names = TRUE)
-  #   sample_paths <- sample_paths[!grepl('MS2', sample_paths)]
-  #
-  #   return(xcms_utils$get_xraw_list_from_files(sample_paths))
-  # }
 )

@@ -2,18 +2,18 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{grid}
 \alias{grid}
-\title{Define the arrangement of chromatograms}
+\title{Define a gridded plot}
 \usage{
 grid(rows, cols)
 }
 \arguments{
-\item{rows}{...}
+\item{rows}{The factors that represent rows}
 
-\item{cols}{...}
+\item{cols}{The factors that represent columns}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object
 }
 \description{
-Define the arrangement of chromatograms
+Define a gridded plot
 }

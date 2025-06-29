@@ -7,5 +7,11 @@ io_utils <- list(
     }
 
     return(raw_data)
+  },
+
+  close_raw_data = function(raw_data) {
+    for (raw_obj in raw_data) {
+      mzR::close(raw_obj)
+    }
   }
 )

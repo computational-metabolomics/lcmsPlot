@@ -3,7 +3,7 @@
 \name{create_full_rt_chromatograms}
 \alias{create_full_rt_chromatograms}
 \alias{create_full_rt_chromatograms,lcmsPlotDataContainer,character,character-method}
-\title{Creates a lcmsPlotDataContainer from raw sample files}
+\title{Creates a lcmsPlotDataContainer from BPC or TIC data}
 \usage{
 create_full_rt_chromatograms(obj, sample_ids, aggregation_fun)
 
@@ -22,5 +22,5 @@ Allowed values are "sum" (the default), "max"}
 A lcmsPlotDataContainer object
 }
 \description{
-Creates a lcmsPlotDataContainer from raw sample files
+Creates a lcmsPlotDataContainer from BPC or TIC data
 }

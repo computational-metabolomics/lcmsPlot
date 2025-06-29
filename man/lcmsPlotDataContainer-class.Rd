@@ -10,14 +10,25 @@ lcmsPlotDataContainer class
 \section{Slots}{
 
 \describe{
-\item{\code{rts}}{The chromatogram retention time points}
+\item{\code{data_obj}}{The data object. One of:
+\itemize{
+\item XCMSnExp
+\item MsExperiment
+\item character: vector of sample paths
+}}
 
-\item{\code{mzs}}{The mass trace masses}
+\item{\code{metadata}}{The sample metadata}
 
-\item{\code{intensities}}{The chromatogram intensities}
+\item{\code{chromatograms}}{The chromatograms}
 
-\item{\code{sample_ids}}{The sample IDs}
+\item{\code{mass_traces}}{The mass traces}
 
-\item{\code{metadata}}{The metadata for each chromatogram point}
+\item{\code{spectra}}{The spectra}
+
+\item{\code{intensity_maps}}{The 2D intensity maps}
+
+\item{\code{processed_data_info}}{Additional information attached to datasets}
+
+\item{\code{detected_peaks}}{The detected peaks}
 }}
 
