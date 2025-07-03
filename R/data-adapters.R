@@ -47,7 +47,8 @@ get_detected_peaks.character <- function(obj) {
 
 #' @export
 get_detected_peaks.XCMSnExp <- function(obj) {
-  as.data.frame(chromPeaks(obj))
+  as.data.frame(chromPeaks(obj)) %>%
+    dplyr::rename(sample_index = sample)
 }
 
 #' @export

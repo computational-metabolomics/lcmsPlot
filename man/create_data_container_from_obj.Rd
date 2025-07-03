@@ -11,7 +11,7 @@ create_data_container_from_obj(data_obj, sample_id_column, metadata)
 
 \item{sample_id_column}{The sample ID column}
 
-\item{metadata}{The sample metadata}
+\item{metadata}{The sample metadata in case it's not provided in the data object}
 }
 \description{
 Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)

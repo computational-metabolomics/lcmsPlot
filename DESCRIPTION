@@ -44,6 +44,8 @@ Collate:
     'io-raw-data.R'
     'options.R'
     'processing-xcms.R'
+    'constructors-chromatograms.R'
+    'constructors-spectra.R'
     'data-adapters.R'
     'plot-units.R'
     'plot-chromatogram.R'

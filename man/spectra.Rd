@@ -9,7 +9,9 @@ spectra(
   mode = "closest_apex",
   ms_level = 1,
   rt = NULL,
-  interval = 3
+  interval = 3,
+  spectral_match_db = NULL,
+  match_target_index = NULL
 )
 }
 \arguments{

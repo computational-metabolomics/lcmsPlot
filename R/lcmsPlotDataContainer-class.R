@@ -1,11 +1,26 @@
-# TODO: add validation to all slots
-# TODO: define what a dataset entails (e.g., metadata_index)
+.validators <- list(
+  chromatograms = function(df) {
+    nrow(df) == 0 || identical(colnames(df), c("rt", "intensity", "metadata_index"))
+  },
+  mass_traces = function(df) {
+    nrow(df) == 0 || identical(colnames(df), c("rt", "mz", "metadata_index"))
+  },
+  spectra = function(df) {
+    nrow(df) == 0 || identical(colnames(df), c("mz", "intensity", "rt", "metadata_index", "reference"))
+  },
+  intensity_maps = function(df) {
+    nrow(df) == 0 || identical(colnames(df), c("rt", "mz", "intensity", "metadata_index"))
+  },
+  detected_peaks = function(df) {
+    nrow(df) == 0 || all(c("mz", "rt", "rtmin", "rtmax", "sample_index") %in% colnames(df))
+  }
+)
 
 #' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
 #'
 #' @param data_obj The data object (e.g., XCMSnExp)
 #' @param sample_id_column The sample ID column
-#' @param metadata The sample metadata
+#' @param metadata The sample metadata in case it's not provided in the data object
 create_data_container_from_obj <- function(data_obj, sample_id_column, metadata) {
   new("lcmsPlotDataContainer",
       data_obj = data_obj,
@@ -56,71 +71,24 @@ setClass(
   )
 )
 
-.create_bpc_tic <- function(raw_data, aggregation_fun) {
-  hdr <- mzR::header(raw_data)
-  ms1_header <- hdr[hdr$msLevel == 1, ]
-  rt <- ms1_header$retentionTime
+setValidity("lcmsPlotDataContainer", function(object) {
+  ret <- TRUE
 
-  if (aggregation_fun == "max") {
-    bpi <- ms1_header$basePeakIntensity
+  if (!inherits(object@data_obj, c("XCMSnExp", "MsExperiment", "character"))) {
+    ret <- "@data_obj must be either XCMSnExp, MsExperiment, or character."
   } else {
-    bpi <- ms1_header$totIonCurrent
-  }
+    for (validator_name in names(.validators)) {
+      df <- slot(object, validator_name)
 
-  return(list(
-    chromatograms = data.frame(rt = rt, intensity = bpi)
-  ))
-}
-
-.create_chromatogram <- function(raw_data, mz_range, rt_range) {
-  hdr <- mzR::header(raw_data)
-  scans_in_rt <- hdr[hdr$retentionTime >= rt_range[1] & hdr$retentionTime <= rt_range[2], ]
-
-  chr <- data.frame()
-  mass_traces <- data.frame()
-
-  for (scan_id in scans_in_rt$seqNum) {
-    spectrum <- mzR::peaks(raw_data, scan_id)
-    rt <- scans_in_rt$retentionTime[scans_in_rt$seqNum == scan_id]
-    in_mz_range <- spectrum[spectrum[, 1] >= mz_range[1] & spectrum[, 1] <= mz_range[2], , drop = FALSE]
-    total_intensity <- sum(in_mz_range[, 2])
-
-    if (nrow(in_mz_range) > 0) {
-      chr <- rbind(chr, data.frame(rt = rt, intensity = total_intensity))
-      mass_traces <- rbind(mass_traces, data.frame(rt = rt, mz = in_mz_range[, 1]))
+      if (!.validators[[validator_name]](df)) {
+        ret <- paste0(validator_name, " did not pass validation.")
+        break
+      }
     }
   }
 
-  return(list(
-    chromatograms = chr,
-    mass_traces = mass_traces
-  ))
-}
-
-.create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
-  hdr <- mzR::header(raw_data)
-
-  ms_level_indices <- which(hdr$msLevel == ms_level)
-
-  if (length(ms_level_indices) == 0) {
-    # TODO: rethink this
-    stop("No scans found with the specified MS level.")
-  }
-
-  rt_diffs <- abs(hdr$retentionTime[ms_level_indices] - rt)
-
-  closest_index <- ms_level_indices[which.min(rt_diffs)]
-
-  spectrum_data <- mzR::peaks(raw_data, closest_index)
-
-  spectrum_df <- data.frame(
-    mz = spectrum_data[, 1],
-    intensity = spectrum_data[, 2],
-    rt = hdr$retentionTime[closest_index]
-  )
-
-  return(spectrum_df)
-}
+  ret
+})
 
 #' Creates a lcmsPlotDataContainer from feature IDs
 #'
@@ -158,27 +126,27 @@ setMethod(
       peaks <- all_detected_peaks %>%
         filter(
           row_number() %in% peak_indices,
-          sample %in% metadata$sample_index
+          sample_index %in% metadata$sample_index
         ) %>%
-        left_join(metadata, by = c("sample" = "sample_index")) # TODO: check this, too specific
+        left_join(metadata, by = "sample_index")
 
       detected_peaks <- rbind(detected_peaks, peaks)
 
       for (j in seq_len(nrow(peaks))) {
         peak <- peaks[j,]
         mzr <- get_mz_range(peak$mz, ppm)
-        sample_metadata <- metadata %>% filter(sample_index == peak$sample)
+        sample_metadata <- metadata %>% filter(sample_index == peak$sample_index)
         raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-        data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
+        data <- create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
         processed_data_info <- rbind(processed_data_info, cbind(
           sample_metadata,
           data.frame(
-            feature_id = feature$name,
+            feature_id = feature$name
             # TODO: remove these
-            peak_rt_min = peak$rtmin,
-            peak_rt_max = peak$rtmax
+            # peak_rt_min = peak$rtmin,
+            # peak_rt_max = peak$rtmax
           )
         ))
 
@@ -202,6 +170,8 @@ setMethod(
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
     obj@detected_peaks = detected_peaks
+
+    validObject(obj)
 
     return(obj)
   }
@@ -245,18 +215,18 @@ setMethod(
         sample_metadata <- metadata[j,]
         raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-        data <- .create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
+        data <- create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
 
         if (!is.null(all_detected_peaks)) {
           peaks <- all_detected_peaks %>%
             filter(
-              sample %in% sample_metadata$sample_index,
+              sample_index %in% sample_metadata$sample_index,
               mz >= mzr[1],
               mz <= mzr[2],
               rt >= rtr[1],
               rt <= rtr[2]
             ) %>%
-            left_join(metadata, by = c("sample" = "sample_index")) # TODO: check this, too specific
+            left_join(metadata, by = "sample_index")
         } else {
           peaks <- data.frame()
         }
@@ -288,6 +258,8 @@ setMethod(
     obj@mass_traces <- mass_traces
     obj@processed_data_info <- processed_data_info
     obj@detected_peaks <- detected_peaks
+
+    validObject(obj)
 
     return(obj)
   }
@@ -322,7 +294,7 @@ setMethod(
       sample_metadata <- metadata[i,]
       raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-      data <- .create_bpc_tic(raw_obj, aggregation_fun)
+      data <- create_bpc_tic(raw_obj, aggregation_fun)
 
       processed_data_info <- rbind(processed_data_info, sample_metadata)
 
@@ -337,6 +309,8 @@ setMethod(
 
     obj@chromatograms <- chromatograms
     obj@processed_data_info <- processed_data_info
+
+    validObject(obj)
 
     return(obj)
   }
@@ -360,13 +334,12 @@ setMethod(
   definition = function(obj, options) {
     metadata <- obj@metadata %>% filter(sample_id %in% options$sample_ids)
 
-    # mz, intensity, rt, reference, metadata_index
     all_spectra <- data.frame()
 
     # Retrieve the spectral library
     spectral_library <- NULL
     if (!is.null(options$spectra$spectral_match_db)) {
-      if (length(options$spectra$spectral_match_db) & endsWith(options$spectra$spectral_match_db, ".msp")) {
+      if (length(options$spectra$spectral_match_db) == 1 & all(endsWith(options$spectra$spectral_match_db, ".msp"))) {
         source <- MsBackendMsp()
       } else {
         source <- MsBackendMzR()
@@ -380,12 +353,12 @@ setMethod(
       raw_obj <- mzR::openMSfile(sample_metadata$sample_path)
 
       if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
-        spectra <- .create_spectrum_from_closest_scan_to_rt(raw_obj, options$spectra$rt, options$spectra$ms_level)
+        spectra <- create_spectrum_from_closest_scan_to_rt(raw_obj, options$spectra$rt, options$spectra$ms_level)
       } else if (options$spectra$mode == "closest_apex") {
         spectra <- obj@detected_peaks %>%
           filter(sample_id == sample_metadata$sample_id) %>%
           pull(rt) %>%
-          lapply(function (rt) .create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
+          lapply(function (rt) create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
           do.call(rbind, .)
       } else if (options$spectra$mode == "across_peak") {
         spectra <- expanded_peaks <- obj@detected_peaks %>%
@@ -395,7 +368,7 @@ setMethod(
           mutate(rt_interval = intervals) %>%
           select(sample_id, rt, rtmin, rtmax, rt_interval) %>%
           pull(rt_interval) %>%
-          lapply(function (rt) .create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
+          lapply(function (rt) create_spectrum_from_closest_scan_to_rt(raw_obj, rt, options$spectra$ms_level)) %>%
           do.call(rbind, .)
 
       } else {
@@ -464,6 +437,8 @@ setMethod(
 
     obj@spectra <- all_spectra
 
+    validObject(obj)
+
     return(obj)
   }
 )
@@ -522,6 +497,8 @@ setMethod(
     }
 
     obj@intensity_maps <- intensity_maps
+
+    validObject(obj)
 
     return(obj)
   }
