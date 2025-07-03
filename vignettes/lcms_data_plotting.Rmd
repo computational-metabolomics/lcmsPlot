@@ -1,0 +1,404 @@
+---
+title: "Easy-to-use, intuitive, and efficient LC-MS data plotting with lcmsPlot"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2  
+    number_sections: true  
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{basic_plotting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_knit$set(
+  root.dir = dirname(getwd())
+)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(ggplot2)
+  library(openxlsx)
+  library(xcms)
+  library(BiocStyle)
+  library(lcmsPlot)
+})
+```
+
+# Introduction
+
+LC-MS (or generally X-MS) data visualisation is important when inspecting the quality of the data
+as well as during the publication process.
+Plots are a quick way to show acquisition anomalies such as retention time shifts,
+internal standards inconsistencies, gradual signal drops, and so on.
+
+# Current landscape
+
+The current LC-MS data visualisation landscape is mainly covered by `xcms`'s
+base R plotting routines.
+
+Outside `xcms`, many plotting functionalities are tightly coupled specific applications, such as:
+
+- [LCMSQA](https://cran.r-project.org/web/packages/LCMSQA/index.html)
+- [MetaboAnalystR](https://www.metaboanalyst.ca/docs/RTutorial.xhtml)
+- [CAMERA](https://www.bioconductor.org/packages/release/bioc/html/CAMERA.html)
+
+# Objectives
+
+`lcmsPlot` aims to be a generic, flexible, and interoperable solution for plotting LC-MS data, such
+as chromatograms, mass traces, mass spectra, and more.
+
+`lcmsPlot` focuses on the following objectives:
+
+- Generic and flexible plotting capabilities.
+- Easy-to-use programming interface using a building-blocks approach such as [ggplot](https://ggplot2.tidyverse.org/).
+- Interoperability: it can be seamlessly used with `xcms` or raw data (e.g., from mzML).
+- Efficiency: better performance when scaling, compared to current solutions.
+
+# Installation
+
+`lcmsPlot` is a Bioconductor package and to install it we have to use [BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
+
+```{r, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("lcmsPlot")
+```
+
+# Load data
+
+In this vignette, we will use a set of plasma samples from a long-term stability study from the [Phenome Centre Birmingham](https://www.birmingham.ac.uk/research/centres-institutes/phenome-centre-birmingham).
+
+The data was processed using [xcms](https://www.bioconductor.org/packages/release/bioc/html/xcms.html) and the
+`XCMSnExp` object saved to `inst/extdata/xdata.rds`.
+
+```{r}
+xdata <- readRDS(system.file("extdata", "xdata.rds", package = "lcmsPlot"))
+```
+
+# Samples summary
+
+## Plot base peak chromatogram (BPC)
+
+Base peak chromatograms (BPCs) are useful in LC-MS because they simplify complex data and help quickly identify the most intense signals.
+
+In the example below we plot the BPC for five samples:
+
+```{r}
+samples_metadata <- read.xlsx(system.file("extdata", "metadata.xlsx", package = "lcmsPlot"))
+
+raw_files <- c(
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_066.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_068.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_070.mzML", package = "lcmsPlot")
+)
+
+lcmsPlot(raw_files, metadata = samples_metadata) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  facets(facets = "sample_id", ncol = 1)
+```
+
+We can also plot multiple chromatograms in the same plot:
+
+```{r}
+raw_files <- c(
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  arrange(group_by = "sample_id") +
+  labels(title = "Base peak chromatograms", legend = "Sample") +
+  legend(position = "bottom")
+```
+
+## Plot total ion chromatogram (TIC)
+
+Total ion chromatogram (TIC) plots the sum of all ion intensities detected at each time point, giving a complete picture of everything entering the detector; not just the most abundant ion.
+
+```{r}
+raw_files <- c(
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
+  facets(facets = "sample_id", ncol = 1)
+```
+
+## Intensity maps
+
+2D intensity maps are a quick way to see patterns in the acquired data.
+
+Below, we build intensity density maps from two samples:
+
+```{r}
+raw_files <- c(
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
+  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
+)
+
+lcmsPlot(raw_files) +
+  intensity_map(mz_range = c(100, 105), rt_range = c(0, 200), density = TRUE) +
+  facets(facets = "sample_id", ncol = 2)
+```
+
+# Plot chromatograms
+
+Next, we will plot chromatograms for a feature detected by `xcms` in two samples.
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+               sample_ids = c(
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE) +
+  arrange(group_by = 'sample_id') +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom")
+```
+
+The above plot can be faceted on metadata factors; in this case we facet on `feature_id` and `sample_id`:
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
+               sample_ids = c('Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                              'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = "#121212") +
+  facets(facets = c('feature_id', 'sample_id')) +
+  labels(legend = "Sample") +
+  legend(position = "bottom")
+```
+
+On the other hand, gridded plots (`grid` function), arrange panels in a matrix defined by two variables, allowing structured comparisons across both dimensions.
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
+               sample_ids = c(
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = '#f00') +
+  grid(rows = 'feature_id', cols = 'sample_id')
+```
+
+In some cases, you may want to highlight specific regions of the extracted ion chromatogram, for example, to draw attention to a peak that hasn't been detected yet. This can be done using the `rt_line` functionality:
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+                       sample_ids = c(
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+                       ppm = 5,
+                       rt_tol = 10) +
+  facets(facets = 'sample_id') +
+  rt_line(intercept = 580, line_type = 'solid', color = 'red') +
+  rt_line(intercept = 575, line_type = 'dashed', color = 'blue') +
+  rt_line(intercept = 587, line_type = 'dashed', color = 'blue')
+```
+
+# Plot chromatograms with mass traces
+
+Until now, we've primarily focused on chromatograms to understand the abundance and retention behaviour of features across samples.
+These chromatograms show when and how strongly a compound elutes, but they don't reveal whether the mass accuracy or consistency is stable across the peak or between samples; this is where the mass trace (bottom panel) becomes valuable.
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+                       sample_ids = c(
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+                       ppm = 5,
+                       rt_tol = 10,
+                       highlight_peaks = TRUE) +
+  mass_trace() +
+  arrange(group_by = 'sample_id') +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom")
+```
+
+As for plain chromatograms, we can facet a combination of chromatograms + mass traces on a factor, such as `feature_id`:
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
+                       sample_ids = c(
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+                       ppm = 5,
+                       rt_tol = 10,
+                       highlight_peaks = TRUE) +
+  mass_trace() +
+  arrange(group_by = "sample_id") +
+  facets(facets = 'feature_id', ncol = 2) +
+  labels(legend = "Sample") +
+  legend(position = "bottom")
+```
+
+Or multiple factors (`feature_id` and `sample_id`):
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = c('M70T581', 'M85T587_1'),
+               sample_ids = c(
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE,
+               highlight_peaks_color = '#343434') +
+  mass_trace() +
+  facets(facets = c('feature_id', 'sample_id'))
+```
+
+# Plot chromatograms from raw files
+
+Until now, we’ve been using an `XCMSnExp` object as our data source. However, `lcmsPlot` also supports extracting chromatograms directly from raw files, such as those in the `mzML` format.
+
+```{r}
+raw_files <- c(
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
+)
+
+lcmsPlot(raw_files) +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
+               ppm = 5,
+               rt_tol = 10) +
+  arrange(group_by = "sample_id") +
+  facets(facets = "feature_id", ncol = 2) +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
+```
+
+Metadata can be attached to the raw files and used for plotting as follows:
+
+```{r}
+raw_files <- c(
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
+  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
+)
+
+metadata <- data.frame(
+  sample_type = c("T1", "T2"),
+  sample_id = c("S62", "S64")
+)
+
+lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
+               ppm = 5,
+               rt_tol = 10) +
+  grid(rows = 'feature_id', cols = 'sample_type')
+```
+
+# Plot spectra
+
+Now, we want to include spectra because they provide critical compositional insight into what ions make up the feature at a given point in time.
+
+To do so, we can use the `spectra` function and define what mode of scan selection to use.
+
+## Select closest scan to specified RT
+
+To select the closest scan to a specified RT value you can use `mode = "closest"`:
+
+```{r}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = 'M70T581',
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 10,
+               highlight_peaks = TRUE) +
+  spectra(rt = 580, mode = "closest", ms_level = 1) +
+  labels(title = "Feature M70T581", legend = "Sample") +
+  legend(position = "bottom")
+```
+
+## Select scan closest to a detected peak apex
+
+To select the closest scan to a detected peak apex you can use `mode = "closest_apex"`:
+
+```{r, fig.height=3}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 40,
+               highlight_peaks = TRUE) +
+  spectra(mode = "closest_apex", ms_level = 1) +
+  labels(legend = "Sample") +
+  legend(position = "bottom") +
+  layout(design = "C\nS\nS")
+```
+
+## Select multiple scans across a detected peak
+
+To select multiple scans across a detecte peak, given an RT interval, you can use `mode = "across_peak"`:
+
+```{r, fig.height=5, fig.width=3}
+lcmsPlot(xdata, 'sample_id') +
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
+               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+               ppm = 5,
+               rt_tol = 40,
+               highlight_peaks = TRUE) +
+  spectra(mode = "across_peak", ms_level = 1) +
+  labels(legend = "Sample") +
+  legend(position = "bottom") +
+  layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
+```
+
+## Plot standalone spectra
+
+So far we have been plotting spectra alongside chromatograms.
+Often, it is preferable to plot spectra on their own to allow for clearer analysis of spectral features:
+
+```{r}
+sample_ids = c(
+  'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+  'Human_Plasma_HILP_Ch1_Col1_scIC_064'
+)
+
+lcmsPlot(xdata, 'sample_id') +
+  spectra(sample_ids = sample_ids, rt = 580, mode = "closest", ms_level = 1) +
+  legend(position = "bottom")
+```
+
+```{r}
+sample_ids = c(
+  'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+  'Human_Plasma_HILP_Ch1_Col1_scIC_064'
+)
+
+lcmsPlot(xdata, 'sample_id') +
+  spectra(
+    sample_ids = sample_ids,
+    rt = 580,
+    mode = "closest",
+    ms_level = 1,
+    spectral_match_db = dir(system.file("sciex", package = "msdata"), full.names = TRUE),
+    match_target_index = 1) +
+  legend(position = "bottom")
+```
+

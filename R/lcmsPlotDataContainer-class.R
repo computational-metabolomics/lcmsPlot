@@ -318,7 +318,7 @@ setMethod(
     chromatograms <- data.frame()
     processed_data_info <- data.frame()
 
-    for (i in 1:nrow(metadata)) {
+    for (i in seq_len(nrow(metadata))) {
       sample_metadata <- metadata[i,]
       raw_obj <- raw_data[[sample_metadata$sample_path]]
 
@@ -332,6 +332,8 @@ setMethod(
         metadata_index = nrow(processed_data_info)
       ))
     }
+
+    io_utils$close_raw_data(raw_data)
 
     obj@chromatograms <- chromatograms
     obj@processed_data_info <- processed_data_info
@@ -358,7 +360,20 @@ setMethod(
   definition = function(obj, options) {
     metadata <- obj@metadata %>% filter(sample_id %in% options$sample_ids)
 
+    # mz, intensity, rt, reference, metadata_index
     all_spectra <- data.frame()
+
+    # Retrieve the spectral library
+    spectral_library <- NULL
+    if (!is.null(options$spectra$spectral_match_db)) {
+      if (length(options$spectra$spectral_match_db) & endsWith(options$spectra$spectral_match_db, ".msp")) {
+        source <- MsBackendMsp()
+      } else {
+        source <- MsBackendMzR()
+      }
+
+      spectral_library <- Spectra(options$spectra$spectral_match_db, source = source)
+    }
 
     for (i in seq_len(nrow(metadata))) {
       sample_metadata <- metadata[i,]
@@ -393,6 +408,59 @@ setMethod(
 
       mzR::close(raw_obj)
     }
+
+    all_spectra = all_spectra %>%
+      mutate(reference = FALSE)
+
+    if (!is.null(spectral_library)) {
+      all_spectra_as_list <- all_spectra %>%
+        group_by(metadata_index, rt) %>%
+        group_split()
+
+      query_spectra <- DataFrame(
+        metadata_index = unique(all_spectra$metadata_index),
+        rt = unique(all_spectra$rt)
+      )
+      query_spectra$mz = lapply(all_spectra_as_list, function (x) x$mz)
+      query_spectra$intensity = lapply(all_spectra_as_list, function (x) x$intensity)
+      query_spectra <- Spectra(query_spectra)
+
+      similarities = compareSpectra(query_spectra, spectral_library)
+
+      target_values <- apply(similarities, 1, function(row) {
+        sorted_unique <- sort(unique(row), decreasing = TRUE)
+        if (length(sorted_unique) >= options$spectra$match_target_index) {
+          sorted_unique[options$spectra$match_target_index]
+        } else {
+          NA
+        }
+      })
+
+      target_indices <- lapply(1:nrow(similarities), function(i) {
+        which(similarities[i, ] == target_values[i])
+      }) %>% unlist()
+
+      i = 1
+      for (target_index in target_indices) {
+        hit_mzs <- mz(spectral_library)[[target_index]]
+        hit_intensities <- intensity(spectral_library)[[target_index]]
+
+        all_spectra <- rbind(all_spectra, data.frame(
+          mz = hit_mzs,
+          intensity = hit_intensities,
+          rt = unique(all_spectra_as_list[[i]]$rt),
+          metadata_index = unique(all_spectra_as_list[[i]]$metadata_index),
+          reference = TRUE
+        ))
+
+        i <- i + 1
+      }
+    }
+
+    all_spectra <- all_spectra %>%
+      group_by(metadata_index, rt, reference) %>%
+      mutate(intensity = 100 * intensity / max(intensity)) %>%
+      ungroup()
 
     obj@spectra <- all_spectra
 

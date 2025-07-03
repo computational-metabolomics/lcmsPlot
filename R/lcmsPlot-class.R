@@ -64,8 +64,8 @@ setMethod(
       if (object@options[[dataset_name]]$show) {
         data_df <- slot(object@data, dataset_name)
 
-        if (nrow(obj@data@processed_data_info) > 0) {
-          metadata_to_merge <- obj@data@processed_data_info
+        if (nrow(object@data@processed_data_info) > 0) {
+          metadata_to_merge <- object@data@processed_data_info
         } else {
           metadata_to_merge <- object@data@metadata
         }
@@ -109,6 +109,7 @@ chromatogram <- function(
       sample_ids <- obj@data@metadata$sample_id
     }
 
+    obj@options$chromatograms$show <- TRUE
     obj@options$sample_ids <- sample_ids
 
     if (is.null(features)) {
@@ -162,14 +163,24 @@ mass_trace <- function() {
 #' @param interval The RT interval to consider - mode=across_peak
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
-spectra <- function(sample_ids = NULL, mode = 'closest_apex', ms_level = 1, rt = NULL, interval = 3) {
+spectra <- function(
+  sample_ids = NULL,
+  mode = 'closest_apex',
+  ms_level = 1,
+  rt = NULL,
+  interval = 3,
+  spectral_match_db = NULL,
+  match_target_index = NULL
+) {
   function(obj) {
     obj@options$spectra <- list(
       show = TRUE,
       mode = mode,
       ms_level = ms_level,
       rt = rt,
-      interval = interval
+      interval = interval,
+      spectral_match_db = spectral_match_db,
+      match_target_index = match_target_index
     )
 
     if (!is.null(sample_ids)) {

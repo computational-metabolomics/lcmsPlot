@@ -7,24 +7,26 @@ plot_spectrum <- function(datasets, dataset_type, supporting_datasets, options, 
   )
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
 
-  # custom_rt_labeller <- function(rt_vals) {
-  #   paste0("RT: ", round(rt_vals, 3), " sec.")
-  # }
+  dataset_for_plot <- dataset %>%
+    mutate(intensity = case_when(
+      reference == TRUE ~ -intensity,
+      TRUE ~ intensity
+    )) %>%
+    mutate(sample_id_rt = paste0(sample_id, " RT: ", round(rt, 3), " sec."))
 
-  custom_rt_labeller <- function(rt_vals) {
-    sapply(rt_vals, function(x) {
-      x_num <- as.numeric(as.character(x))
-      paste0("RT: ", round(x_num, 3), " sec.")
-    })
+  if (length(unique(dataset_for_plot$reference)) == 2) {
+    p_aes <- build_aes(x = "mz", y = "intensity", options = options, color = "reference")
+  } else {
+    p_aes <- build_aes(x = "mz", y = "intensity", options = options)
   }
 
   p <- ggplot(
-    data = dataset,
-    mapping = build_aes(x = sym("mz"), y = sym("intensity"), options)
+    data = dataset_for_plot,
+    mapping = p_aes
   ) +
-    geom_segment(aes(xend = mz, yend = 0), color = "black", show.legend = single) +
-    facet_wrap(~ rt, ncol = 1, labeller = labeller(rt = custom_rt_labeller)) +
-    labs(x = "m/z", y = "Intensity") +
+    geom_segment(aes(xend = mz, yend = 0), show.legend = single) +
+    facet_wrap(~ sample_id_rt, ncol = 1) +
+    labs(x = "m/z", y = "Relative intensity (%)") +
     theme_minimal() +
     extra_layers
 

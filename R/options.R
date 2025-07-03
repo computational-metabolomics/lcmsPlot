@@ -13,7 +13,9 @@ default_options <- list(
     mode = 'closest_apex', # One of: closest, closest_apex, across_peak
     ms_level = 1,
     rt = NULL, # For mode=closest
-    interval = 3 # mode=across_peak
+    interval = 3, # mode=across_peak
+    spectral_match_db = NULL,
+    match_target_index = 1
   ),
   intensity_maps = list(
     show = FALSE,

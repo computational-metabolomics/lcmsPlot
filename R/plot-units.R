@@ -1,8 +1,13 @@
-build_aes <- function(x, y, options) {
+build_aes <- function(x, y, options, ...) {
+  args <- list(...)
   p_aes <- list(x = sym(x), y = sym(y))
 
   if (!is.null(options$arrangement$group_by)) {
     p_aes$color <- sym(options$arrangement$group_by)
+  }
+
+  for (arg_name in names(args)) {
+    p_aes[[arg_name]] <- sym(args[[arg_name]])
   }
 
   return(do.call(aes, p_aes))
