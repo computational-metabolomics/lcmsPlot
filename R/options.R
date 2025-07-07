@@ -2,14 +2,20 @@ default_options <- list(
   sample_id_column = "sample_id",
   chromatograms = list(
     show = FALSE,
+    features = NULL,
+    sample_ids = NULL,
+    ppm = 10,
+    rt_tol = 10,
     highlight_peaks = FALSE,
-    highlight_peaks_color = NULL
+    highlight_peaks_color = NULL,
+    aggregation_fun = "max"
   ),
   mass_traces = list(
     show = FALSE
   ),
   spectra = list(
     show = FALSE,
+    sample_ids = NULL,
     mode = 'closest_apex', # One of: closest, closest_apex, across_peak
     ms_level = 1,
     rt = NULL, # For mode=closest

@@ -58,19 +58,19 @@ setMethod(
   f = "show",
   signature = "lcmsPlotClass",
   function(object) {
-    # TODO: do validation on data types
     dataset_types <- c("chromatograms", "mass_traces", "spectra", "intensity_maps")
     datasets <- lapply(dataset_types, function(dataset_name) {
       if (object@options[[dataset_name]]$show) {
         data_df <- slot(object@data, dataset_name)
 
-        if (nrow(object@data@processed_data_info) > 0) {
-          metadata_to_merge <- object@data@processed_data_info
-        } else {
-          metadata_to_merge <- object@data@metadata
+        # TODO: Check when data_df is empty
+
+        data_df <- merge_by_index(data_df, object@data@metadata, index_col = 'metadata_index')
+
+        if (nrow(object@data@additional_metadata) > 0) {
+          data_df <- merge_by_index(data_df, object@data@additional_metadata, index_col = 'additional_metadata_index')
         }
 
-        data_df <- merge_by_index(data_df, metadata_to_merge, index_col = 'metadata_index')
         return(data_df)
       } else {
         return(NULL)
@@ -109,34 +109,29 @@ chromatogram <- function(
       sample_ids <- obj@data@metadata$sample_id
     }
 
-    obj@options$chromatograms$show <- TRUE
-    obj@options$sample_ids <- sample_ids
+    obj@options$chromatograms <- list(
+      show = TRUE,
+      features = features,
+      sample_ids = sample_ids,
+      ppm = ppm,
+      rt_tol = rt_tol,
+      highlight_peaks = highlight_peaks,
+      highlight_peaks_color = highlight_peaks_color,
+      aggregation_fun = aggregation_fun
+    )
 
     if (is.null(features)) {
-      obj@data <- create_full_rt_chromatograms(
-        obj@data,
-        sample_ids,
-        aggregation_fun)
+      obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
     } else if (is.character(features)) {
-      obj@data <- create_chromatograms_from_feature_ids(
-        obj@data,
-        features,
-        sample_ids,
-        ppm,
-        rt_tol)
+      obj@data <- create_chromatograms_from_feature_ids(obj@data, obj@options)
 
-      obj@options$chromatograms$highlight_peaks <- highlight_peaks
-      obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
+      # obj@options$chromatograms$highlight_peaks <- highlight_peaks
+      # obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     } else {
-      obj@data <- create_chromatograms_from_features(
-        obj@data,
-        features,
-        sample_ids,
-        ppm,
-        rt_tol)
+      obj@data <- create_chromatograms_from_features(obj@data, obj@options)
 
-      obj@options$chromatograms$highlight_peaks <- highlight_peaks
-      obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
+      # obj@options$chromatograms$highlight_peaks <- highlight_peaks
+      # obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     }
 
     return(obj)
@@ -175,6 +170,7 @@ spectra <- function(
   function(obj) {
     obj@options$spectra <- list(
       show = TRUE,
+      sample_ids = sample_ids,
       mode = mode,
       ms_level = ms_level,
       rt = rt,
@@ -182,10 +178,6 @@ spectra <- function(
       spectral_match_db = spectral_match_db,
       match_target_index = match_target_index
     )
-
-    if (!is.null(sample_ids)) {
-      obj@options$sample_ids <- sample_ids
-    }
 
     obj@data <- create_spectra(obj@data, obj@options)
 

@@ -34,7 +34,9 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
   facets_options <- obj@options$facets
   facets <- facets_options$facets
 
-  all_plots <- obj@data@processed_data_info %>%
+  metadata <- left_join(obj@data@additional_metadata, obj@data@metadata, by = c("metadata_index" = "sample_index"))
+
+  all_plots <- metadata %>%
     group_by(!!!syms(facets)) %>%
     group_map(~ {
       metadata_df = .y

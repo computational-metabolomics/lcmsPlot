@@ -341,12 +341,13 @@ To select the closest scan to a detected peak apex you can use `mode = "closest_
 
 ```{r, fig.height=3}
 lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
+  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
                sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
                ppm = 5,
                rt_tol = 40,
                highlight_peaks = TRUE) +
   spectra(mode = "closest_apex", ms_level = 1) +
+  facets(facets = "feature_id", ncol = 2) +
   labels(legend = "Sample") +
   legend(position = "bottom") +
   layout(design = "C\nS\nS")
@@ -354,7 +355,7 @@ lcmsPlot(xdata, 'sample_id') +
 
 ## Select multiple scans across a detected peak
 
-To select multiple scans across a detecte peak, given an RT interval, you can use `mode = "across_peak"`:
+To select multiple scans across a detected peak, given an RT interval, you can use `mode = "across_peak"`:
 
 ```{r, fig.height=5, fig.width=3}
 lcmsPlot(xdata, 'sample_id') +

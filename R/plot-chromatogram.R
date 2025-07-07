@@ -1,6 +1,8 @@
 plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, options, single = FALSE) {
   dataset <- datasets[[dataset_type]]
 
+  saveRDS(dataset, "test.rds")
+
   extra_layers <- list(
     highlight_peaks(dataset, supporting_datasets$detected_peaks, options),
     highlight_spectra_scans(datasets$spectra, options),

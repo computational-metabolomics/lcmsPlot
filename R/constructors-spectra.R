@@ -1,4 +1,4 @@
-create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
+create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt_range, rt, ms_level) {
   hdr <- mzR::header(raw_data)
 
   ms_level_indices <- which(hdr$msLevel == ms_level)
@@ -21,4 +21,44 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
   )
 
   return(spectrum_df)
+}
+
+create_spectra_for_sample <- function(raw_obj, detected_peaks, sid, options, rt_range = NULL) {
+  spectra <- NULL
+
+  if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
+    # TODO: check if RT is outside range
+    spectra <- create_spectrum_from_closest_scan_to_rt(
+      raw_obj,
+      rt = options$spectra$rt,
+      ms_level = options$spectra$ms_level
+    )
+  } else if (options$spectra$mode == "closest_apex") {
+    spectra <- detected_peaks %>%
+      filter(sample_id == sid) %>%
+      { if (!is.null(rt_range)) filter(., rt >= rt_range[1], rt <= rt_range[2]) else . } %>%
+      pull(rt) %>%
+      lapply(function (rt) create_spectrum_from_closest_scan_to_rt(
+        raw_obj,
+        rt = rt,
+        ms_level = options$spectra$ms_level)) %>%
+      do.call(rbind, .)
+  } else if (options$spectra$mode == "across_peak") {
+    spectra <- detected_peaks %>%
+      filter(sample_id == sid) %>%
+      { if (!is.null(rt_range)) filter(., rt >= rt_range[1], rt <= rt_range[2]) else . } %>%
+      rowwise() %>%
+      mutate(intervals = list(seq(rtmin, rtmax, by = options$spectra$interval))) %>%
+      tidyr::unnest(intervals) %>%
+      mutate(rt_interval = intervals) %>%
+      select(sample_id, rt, rtmin, rtmax, rt_interval) %>%
+      pull(rt_interval) %>%
+      lapply(function (rt) create_spectrum_from_closest_scan_to_rt(
+        raw_obj,
+        rt = rt,
+        ms_level = options$spectra$ms_level)) %>%
+      do.call(rbind, .)
+  }
+
+  return(spectra)
 }

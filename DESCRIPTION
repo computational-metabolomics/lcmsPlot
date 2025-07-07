@@ -32,6 +32,7 @@ Imports:
     magrittr,
     xcms,
     mzR,
+    Spectra,
     MsBackendMsp,
     patchwork
 Suggests: 
