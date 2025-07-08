@@ -26,6 +26,8 @@ chromatogram(
 \item{highlight_peaks}{Whether to highlight the picked peaks}
 
 \item{highlight_peaks_color}{The color of the highlighted peaks. By default it colors by sample.}
+
+\item{aggregation_fun}{In case of plotting the full RT range, which aggregation function to use for the spectra intensities}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object

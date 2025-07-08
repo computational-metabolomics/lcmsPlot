@@ -109,10 +109,10 @@ setMethod(
   f = "create_chromatograms_from_feature_ids",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
-    metadata <- obj@metadata %>% filter(sample_id %in% options$chromatograms$sample_ids)
+    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_utils$get_raw_data(metadata$sample_path)
     all_detected_peaks <- get_detected_peaks(obj@data_obj)
-    grouped_peaks <- get_grouped_peaks(obj@data_obj) %>% filter(name %in% options$chromatograms$features)
+    grouped_peaks <- get_grouped_peaks(obj@data_obj) %>% filter(.data$name %in% options$chromatograms$features)
     detected_peaks <- data.frame()
 
     chromatograms <- data.frame()
@@ -122,11 +122,11 @@ setMethod(
     for (i in seq_len(nrow(grouped_peaks))) {
       feature <- grouped_peaks[i,]
       rtr <- c(feature$rt - options$chromatograms$rt_tol, feature$rt + options$chromatograms$rt_tol)
-      peak_indices <- as.numeric(unlist(strsplit(feature %>% pull(peakidx), ',')))
+      peak_indices <- as.numeric(unlist(strsplit(feature %>% pull(.data$peakidx), ',')))
       peaks <- all_detected_peaks %>%
         filter(
           row_number() %in% peak_indices,
-          sample_index %in% metadata$sample_index
+          .data$sample_index %in% metadata$sample_index
         ) %>%
         left_join(metadata, by = "sample_index")
 
@@ -135,7 +135,7 @@ setMethod(
       for (j in seq_len(nrow(peaks))) {
         peak <- peaks[j,]
         mzr <- get_mz_range(peak$mz, options$chromatograms$ppm)
-        sample_metadata <- metadata %>% filter(sample_index == peak$sample_index)
+        sample_metadata <- metadata %>% filter(.data$sample_index == peak$sample_index)
         raw_obj <- raw_data[[sample_metadata$sample_path]]
 
         data <- create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
@@ -190,7 +190,7 @@ setMethod(
   f = "create_chromatograms_from_features",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
-    metadata <- obj@metadata %>% filter(sample_id %in% options$chromatograms$sample_ids)
+    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_utils$get_raw_data(metadata$sample_path)
     all_detected_peaks <- get_detected_peaks(obj@data_obj)
 
@@ -214,11 +214,11 @@ setMethod(
         if (!is.null(all_detected_peaks)) {
           peaks <- all_detected_peaks %>%
             filter(
-              sample_index %in% sample_metadata$sample_index,
-              mz >= mzr[1],
-              mz <= mzr[2],
-              rt >= rtr[1],
-              rt <= rtr[2]
+              .data$sample_index %in% sample_metadata$sample_index,
+              .data$mz >= mzr[1],
+              .data$mz <= mzr[2],
+              .data$rt >= rtr[1],
+              .data$rt <= rtr[2]
             ) %>%
             left_join(metadata, by = "sample_index")
         } else {
@@ -277,7 +277,7 @@ setMethod(
   f = "create_full_rt_chromatograms",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
-    metadata <- obj@metadata %>% filter(sample_id %in% options$chromatograms$sample_ids)
+    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_utils$get_raw_data(metadata$sample_path)
 
     chromatograms <- data.frame()
@@ -326,17 +326,17 @@ setMethod(
 
     if  (is_standalone) {
       metadata <- obj@metadata %>%
-        filter(sample_id %in% options$spectra$sample_ids)
+        filter(.data$sample_id %in% options$spectra$sample_ids)
     } else {
       metadata <- obj@metadata %>%
-        filter(sample_id %in% options$chromatograms$sample_ids)
+        filter(.data$sample_id %in% options$chromatograms$sample_ids)
     }
 
     if (is_standalone) {
       grouped_peaks <- NULL
     } else {
       grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
-        filter(name %in% options$chromatograms$features)
+        filter(.data$name %in% options$chromatograms$features)
     }
 
     all_spectra <- data.frame()
@@ -418,7 +418,7 @@ setMethod(
 
     if (!is.null(spectral_library)) {
       all_spectra_as_list <- all_spectra %>%
-        group_by(metadata_index, rt) %>%
+        group_by(.data$metadata_index, .data$rt) %>%
         group_split()
 
       query_spectra <- S4Vectors::DataFrame(
@@ -446,8 +446,8 @@ setMethod(
 
       i = 1
       for (target_index in target_indices) {
-        hit_mzs <- mz(spectral_library)[[target_index]]
-        hit_intensities <- intensity(spectral_library)[[target_index]]
+        hit_mzs <- Spectra::mz(spectral_library)[[target_index]]
+        hit_intensities <- Spectra::intensity(spectral_library)[[target_index]]
 
         all_spectra <- rbind(all_spectra, data.frame(
           mz = hit_mzs,
@@ -463,8 +463,8 @@ setMethod(
     }
 
     all_spectra <- all_spectra %>%
-      group_by(metadata_index, rt, reference) %>%
-      mutate(intensity = 100 * intensity / max(intensity)) %>%
+      group_by(.data$metadata_index, .data$rt, .data$reference) %>%
+      mutate(intensity = 100 * .data$intensity / max(.data$intensity)) %>%
       ungroup()
 
     obj@spectra <- all_spectra
@@ -519,10 +519,10 @@ setMethod(
       mzR::close(ms)
 
       intensity_map <- df %>%
-        mutate(rt = round(rt, 1),
-               mz = round(mz, 1)) %>%
-        group_by(rt, mz) %>%
-        summarize(intensity = sum(intensity), .groups = 'drop') %>%
+        mutate(rt = round(.data$rt, 1),
+               mz = round(.data$mz, 1)) %>%
+        group_by(.data$rt, .data$mz) %>%
+        summarize(intensity = sum(.data$intensity), .groups = 'drop') %>%
         mutate(metadata_index = i, additional_metadata_index = i)
 
       intensity_maps <- rbind(intensity_maps, intensity_map)

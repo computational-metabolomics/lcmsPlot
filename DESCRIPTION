@@ -27,19 +27,24 @@ LazyData: true
 Depends:
   R (>= 4.3.0)
 Imports:
+    methods,
     dplyr,
-    ggplot2,
+    tidyr,
     magrittr,
     xcms,
     mzR,
     Spectra,
     MsBackendMsp,
+    S4Vectors,
+    ggplot2,
     patchwork
 Suggests: 
     knitr,
     rmarkdown,
-    BiocStyle
+    BiocStyle,
+    openxlsx
 Collate:
+    'zzz.R'
     'helpers-data.R'
     'helpers-s4.R'
     'io-raw-data.R'

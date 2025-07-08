@@ -24,6 +24,10 @@ spectra(
 \item{rt}{The RT to consider - mode=closest}
 
 \item{interval}{The RT interval to consider - mode=across_peak}
+
+\item{spectral_match_db}{The spectral database to match against}
+
+\item{match_target_index}{The target index for the mirror plot (index from the highest scoring)}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object

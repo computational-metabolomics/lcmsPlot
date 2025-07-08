@@ -2,35 +2,17 @@
 % Please edit documentation in R/lcmsPlotDataContainer-class.R
 \name{create_chromatograms_from_feature_ids}
 \alias{create_chromatograms_from_feature_ids}
-\alias{create_chromatograms_from_feature_ids,lcmsPlotDataContainer,character,character,numeric,numeric-method}
+\alias{create_chromatograms_from_feature_ids,lcmsPlotDataContainer,list-method}
 \title{Creates a lcmsPlotDataContainer from feature IDs}
 \usage{
-create_chromatograms_from_feature_ids(
-  obj,
-  feature_ids,
-  sample_ids,
-  ppm,
-  rt_tol
-)
+create_chromatograms_from_feature_ids(obj, options)
 
-\S4method{create_chromatograms_from_feature_ids}{lcmsPlotDataContainer,character,character,numeric,numeric}(
-  obj,
-  feature_ids,
-  sample_ids,
-  ppm,
-  rt_tol
-)
+\S4method{create_chromatograms_from_feature_ids}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
 \item{obj}{A lcmsPlotDataContainer object}
 
-\item{feature_ids}{The feature IDs}
-
-\item{sample_ids}{The sample IDs}
-
-\item{ppm}{The ppm error for the chromatograms}
-
-\item{rt_tol}{The RT tolerance for the chromatograms}
+\item{options}{The options}
 }
 \value{
 A lcmsPlotDataContainer object

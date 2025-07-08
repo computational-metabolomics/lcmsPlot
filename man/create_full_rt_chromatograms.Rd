@@ -2,21 +2,17 @@
 % Please edit documentation in R/lcmsPlotDataContainer-class.R
 \name{create_full_rt_chromatograms}
 \alias{create_full_rt_chromatograms}
-\alias{create_full_rt_chromatograms,lcmsPlotDataContainer,character,character-method}
+\alias{create_full_rt_chromatograms,lcmsPlotDataContainer,list-method}
 \title{Creates a lcmsPlotDataContainer from BPC or TIC data}
 \usage{
-create_full_rt_chromatograms(obj, sample_ids, aggregation_fun)
+create_full_rt_chromatograms(obj, options)
 
-\S4method{create_full_rt_chromatograms}{lcmsPlotDataContainer,character,character}(obj, sample_ids, aggregation_fun)
+\S4method{create_full_rt_chromatograms}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
 \item{obj}{A lcmsPlotDataContainer object}
 
-\item{sample_ids}{The sample IDs to select}
-
-\item{aggregation_fun}{Specify the function to be used to aggregate intensity
-values across the mz value range for the same retention time.
-Allowed values are "sum" (the default), "max"}
+\item{options}{The options}
 }
 \value{
 A lcmsPlotDataContainer object

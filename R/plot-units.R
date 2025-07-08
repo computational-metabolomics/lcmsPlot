@@ -33,8 +33,8 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
       do({
         peak <- .
         subset <- dataset %>%
-          filter(sample_id == peak$sample_id) %>%
-          filter(rt >= peak$rtmin, rt <= peak$rtmax) %>%
+          filter(.data$sample_id == peak$sample_id) %>%
+          filter(.data$rt >= peak$rtmin, .data$rt <= peak$rtmax) %>%
           mutate(peak_id = peak$peak_id)
         subset
       }) %>%
@@ -53,10 +53,10 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
         common_args,
         list(mapping = aes(
           ymin = 0,
-          ymax = intensity,
-          group = peak_id,
-          fill = sample_id,
-          colour = sample_id
+          ymax = .data$intensity,
+          group = .data$peak_id,
+          fill = .data$sample_id,
+          colour = .data$sample_id
         ))
       ))
     } else {
@@ -65,8 +65,8 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
         list(
           mapping = aes(
             ymin = 0,
-            ymax = intensity,
-            group = peak_id
+            ymax = .data$intensity,
+            group = .data$peak_id
           ),
           fill = highlight_peaks_color,
           colour = highlight_peaks_color
@@ -94,7 +94,7 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
 
 highlight_spectra_scans <- function(dataset, options) {
   if (options$spectra$show) {
-    geom_vline(data = dataset, aes(xintercept = rt), color = "black", linetype = "dashed")
+    geom_vline(data = dataset, aes(xintercept = .data$rt), color = "black", linetype = "dashed")
   } else {
     NULL
   }

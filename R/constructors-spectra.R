@@ -35,9 +35,9 @@ create_spectra_for_sample <- function(raw_obj, detected_peaks, sid, options, rt_
     )
   } else if (options$spectra$mode == "closest_apex") {
     spectra <- detected_peaks %>%
-      filter(sample_id == sid) %>%
-      { if (!is.null(rt_range)) filter(., rt >= rt_range[1], rt <= rt_range[2]) else . } %>%
-      pull(rt) %>%
+      filter(.data$sample_id == sid) %>%
+      { if (!is.null(rt_range)) filter(., .data$rt >= rt_range[1], .data$rt <= rt_range[2]) else . } %>%
+      pull(.data$rt) %>%
       lapply(function (rt) create_spectrum_from_closest_scan_to_rt(
         raw_obj,
         rt = rt,
@@ -45,14 +45,14 @@ create_spectra_for_sample <- function(raw_obj, detected_peaks, sid, options, rt_
       do.call(rbind, .)
   } else if (options$spectra$mode == "across_peak") {
     spectra <- detected_peaks %>%
-      filter(sample_id == sid) %>%
-      { if (!is.null(rt_range)) filter(., rt >= rt_range[1], rt <= rt_range[2]) else . } %>%
+      filter(.data$sample_id == sid) %>%
+      { if (!is.null(rt_range)) filter(., .data$rt >= rt_range[1], .data$rt <= rt_range[2]) else . } %>%
       rowwise() %>%
-      mutate(intervals = list(seq(rtmin, rtmax, by = options$spectra$interval))) %>%
-      tidyr::unnest(intervals) %>%
-      mutate(rt_interval = intervals) %>%
-      select(sample_id, rt, rtmin, rtmax, rt_interval) %>%
-      pull(rt_interval) %>%
+      mutate(intervals = list(seq(.data$rtmin, .data$rtmax, by = options$spectra$interval))) %>%
+      tidyr::unnest(.data$intervals) %>%
+      mutate(rt_interval = .data$intervals) %>%
+      select(.data$sample_id, .data$rt, .data$rtmin, .data$rtmax, .data$rt_interval) %>%
+      pull(.data$rt_interval) %>%
       lapply(function (rt) create_spectrum_from_closest_scan_to_rt(
         raw_obj,
         rt = rt,

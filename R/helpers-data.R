@@ -13,9 +13,6 @@
 #' @return The result of calling `rhs(lhs)`.
 NULL
 
-#' @import dplyr
-NULL
-
 merge_by_index <- function(a, b, index_col) {
   b_mod <- b %>%
     mutate(row_id = row_number())

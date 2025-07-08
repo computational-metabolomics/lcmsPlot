@@ -27,7 +27,7 @@ lcmsPlotDataContainer class
 
 \item{\code{intensity_maps}}{The 2D intensity maps}
 
-\item{\code{processed_data_info}}{Additional information attached to datasets}
+\item{\code{additional_metadata}}{Additional information attached to datasets}
 
 \item{\code{detected_peaks}}{The detected peaks}
 }}

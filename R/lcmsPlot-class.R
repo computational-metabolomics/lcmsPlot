@@ -51,8 +51,6 @@ setMethod(
 #' Plot the lcmsPlotClass object
 #'
 #' @param object The lcmsPlotClass object
-#'
-#' @importFrom ggplot2 ggplot aes geom_line geom_point geom_ribbon facet_wrap
 #' @export
 setMethod(
   f = "show",
@@ -93,6 +91,7 @@ setMethod(
 #' @param rt_tol The RT tolerance for the chromatograms
 #' @param highlight_peaks Whether to highlight the picked peaks
 #' @param highlight_peaks_color The color of the highlighted peaks. By default it colors by sample.
+#' @param aggregation_fun In case of plotting the full RT range, which aggregation function to use for the spectra intensities
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 chromatogram <- function(
@@ -156,6 +155,8 @@ mass_trace <- function() {
 #' @param ms_level The MS level to consider for the scan.
 #' @param rt The RT to consider - mode=closest
 #' @param interval The RT interval to consider - mode=across_peak
+#' @param spectral_match_db The spectral database to match against
+#' @param match_target_index The target index for the mirror plot (index from the highest scoring)
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 spectra <- function(

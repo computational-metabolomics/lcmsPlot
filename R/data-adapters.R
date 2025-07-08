@@ -1,8 +1,14 @@
+#' Get the metadata associated with the input object
+#'
+#' @param obj The data object
+#' @param sample_id_column The column that should be associated with the sample ID
+#' @param metadata The metadata data frame if not already included in the data object
 #' @export
 get_metadata <- function(obj, sample_id_column, metadata) {
   UseMethod("get_metadata")
 }
 
+#' @rdname get_metadata
 #' @export
 get_metadata.character <- function(obj, sample_id_column, metadata) {
   if (is.null(metadata)) {
@@ -21,45 +27,61 @@ get_metadata.character <- function(obj, sample_id_column, metadata) {
   }
 }
 
+#' @rdname get_metadata
 #' @export
 get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
   if (!is.null(metadata)) {
-    phenoData(obj) <- new("NAnnotatedDataFrame", metadata)
+    xcms::phenoData(obj) <- new("NAnnotatedDataFrame", metadata)
   }
 
-  phenoData(obj)@data %>%
+  xcms::phenoData(obj)@data %>%
     mutate(
       sample_index = row_number(),
       sample_id = .data[[sample_id_column]],
-      sample_path = fileNames(obj)
+      sample_path = xcms::fileNames(obj)
     )
 }
 
+#' Get the detected peaks from the data object (e.g. XCMSnExp)
+#'
+#' @param obj The data object
 #' @export
 get_detected_peaks <- function(obj) {
   UseMethod("get_detected_peaks")
 }
 
+#' @rdname get_detected_peaks
 #' @export
 get_detected_peaks.character <- function(obj) {
   return(NULL)
 }
 
+#' @rdname get_detected_peaks
 #' @export
 get_detected_peaks.XCMSnExp <- function(obj) {
-  as.data.frame(chromPeaks(obj)) %>%
-    dplyr::rename(sample_index = sample)
+  as.data.frame(xcms::chromPeaks(obj)) %>%
+    dplyr::rename(sample_index = .data$sample)
 }
 
+#' Get the grouped peaks across samples (features) from the data object
+#'
+#' @param obj The data object
 #' @export
 get_grouped_peaks <- function(obj) {
   UseMethod("get_grouped_peaks")
 }
 
+#' @rdname get_grouped_peaks
+#' @export
+get_grouped_peaks.character <- function(obj) {
+  return(NULL)
+}
+
+#' @rdname get_grouped_peaks
 #' @export
 get_grouped_peaks.XCMSnExp <- function(obj) {
-  as.data.frame(featureDefinitions(obj)) %>%
-    rename(mz = mzmed, rt = rtmed) %>%
-    mutate(name = groupnames(obj)) %>%
+  as.data.frame(xcms::featureDefinitions(obj)) %>%
+    rename(mz = .data$mzmed, rt = .data$rtmed) %>%
+    mutate(name = xcms::groupnames(obj)) %>%
     xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
 }
