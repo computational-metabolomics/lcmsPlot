@@ -4,7 +4,7 @@
 \alias{facets}
 \title{Define plot's faceting}
 \usage{
-facets(facets, ncol = NULL, nrow = NULL)
+facets(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE)
 }
 \arguments{
 \item{facets}{The facet factors from the sample metadata}
@@ -12,6 +12,10 @@ facets(facets, ncol = NULL, nrow = NULL)
 \item{ncol}{The number of columns}
 
 \item{nrow}{The number of rows}
+
+\item{free_x}{Allow scales to vary across x}
+
+\item{free_y}{Allow scales to vary across y}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object

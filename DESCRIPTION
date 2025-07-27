@@ -31,7 +31,9 @@ Imports:
     dplyr,
     tidyr,
     magrittr,
+    BiocParallel,
     xcms,
+    MsExperiment,
     mzR,
     Spectra,
     MsBackendMsp,
@@ -42,7 +44,8 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle,
-    openxlsx
+    openxlsx,
+    faahKO
 Collate:
     'zzz.R'
     'helpers-data.R'
@@ -57,10 +60,17 @@ Collate:
     'plot-chromatogram.R'
     'plot-mass-trace.R'
     'plot-spectrum.R'
+    'plot-total-ion-current.R'
     'plot-intensity-map.R'
+    'plot-rt-diff.R'
     'plot-variants.R'
     'plot.R'
     'lcmsPlotDataContainer-class.R'
+    'creators-chromatograms.R'
+    'creators-intensity-map.R'
+    'creators-rt-diff.R'
+    'creators-spectra.R'
+    'creators-total-ion-current.R'
     'lcmsPlot-class.R'
 VignetteBuilder: knitr
 URL: https://computational-metabolomics.github.io/lcmsPlot/

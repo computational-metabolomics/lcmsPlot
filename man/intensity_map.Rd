@@ -4,12 +4,14 @@
 \alias{intensity_map}
 \title{Define a 2D intensity map}
 \usage{
-intensity_map(mz_range, rt_range, density = FALSE)
+intensity_map(mz_range, rt_range, sample_ids = NULL, density = FALSE)
 }
 \arguments{
 \item{mz_range}{The m/z range of the map}
 
 \item{rt_range}{The RT range of the map}
+
+\item{sample_ids}{The sample IDs to select}
 
 \item{density}{Whether to show a density or a point-cloud plot}
 }

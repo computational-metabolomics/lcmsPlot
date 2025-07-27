@@ -1,8 +1,6 @@
 plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, options, single = FALSE) {
   dataset <- datasets[[dataset_type]]
 
-  saveRDS(dataset, "test.rds")
-
   extra_layers <- list(
     highlight_peaks(dataset, supporting_datasets$detected_peaks, options),
     highlight_spectra_scans(datasets$spectra, options),
@@ -15,7 +13,7 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
 
   p <- ggplot(
     data = dataset,
-    mapping = build_aes(x = "rt", y = "intensity", options)
+    mapping = build_aes(x = "rt", y = "intensity", options = options, group = "sample_id")
   ) +
     geom_line() +
     labs(x = "RT (sec)", y = "Intensity") +

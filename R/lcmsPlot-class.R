@@ -3,11 +3,13 @@
 #' @param dataset An object of type XCMSnExp, MsExperiment, or character
 #' @param sample_id_column Which column should be used as the sample ID
 #' @param metadata The metadata in case it's not provided in the dataset object
+#' @param parallel_param The BiocParallel object for enabling parallelism
 #' @returns An lcmsPlotClass object
 #' @export
-lcmsPlot <- function(dataset, sample_id_column = "sample_id", metadata = NULL) {
+lcmsPlot <- function(dataset, sample_id_column = "sample_id", metadata = NULL, parallel_param = NULL) {
   opts <- default_options
   opts$sample_id_column <- sample_id_column
+  opts$parallel_param <- parallel_param
 
   new("lcmsPlotClass",
       options = opts,
@@ -48,18 +50,29 @@ setMethod(
   definition = function(e1, e2) { e2(e1) }
 )
 
-#' Plot the lcmsPlotClass object
+#' Set the plot for an lcmsPlotClass object
 #'
 #' @param object The lcmsPlotClass object
+#' @param additional_datasets Additional datasets to include in the plotting
 #' @export
+setGeneric(
+  "set_plot",
+  function(object, additional_datasets) standardGeneric("set_plot")
+)
+
+#' @rdname set_plot
 setMethod(
-  f = "show",
-  signature = "lcmsPlotClass",
-  function(object) {
-    dataset_types <- c("chromatograms", "mass_traces", "spectra", "intensity_maps")
+  f = "set_plot",
+  signature = c("lcmsPlotClass", "list"),
+  function(object, additional_datasets) {
+    dataset_types <- c(DATASET_TYPES, names(additional_datasets))
     datasets <- lapply(dataset_types, function(dataset_name) {
       if (object@options[[dataset_name]]$show) {
-        data_df <- slot(object@data, dataset_name)
+        if (dataset_name %in% slotNames(object@data)) {
+          data_df <- slot(object@data, dataset_name)
+        } else {
+          data_df <- additional_datasets[[dataset_name]]
+        }
 
         # TODO: Check when data_df is empty
 
@@ -79,20 +92,38 @@ setMethod(
 
     object@plot <- plot_data(datasets, object)
 
+    return(object)
+  }
+)
+
+#' Plot the lcmsPlotClass object
+#'
+#' @param object The lcmsPlotClass object
+#' @export
+setMethod(
+  f = "show",
+  signature = "lcmsPlotClass",
+  function(object) {
+    if (!object@options$bypass_plot_generation) {
+      object <- set_plot(object, additional_datasets = list())
+    }
+    object@options$bypass_plot_generation <- FALSE
     print(object@plot)
   }
 )
 
-#' Define the chromatograms to plot
+#' Define the chromatograms to plot.
 #'
-#' @param features A character vector or a matrix of mz and rt representing features to plot
-#' @param sample_ids A character vector of sample IDs to plot
-#' @param ppm The ppm error for the chromatograms
-#' @param rt_tol The RT tolerance for the chromatograms
-#' @param highlight_peaks Whether to highlight the picked peaks
+#' @param features A character vector or a matrix of mz and rt representing features to plot.
+#' @param sample_ids A character vector of sample IDs to plot.
+#' @param ppm The ppm error for the chromatograms.
+#' @param rt_tol The RT tolerance for the chromatograms.
+#' @param highlight_peaks Whether to highlight the picked peaks.
 #' @param highlight_peaks_color The color of the highlighted peaks. By default it colors by sample.
-#' @param aggregation_fun In case of plotting the full RT range, which aggregation function to use for the spectra intensities
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param highlight_peaks_factor The factor that determines the color.
+#' @param aggregation_fun In case of plotting the full RT range, which aggregation function to use for the spectra intensities.
+#' @param rt_adjusted Whether to plot the RT adjusted version of the chromatograms.
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 chromatogram <- function(
   features = NULL,
@@ -101,7 +132,9 @@ chromatogram <- function(
   rt_tol = 10,
   highlight_peaks = FALSE,
   highlight_peaks_color = NULL,
-  aggregation_fun = "max"
+  highlight_peaks_factor = "sample_id",
+  aggregation_fun = "max",
+  rt_adjusted = FALSE
 ) {
   function(obj) {
     if (is.null(sample_ids)) {
@@ -116,30 +149,26 @@ chromatogram <- function(
       rt_tol = rt_tol,
       highlight_peaks = highlight_peaks,
       highlight_peaks_color = highlight_peaks_color,
-      aggregation_fun = aggregation_fun
+      highlight_peaks_factor = highlight_peaks_factor,
+      aggregation_fun = aggregation_fun,
+      rt_adjusted = rt_adjusted
     )
 
     if (is.null(features)) {
       obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
     } else if (is.character(features)) {
       obj@data <- create_chromatograms_from_feature_ids(obj@data, obj@options)
-
-      # obj@options$chromatograms$highlight_peaks <- highlight_peaks
-      # obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     } else {
       obj@data <- create_chromatograms_from_features(obj@data, obj@options)
-
-      # obj@options$chromatograms$highlight_peaks <- highlight_peaks
-      # obj@options$chromatograms$highlight_peaks_color <- highlight_peaks_color
     }
 
     return(obj)
   }
 }
 
-#' Define the mass trace to plot
+#' Define the mass trace to plot.
 #'
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 mass_trace <- function() {
   function(obj) {
@@ -186,23 +215,77 @@ spectra <- function(
   }
 }
 
+#' Define the total ion currents.
+#'
+#' @param sample_ids The sample IDs to select.
+#' @param type The type of plot; one of "boxplot", "violin", "jitter".
+#' @export
+total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
+  function(obj) {
+    if (!inherits(obj@data@data_obj, c("XCMSnExp", "MsExperiment"))) {
+      stop("total_ion_current: to plot the total ion current the data object should be either of class XCMSnExp or MsExperiment.")
+    }
+
+    if (is.null(sample_ids)) {
+      sample_ids <- obj@data@metadata$sample_id
+    }
+
+    obj@options$total_ion_current <- list(
+      show = TRUE,
+      sample_ids = sample_ids,
+      type = type
+    )
+
+    obj@data <- create_total_ion_current(obj@data, obj@options)
+
+    return(obj)
+  }
+}
+
 #' Define a 2D intensity map
 #'
 #' @param mz_range The m/z range of the map
 #' @param rt_range The RT range of the map
+#' @param sample_ids The sample IDs to select
 #' @param density Whether to show a density or a point-cloud plot
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
-intensity_map <- function(mz_range, rt_range, density = FALSE) {
+intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE) {
   function(obj) {
+    if (is.null(sample_ids)) {
+      sample_ids <- obj@data@metadata$sample_id
+    }
+
     obj@options$intensity_maps <- list(
       show = TRUE,
+      sample_ids = sample_ids,
       mz_range = mz_range,
       rt_range = rt_range,
       density = density
     )
 
     obj@data <- create_intensity_map(obj@data, obj@options)
+
+    return(obj)
+  }
+}
+
+#' Define the RT difference plot between raw and adjusted datasets
+#'
+#' @returns A function that takes and returns a lcmsPlotClass object
+#' @export
+rt_diff_plot <- function() {
+  function(obj) {
+    if (!inherits(obj@data@data_obj, c("XCMSnExp", "MsExperiment"))) {
+      stop("rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
+    }
+
+    if (!xcms_utils$has_rt_alignment_been_performed(obj@data@data_obj)) {
+      stop("rt_diff_plot: RT alignment was not performed.")
+    }
+
+    obj@options$rt_diff <- list(show = TRUE)
+    obj@data <- create_rt_diff(obj@data, obj@options)
 
     return(obj)
   }
@@ -227,14 +310,18 @@ arrange <- function(group_by) {
 #' @param facets The facet factors from the sample metadata
 #' @param ncol The number of columns
 #' @param nrow The number of rows
+#' @param free_x Allow scales to vary across x
+#' @param free_y Allow scales to vary across y
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
-facets <- function(facets, ncol = NULL, nrow = NULL) {
+facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE) {
   function(obj) {
     obj@options$facets <- list(
       facets = facets,
       ncol = ncol,
-      nrow = nrow
+      nrow = nrow,
+      free_x = free_x,
+      free_y = free_y
     )
     return(obj)
   }
@@ -244,13 +331,15 @@ facets <- function(facets, ncol = NULL, nrow = NULL) {
 #'
 #' @param rows The factors that represent rows
 #' @param cols The factors that represent columns
+#' @param free_y Whether the y-axis is free for each row
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
-grid <- function(rows, cols) {
+grid <- function(rows, cols, free_y = FALSE) {
   function(obj) {
     obj@options$grid <- list(
       rows = rows,
-      cols = cols
+      cols = cols,
+      free_y = free_y
     )
     return(obj)
   }
@@ -314,5 +403,14 @@ layout <- function(design = NULL) {
       design = design
     )
     return(obj)
+  }
+}
+
+#' Get the underlying plot object
+#' @export
+get_plot <- function() {
+  function(obj) {
+    obj <- set_plot(obj, additional_datasets = list())
+    return(obj@plot)
   }
 }

@@ -4,7 +4,12 @@
 \alias{lcmsPlot}
 \title{Create an lcmsPlotClass object}
 \usage{
-lcmsPlot(dataset, sample_id_column = "sample_id", metadata = NULL)
+lcmsPlot(
+  dataset,
+  sample_id_column = "sample_id",
+  metadata = NULL,
+  parallel_param = NULL
+)
 }
 \arguments{
 \item{dataset}{An object of type XCMSnExp, MsExperiment, or character}
@@ -12,6 +17,8 @@ lcmsPlot(dataset, sample_id_column = "sample_id", metadata = NULL)
 \item{sample_id_column}{Which column should be used as the sample ID}
 
 \item{metadata}{The metadata in case it's not provided in the dataset object}
+
+\item{parallel_param}{The BiocParallel object for enabling parallelism}
 }
 \value{
 An lcmsPlotClass object

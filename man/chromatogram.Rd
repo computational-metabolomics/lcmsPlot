@@ -2,7 +2,7 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{chromatogram}
 \alias{chromatogram}
-\title{Define the chromatograms to plot}
+\title{Define the chromatograms to plot.}
 \usage{
 chromatogram(
   features = NULL,
@@ -11,27 +11,33 @@ chromatogram(
   rt_tol = 10,
   highlight_peaks = FALSE,
   highlight_peaks_color = NULL,
-  aggregation_fun = "max"
+  highlight_peaks_factor = "sample_id",
+  aggregation_fun = "max",
+  rt_adjusted = FALSE
 )
 }
 \arguments{
-\item{features}{A character vector or a matrix of mz and rt representing features to plot}
+\item{features}{A character vector or a matrix of mz and rt representing features to plot.}
 
-\item{sample_ids}{A character vector of sample IDs to plot}
+\item{sample_ids}{A character vector of sample IDs to plot.}
 
-\item{ppm}{The ppm error for the chromatograms}
+\item{ppm}{The ppm error for the chromatograms.}
 
-\item{rt_tol}{The RT tolerance for the chromatograms}
+\item{rt_tol}{The RT tolerance for the chromatograms.}
 
-\item{highlight_peaks}{Whether to highlight the picked peaks}
+\item{highlight_peaks}{Whether to highlight the picked peaks.}
 
 \item{highlight_peaks_color}{The color of the highlighted peaks. By default it colors by sample.}
 
-\item{aggregation_fun}{In case of plotting the full RT range, which aggregation function to use for the spectra intensities}
+\item{highlight_peaks_factor}{The factor that determines the color.}
+
+\item{aggregation_fun}{In case of plotting the full RT range, which aggregation function to use for the spectra intensities.}
+
+\item{rt_adjusted}{Whether to plot the RT adjusted version of the chromatograms.}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the chromatograms to plot
+Define the chromatograms to plot.
 }

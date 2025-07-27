@@ -4,12 +4,14 @@
 \alias{grid}
 \title{Define a gridded plot}
 \usage{
-grid(rows, cols)
+grid(rows, cols, free_y = FALSE)
 }
 \arguments{
 \item{rows}{The factors that represent rows}
 
 \item{cols}{The factors that represent columns}
+
+\item{free_y}{Whether the y-axis is free for each row}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object

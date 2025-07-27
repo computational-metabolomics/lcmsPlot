@@ -55,8 +55,8 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
           ymin = 0,
           ymax = .data$intensity,
           group = .data$peak_id,
-          fill = .data$sample_id,
-          colour = .data$sample_id
+          fill = .data[[options$chromatograms$highlight_peaks_factor]],
+          colour = .data[[options$chromatograms$highlight_peaks_factor]]
         ))
       ))
     } else {
@@ -119,10 +119,21 @@ legend_title <- function(options) {
 
 faceting <- function(options, single) {
   if (single & !is.null(options$facets$facets)) {
+    if (options$facets$free_x & options$facets$free_y) {
+      scales <- "free"
+    } else if (options$facets$free_x) {
+      scales <- "free_x"
+    } else if (options$facets$free_y) {
+      scales <- "free_y"
+    } else {
+      scales <- "fixed"
+    }
+
     return(facet_wrap(
       as.formula(paste("~", paste(options$facets$facets, collapse = "+"))),
       ncol = options$facets$ncol,
-      nrow = options$facets$nrow))
+      nrow = options$facets$nrow,
+      scales = scales))
   } else {
     return(NULL)
   }
@@ -143,7 +154,13 @@ grid_layout <- function(options, single) {
       NULL  # No faceting
     }
 
-    return(facet_grid(facet_formula))
+    if (options$grid$free_y == TRUE) {
+      scales <- "free_y"
+    } else {
+      scales <- "fixed"
+    }
+
+    return(facet_grid(facet_formula, scales = scales))
   } else {
     return(NULL)
   }

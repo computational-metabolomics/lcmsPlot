@@ -1,5 +1,7 @@
 default_options <- list(
   sample_id_column = "sample_id",
+  parallel_param = NULL,
+  bypass_plot_generation = FALSE,
   chromatograms = list(
     show = FALSE,
     features = NULL,
@@ -8,7 +10,9 @@ default_options <- list(
     rt_tol = 10,
     highlight_peaks = FALSE,
     highlight_peaks_color = NULL,
-    aggregation_fun = "max"
+    highlight_peaks_factor = "sample_id",
+    aggregation_fun = "max",
+    rt_adjusted = FALSE
   ),
   mass_traces = list(
     show = FALSE
@@ -23,20 +27,32 @@ default_options <- list(
     spectral_match_db = NULL,
     match_target_index = 1
   ),
+  total_ion_current = list(
+    show = FALSE,
+    sample_ids = NULL,
+    type = "boxplot"
+  ),
   intensity_maps = list(
     show = FALSE,
+    sample_ids = NULL,
     mz_range = NULL,
     rt_range = NULL,
     density = FALSE
   ),
+  rt_diff = list(
+    show = FALSE
+  ),
   facets = list(
     facets = NULL,
     ncol = NULL,
-    nrow = NULL
+    nrow = NULL,
+    free_x = FALSE,
+    free_y = FALSE
   ),
   grid = list(
     rows = NULL,
-    cols = NULL
+    cols = NULL,
+    free_y = FALSE
   ),
   arrangement = list(
     group_by = NULL

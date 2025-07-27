@@ -4,7 +4,7 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
   # TODO: standardise interface
   plt <- plot_config[[dataset_name]](
     datasets = datasets,
-    dataset_type = names(datasets)[[1]],
+    dataset_type = dataset_name, # names(datasets)[[1]],
     supporting_datasets = list(detected_peaks = obj@data@detected_peaks),
     options = obj@options,
     single = TRUE

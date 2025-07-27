@@ -10,6 +10,8 @@ vignette: >
   %\VignetteIndexEntry{basic_plotting}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+csl: biomed-central.csl
 ---
 
 ```{r setup, include = FALSE}
@@ -21,15 +23,16 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+```
 
-suppressPackageStartupMessages({
-  library(dplyr)
-  library(ggplot2)
-  library(openxlsx)
-  library(xcms)
-  library(BiocStyle)
-  library(lcmsPlot)
-})
+```{r init, message = FALSE, echo = FALSE, results = "hide"}
+library(BiocStyle)
+library(xcms)
+library(faahKO)
+library(MsExperiment)
+library(patchwork)
+library(lcmsPlot)
+register(SerialParam())
 ```
 
 # Introduction
@@ -74,51 +77,54 @@ BiocManager::install("lcmsPlot")
 
 # Load data
 
-In this vignette, we will use a set of plasma samples from a long-term stability study from the [Phenome Centre Birmingham](https://www.birmingham.ac.uk/research/centres-institutes/phenome-centre-birmingham).
+For demonstration purpose we will analyse a small subset of the
+data from [@Saghatelian04] in which the metabolic consequences of the knock-out
+of the fatty acid amide hydrolase (FAAH) gene in mice was investigated (same data as in the [xcms vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/xcms/inst/doc/xcms.html)).
 
-The data was processed using [xcms](https://www.bioconductor.org/packages/release/bioc/html/xcms.html) and the
-`XCMSnExp` object saved to `inst/extdata/xdata.rds`.
 
-```{r}
-xdata <- readRDS(system.file("extdata", "xdata.rds", package = "lcmsPlot"))
+```{r load-data, message=FALSE}
+library(xcms)
+library(faahKO)
+library(MsExperiment)
+library(patchwork)
+library(lcmsPlot)
+
+cdfs <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE,
+            recursive = TRUE)[c(1, 2, 5, 6, 7, 8, 11, 12)]
+
+sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+
+pd <- data.frame(sample_name = sample_names,
+                 sample_group = c(rep("KO", 4), rep("WT", 4)),
+                 stringsAsFactors = FALSE)
+
+faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+faahko
 ```
 
 # Samples summary
+
+Before examining the detected peaks and their chromatograms, we will first gain an overview of the study samples using a series of plots that highlight different aspects of the data.
 
 ## Plot base peak chromatogram (BPC)
 
 Base peak chromatograms (BPCs) are useful in LC-MS because they simplify complex data and help quickly identify the most intense signals.
 
-In the example below we plot the BPC for five samples:
+In the example below we plot the BPC for the eight samples:
 
 ```{r}
-samples_metadata <- read.xlsx(system.file("extdata", "metadata.xlsx", package = "lcmsPlot"))
-
-raw_files <- c(
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_066.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_068.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_070.mzML", package = "lcmsPlot")
-)
-
-lcmsPlot(raw_files, metadata = samples_metadata) +
+lcmsPlot(faahko, sample_id_column = "sample_name") +
   chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  facets(facets = "sample_id", ncol = 1)
+  facets(facets = "sample_name", ncol = 4)
 ```
 
 We can also plot multiple chromatograms in the same plot:
 
 ```{r}
-raw_files <- c(
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
-)
-
-lcmsPlot(raw_files) +
+lcmsPlot(faahko, sample_id_column = "sample_name") +
   chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  arrange(group_by = "sample_id") +
-  labels(title = "Base peak chromatograms", legend = "Sample") +
+  arrange(group_by = "sample_group") +
+  labels(title = "Base peak chromatograms", legend = "Sample group") +
   legend(position = "bottom")
 ```
 
@@ -127,14 +133,18 @@ lcmsPlot(raw_files) +
 Total ion chromatogram (TIC) plots the sum of all ion intensities detected at each time point, giving a complete picture of everything entering the detector; not just the most abundant ion.
 
 ```{r}
-raw_files <- c(
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
-)
-
-lcmsPlot(raw_files) +
+lcmsPlot(faahko, sample_id_column = "sample_name") +
   chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
-  facets(facets = "sample_id", ncol = 1)
+  facets(facets = "sample_name", ncol = 4)
+```
+
+## Total ion current
+
+```{r}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+  total_ion_current(type = "violin") +
+  arrange(group_by = "sample_group") +
+  labels(title = "Total ion current", legend = "Sample group")
 ```
 
 ## Intensity maps
@@ -144,46 +154,39 @@ lcmsPlot(raw_files) +
 Below, we build intensity density maps from two samples:
 
 ```{r}
-raw_files <- c(
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML",
-  "inst/extdata/data/Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML"
-)
-
-lcmsPlot(raw_files) +
-  intensity_map(mz_range = c(100, 105), rt_range = c(0, 200), density = TRUE) +
+lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = MulticoreParam(workers = 2)) +
+  intensity_map(sample_ids = c("ko15", "wt15"), mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE) +
   facets(facets = "sample_id", ncol = 2)
 ```
 
 # Plot chromatograms
 
-Next, we will plot chromatograms for a feature detected by `xcms` in two samples.
+To begin, we'll perform peak detection to enable highlighting of detected peaks in the chromatogram plots, while retaining the option to plot chromatograms directly from the raw data.
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = 'M70T581',
-               sample_ids = c(
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-               ppm = 5,
-               rt_tol = 10,
-               highlight_peaks = TRUE) +
-  arrange(group_by = 'sample_id') +
-  labels(title = "Feature M70T581", legend = "Sample") +
-  legend(position = "bottom")
+cwp <- CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
+faahko <- findChromPeaks(faahko, param = cwp)
+```
+
+Next, we will plot chromatograms for a feature detected by `xcms` in all considered samples.
+
+```{r}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  arrange(group_by = "sample_group") +
+  labels(legend = "Sample group")
 ```
 
 The above plot can be faceted on metadata factors; in this case we facet on `feature_id` and `sample_id`:
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = c('M70T581', 'M85T587_1'),
-               sample_ids = c('Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                              'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-               ppm = 5,
-               rt_tol = 10,
-               highlight_peaks = TRUE,
-               highlight_peaks_color = "#121212") +
-  facets(facets = c('feature_id', 'sample_id')) +
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+  chromatogram(
+    features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900)),
+    highlight_peaks = TRUE,
+    highlight_peaks_color = "#121212"
+  ) +
+  facets(facets = c('feature_id', 'sample_id'), ncol = 4) +
   labels(legend = "Sample") +
   legend(position = "bottom")
 ```
@@ -191,32 +194,98 @@ lcmsPlot(xdata, 'sample_id') +
 On the other hand, gridded plots (`grid` function), arrange panels in a matrix defined by two variables, allowing structured comparisons across both dimensions.
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = c('M70T581', 'M85T587_1'),
-               sample_ids = c(
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-               ppm = 5,
-               rt_tol = 10,
-               highlight_peaks = TRUE,
-               highlight_peaks_color = '#f00') +
-  grid(rows = 'feature_id', cols = 'sample_id')
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = rbind(
+      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+    ),
+    highlight_peaks = TRUE,
+    highlight_peaks_color = '#f00') +
+  grid(rows = 'feature_id', cols = 'sample_id', free_y = TRUE)
 ```
 
 In some cases, you may want to highlight specific regions of the extracted ion chromatogram, for example, to draw attention to a peak that hasn't been detected yet. This can be done using the `rt_line` functionality:
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = 'M70T581',
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10) +
-  facets(facets = 'sample_id') +
-  rt_line(intercept = 580, line_type = 'solid', color = 'red') +
-  rt_line(intercept = 575, line_type = 'dashed', color = 'blue') +
-  rt_line(intercept = 587, line_type = 'dashed', color = 'blue')
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  facets(facets = 'sample_id', ncol = 4) +
+  rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+  rt_line(intercept = 2750, line_type = 'dashed', color = 'blue') +
+  rt_line(intercept = 2850, line_type = 'dashed', color = 'blue')
+```
+
+# Plot retention time alignment. effect
+
+Next, let’s explore some plots that illustrate the effect of retention time alignment.
+
+First, we’ll perform the retention time alignment/adjustment:
+
+```{r}
+faahko <- adjustRtime(faahko, param = ObiwarpParam(binSize = 0.6))
+```
+
+Now, we can visualise the BPC for the raw and corrected datasets:
+
+```{r}
+bpc <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+  arrange(group_by = "sample_group") +
+  labels(legend = "Sample group") +
+  legend(position = "bottom") +
+  get_plot()
+
+bpc_rt_adjusted <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max", rt_adjusted = TRUE) +
+  arrange(group_by = "sample_group") +
+  labels(legend = "Sample group") +
+  legend(position = "bottom") +
+  get_plot()
+
+(bpc[[1]] / bpc_rt_adjusted[[1]]) +
+  plot_layout(guides = "collect", axes = "collect") &
+  ggplot2::theme(legend.position = "bottom")
+```
+
+The following plot visualises the retention time correction applied during alignment: the x-axis shows the adjusted retention time (`rt_adj`), while the y-axis displays the difference between the raw and adjusted retention times (`rt_raw - rt_adj`). This highlights how much each feature's retention time was shifted to achieve alignment across samples.
+Smooth, gradual trends in the plot indicate consistent chromatographic drift correction, while abrupt changes may suggest anomalies.
+This diagnostic view helps you assess the quality and extent of retention time alignment in LC-MS data processing.
+
+```{r}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+  rt_diff_plot() +
+  arrange(group_by = "sample_group") +
+  labels(legend = "Sample group")
+```
+
+# Plot grouped peaks across samples (features)
+
+The next step in LC-MS preprocessing is grouping signals/peaks across samples.
+
+```{r}
+pdp <- PeakDensityParam(
+  sampleGroups = sampleData(faahko)$sample_group,
+  minFraction = 0.4,
+  bw = 30)
+faahko <- groupChromPeaks(faahko, param = pdp)
+```
+
+Grouped peaks are assigned unique IDs based on their m/z values and retention times.
+These IDs can then be used to automatically plot the chromatograms of individual peaks across samples.
+
+```{r}
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = c('M205T2792', 'M207T2719', 'M279T2791', 'M284T2719'),
+    ppm = 10,
+    rt_tol = 80,
+    highlight_peaks = TRUE,
+    highlight_peaks_factor = "sample_group") +
+  arrange(group_by = 'sample_group') +
+  facets(facets = 'feature_id', ncol = 2, free_x = TRUE, free_y = TRUE) +
+  labels(title = "Feature M205T2792", legend = "Sample") +
+  legend(position = "bottom")
 ```
 
 # Plot chromatograms with mass traces
@@ -225,31 +294,29 @@ Until now, we've primarily focused on chromatograms to understand the abundance 
 These chromatograms show when and how strongly a compound elutes, but they don't reveal whether the mass accuracy or consistency is stable across the peak or between samples; this is where the mass trace (bottom panel) becomes valuable.
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = 'M70T581',
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10,
-                       highlight_peaks = TRUE) +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = 'M205T2792',
+    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+    ppm = 10,
+    rt_tol = 50,
+    highlight_peaks = TRUE) +
   mass_trace() +
   arrange(group_by = 'sample_id') +
-  labels(title = "Feature M70T581", legend = "Sample") +
+  labels(title = "Feature M205T2792", legend = "Sample") +
   legend(position = "bottom")
 ```
 
 As for plain chromatograms, we can facet a combination of chromatograms + mass traces on a factor, such as `feature_id`:
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = c('M70T581', 'M85T587_1'),
-                       sample_ids = c(
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                         'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-                       ppm = 5,
-                       rt_tol = 10,
-                       highlight_peaks = TRUE) +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = c('M283T3890', 'M205T2792'),
+    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+    ppm = 10,
+    rt_tol = 50,
+    highlight_peaks = TRUE) +
   mass_trace() +
   arrange(group_by = "sample_id") +
   facets(facets = 'feature_id', ncol = 2) +
@@ -259,36 +326,29 @@ lcmsPlot(xdata, 'sample_id') +
 
 Or multiple factors (`feature_id` and `sample_id`):
 
-```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = c('M70T581', 'M85T587_1'),
-               sample_ids = c(
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-                 'Human_Plasma_HILP_Ch1_Col1_scIC_064'),
-               ppm = 5,
-               rt_tol = 10,
-               highlight_peaks = TRUE,
-               highlight_peaks_color = '#343434') +
+```{r, fig.height=8, fig.width=5}
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = c('M283T3890', 'M205T2792'),
+    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+    ppm = 10,
+    rt_tol = 50,
+    highlight_peaks = TRUE,
+    highlight_peaks_color = '#343434') +
   mass_trace() +
   facets(facets = c('feature_id', 'sample_id'))
 ```
 
 # Plot chromatograms from raw files
 
-Until now, we’ve been using an `XCMSnExp` object as our data source. However, `lcmsPlot` also supports extracting chromatograms directly from raw files, such as those in the `mzML` format.
+Until now, we’ve been using an `MsExperiment` object as our data source. However, `lcmsPlot` also supports extracting chromatograms directly from raw files, such as those in the `mzML` format.
 
 ```{r}
-raw_files <- c(
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
-)
+raw_files <- faahko@sampleData$spectraOrigin[1:4]
 
 lcmsPlot(raw_files) +
-  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
-               ppm = 5,
-               rt_tol = 10) +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   arrange(group_by = "sample_id") +
-  facets(facets = "feature_id", ncol = 2) +
   legend(position = "bottom") +
   labels(legend = "Sample")
 ```
@@ -296,21 +356,21 @@ lcmsPlot(raw_files) +
 Metadata can be attached to the raw files and used for plotting as follows:
 
 ```{r}
-raw_files <- c(
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_062.mzML", package = "lcmsPlot"),
-  system.file("extdata", "data", "Human_Plasma_HILP_Ch1_Col1_scIC_064.mzML", package = "lcmsPlot")
-)
+raw_files <- faahko@sampleData$spectraOrigin[c(1, 2, 5, 6)]
 
 metadata <- data.frame(
-  sample_type = c("T1", "T2"),
-  sample_id = c("S62", "S64")
+  sample_type = c("KO", "KO", "WT", "WT"),
+  sample_id = c("S1", "S2", "S3", "S4")
 )
 
 lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
-  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
-               ppm = 5,
-               rt_tol = 10) +
-  grid(rows = 'feature_id', cols = 'sample_type')
+  chromatogram(
+    features = rbind(
+      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+    )
+  ) +
+  grid(rows = 'feature_id', cols = 'sample_type', free_y = TRUE)
 ```
 
 # Plot spectra
@@ -324,14 +384,15 @@ To do so, we can use the `spectra` function and define what mode of scan selecti
 To select the closest scan to a specified RT value you can use `mode = "closest"`:
 
 ```{r}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = 'M70T581',
-               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-               ppm = 5,
-               rt_tol = 10,
-               highlight_peaks = TRUE) +
-  spectra(rt = 580, mode = "closest", ms_level = 1) +
-  labels(title = "Feature M70T581", legend = "Sample") +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = 'M283T3890',
+    sample_ids = 'ko15',
+    ppm = 5,
+    rt_tol = 50,
+    highlight_peaks = TRUE) +
+  spectra(rt = 3860, mode = "closest", ms_level = 1) +
+  labels(title = "Feature M283T3890", legend = "Sample") +
   legend(position = "bottom")
 ```
 
@@ -340,12 +401,14 @@ lcmsPlot(xdata, 'sample_id') +
 To select the closest scan to a detected peak apex you can use `mode = "closest_apex"`:
 
 ```{r, fig.height=3}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449), c(mz = 85.06472, rt = 587.131287)),
-               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-               ppm = 5,
-               rt_tol = 40,
-               highlight_peaks = TRUE) +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = rbind(
+      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+    ),
+    sample_ids = 'ko15',
+    highlight_peaks = TRUE) +
   spectra(mode = "closest_apex", ms_level = 1) +
   facets(facets = "feature_id", ncol = 2) +
   labels(legend = "Sample") +
@@ -358,13 +421,14 @@ lcmsPlot(xdata, 'sample_id') +
 To select multiple scans across a detected peak, given an RT interval, you can use `mode = "across_peak"`:
 
 ```{r, fig.height=5, fig.width=3}
-lcmsPlot(xdata, 'sample_id') +
-  chromatogram(features = rbind(c(mz = 70.06507, rt = 580.642449)),
-               sample_ids = 'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-               ppm = 5,
-               rt_tol = 40,
-               highlight_peaks = TRUE) +
-  spectra(mode = "across_peak", ms_level = 1) +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  chromatogram(
+    features = "M205T2792",
+    sample_ids = 'ko15',
+    ppm = 5,
+    rt_tol = 50,
+    highlight_peaks = TRUE) +
+  spectra(mode = "across_peak", interval = 10, ms_level = 1) +
   labels(legend = "Sample") +
   legend(position = "bottom") +
   layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
@@ -376,30 +440,29 @@ So far we have been plotting spectra alongside chromatograms.
 Often, it is preferable to plot spectra on their own to allow for clearer analysis of spectral features:
 
 ```{r}
-sample_ids = c(
-  'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-  'Human_Plasma_HILP_Ch1_Col1_scIC_064'
-)
-
-lcmsPlot(xdata, 'sample_id') +
-  spectra(sample_ids = sample_ids, rt = 580, mode = "closest", ms_level = 1) +
+lcmsPlot(faahko, sample_id_column = 'sample_name') +
+  spectra(
+    sample_ids = c('ko15', 'wt15'),
+    rt = 2740,
+    mode = "closest",
+    ms_level = 1) +
   legend(position = "bottom")
 ```
 
 ```{r}
-sample_ids = c(
-  'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-  'Human_Plasma_HILP_Ch1_Col1_scIC_064'
-)
-
-lcmsPlot(xdata, 'sample_id') +
-  spectra(
-    sample_ids = sample_ids,
-    rt = 580,
-    mode = "closest",
-    ms_level = 1,
-    spectral_match_db = dir(system.file("sciex", package = "msdata"), full.names = TRUE),
-    match_target_index = 1) +
-  legend(position = "bottom")
+# TODO: think about this
+# sample_ids = c(
+#   'Human_Plasma_HILP_Ch1_Col1_scIC_062',
+#   'Human_Plasma_HILP_Ch1_Col1_scIC_064'
+# )
+# 
+# lcmsPlot(xdata, 'sample_id') +
+#   spectra(
+#     sample_ids = sample_ids,
+#     rt = 580,
+#     mode = "closest",
+#     ms_level = 1,
+#     spectral_match_db = dir(system.file("sciex", package = "msdata"), full.names = TRUE),
+#     match_target_index = 1) +
+#   legend(position = "bottom")
 ```
-

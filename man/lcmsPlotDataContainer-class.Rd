@@ -25,7 +25,11 @@ lcmsPlotDataContainer class
 
 \item{\code{spectra}}{The spectra}
 
+\item{\code{total_ion_current}}{The Total Ion Current (TIC)}
+
 \item{\code{intensity_maps}}{The 2D intensity maps}
+
+\item{\code{rt_diff}}{The RT difference dataset for RT alignment}
 
 \item{\code{additional_metadata}}{Additional information attached to datasets}
 

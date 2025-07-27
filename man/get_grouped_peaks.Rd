@@ -4,6 +4,8 @@
 \alias{get_grouped_peaks}
 \alias{get_grouped_peaks.character}
 \alias{get_grouped_peaks.XCMSnExp}
+\alias{get_grouped_peaks.XcmsExperiment}
+\alias{get_grouped_peaks.MsExperiment}
 \title{Get the grouped peaks across samples (features) from the data object}
 \usage{
 get_grouped_peaks(obj)
@@ -11,6 +13,10 @@ get_grouped_peaks(obj)
 \method{get_grouped_peaks}{character}(obj)
 
 \method{get_grouped_peaks}{XCMSnExp}(obj)
+
+\method{get_grouped_peaks}{XcmsExperiment}(obj)
+
+\method{get_grouped_peaks}{MsExperiment}(obj)
 }
 \arguments{
 \item{obj}{The data object}

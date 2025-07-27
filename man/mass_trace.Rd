@@ -2,13 +2,13 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{mass_trace}
 \alias{mass_trace}
-\title{Define the mass trace to plot}
+\title{Define the mass trace to plot.}
 \usage{
 mass_trace()
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the mass trace to plot
+Define the mass trace to plot.
 }

@@ -4,6 +4,7 @@
 \alias{get_detected_peaks}
 \alias{get_detected_peaks.character}
 \alias{get_detected_peaks.XCMSnExp}
+\alias{get_detected_peaks.MsExperiment}
 \title{Get the detected peaks from the data object (e.g. XCMSnExp)}
 \usage{
 get_detected_peaks(obj)
@@ -11,6 +12,8 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{character}(obj)
 
 \method{get_detected_peaks}{XCMSnExp}(obj)
+
+\method{get_detected_peaks}{MsExperiment}(obj)
 }
 \arguments{
 \item{obj}{The data object}
