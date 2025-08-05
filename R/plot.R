@@ -37,7 +37,7 @@ run_matching_plot_variant <- function(datasets, obj) {
     }
   }
 
-  # TODO: error handling
+  stop("No plot variant applicable")
 }
 
 plot_data <- function(datasets, obj) {

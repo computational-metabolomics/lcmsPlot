@@ -26,9 +26,7 @@ highlight_peaks_aes <- function(ymax, options) {
 highlight_peaks <- function(dataset, detected_peaks, options) {
   if (options$chromatograms$highlight_peaks) {
     highlight_df <- detected_peaks %>%
-      # group_by(sample_id) %>%
       mutate(peak_id = row_number()) %>%
-      # ungroup() %>%
       rowwise() %>%
       do({
         peak <- .
@@ -75,18 +73,6 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
     }
 
     return(gr)
-
-    # return(geom_ribbon(
-    #   data = highlight_df,
-    #   aes(
-    #     ymin = 0,
-    #     ymax = intensity,
-    #     group = peak_id,
-    #     fill = factor(sample_id),
-    #     colour = factor(sample_id)), # TODO: check this, should it be peak or sample?
-    #   alpha = 0.3,
-    #   linetype = 1
-    # ))
   } else {
     return(NULL)
   }
@@ -169,6 +155,4 @@ grid_layout <- function(options, single) {
 title_tile <- function(text) {
   text_grob <- grid::textGrob(text, gp = grid::gpar(col = "black", fontsize = 9))
   return(text_grob)
-  # gray_rect <- grid::rectGrob(gp = grid::gpar(fill = "gray90", col = NA))
-  # grid::grobTree(gray_rect, text_grob)
 }

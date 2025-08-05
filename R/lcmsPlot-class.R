@@ -74,7 +74,9 @@ setMethod(
           data_df <- additional_datasets[[dataset_name]]
         }
 
-        # TODO: Check when data_df is empty
+        if (nrow(data_df) == 0) {
+          stop(paste0("Empty dataset ", dataset_name))
+        }
 
         data_df <- merge_by_index(data_df, object@data@metadata, index_col = 'metadata_index')
 

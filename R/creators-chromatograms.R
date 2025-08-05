@@ -213,7 +213,10 @@ setMethod(
       raw_obj <- raw_data[[sample_metadata$sample_path]]
 
       if (options$chromatograms$rt_adjusted) {
-        # TODO: check if adjustedRtime is applicable!
+        if (!inherits(object@data_obj, c("XCMSnExp", "MsExperiment"))) {
+          stop("The data object should be XCMSnExp or MsExperiment to plot the RT adjusted chromatograms")
+        }
+
         scan_indices <- which(xcms::fromFile(obj@data_obj) == sample_metadata$sample_index)
         rt_adjusted <- xcms::adjustedRtime(obj@data_obj)[scan_indices]
       } else {

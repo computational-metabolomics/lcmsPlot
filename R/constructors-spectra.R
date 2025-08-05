@@ -4,7 +4,6 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt_range, rt, ms_l
   ms_level_indices <- which(hdr$msLevel == ms_level)
 
   if (length(ms_level_indices) == 0) {
-    # TODO: rethink this
     stop("No scans found with the specified MS level.")
   }
 
