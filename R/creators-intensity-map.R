@@ -58,8 +58,8 @@ setMethod(
           group_by(.data$rt, .data$mz) %>%
           summarize(intensity = sum(.data$intensity), .groups = "drop") %>%
           mutate(
-            metadata_index = i,
-            additional_metadata_index = i
+            metadata_index = sample_metadata$sample_index,
+            additional_metadata_index = sample_metadata$sample_index
           )
       } else {
         NULL

@@ -43,7 +43,12 @@ setMethod(
         sample_metadata <- metadata %>% filter(.data$sample_index == peak$sample_index)
         raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-        data <- create_chromatogram(raw_obj, mz_range = mzr, rt_range = rtr)
+        data <- create_chromatogram(
+          raw_obj,
+          mz_range = mzr,
+          rt_range = rtr,
+          fill_gaps = options$chromatograms$fill_gaps
+        )
 
         additional_metadata <- rbind(additional_metadata, data.frame(
           metadata_index = sample_metadata$sample_index,
@@ -104,20 +109,29 @@ setMethod(
     process_sample <- function(i) {
       sample_metadata <- metadata[i, ]
       raw_obj <- raw_data[[sample_metadata$sample_path]]
+      hdr <- mzR::header(raw_obj)
+      full_rt_range <- range(hdr$retentionTime)
 
       chromatograms_list <- list()
       mass_traces_list <- list()
       additional_metadata_list <- list()
       detected_peaks_list <- list()
 
-      for (j in seq_len(nrow(options$chromatograms$features))) {
+      if (is.data.frame(options$chromatograms$features) && "sample_id" %in% colnames(options$chromatograms$features)) {
+        feature_indices <- which(options$chromatograms$features$sample_id == sample_metadata$sample_id)
+      } else {
+        feature_indices <- seq_len(nrow(options$chromatograms$features))
+      }
+      
+      for (j in feature_indices) {
         feature <- options$chromatograms$features[j, ]
-        feature_data <- get_feature_data(feature, options)
-
+        feature_data <- get_feature_data(feature, options, full_rt_range)
+        
         data <- create_chromatogram(
           raw_obj,
           mz_range = feature_data$mzr,
-          rt_range = feature_data$rtr
+          rt_range = feature_data$rtr,
+          fill_gaps = options$chromatograms$fill_gaps
         )
 
         if (!is.null(all_detected_peaks)) {
@@ -207,7 +221,7 @@ setMethod(
   definition = function(obj, options) {
     metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_get_raw_data(metadata$sample_path)
-
+    
     process_sample <- function(i) {
       sample_metadata <- metadata[i, ]
       raw_obj <- raw_data[[sample_metadata$sample_path]]
@@ -228,8 +242,8 @@ setMethod(
       data.frame(
         rt = data$chromatograms$rt,
         intensity = data$chromatograms$intensity,
-        metadata_index = i,
-        additional_metadata_index = i
+        metadata_index = sample_metadata$sample_index,
+        additional_metadata_index = sample_metadata$sample_index
       )
     }
 

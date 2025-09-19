@@ -2,6 +2,8 @@ default_options <- list(
   sample_id_column = "sample_id",
   parallel_param = NULL,
   bypass_plot_generation = FALSE,
+  batch_size = NULL,
+  batch_index = 1,
   chromatograms = list(
     show = FALSE,
     features = NULL,
@@ -12,7 +14,9 @@ default_options <- list(
     highlight_peaks_color = NULL,
     highlight_peaks_factor = "sample_id",
     aggregation_fun = "max",
-    rt_adjusted = FALSE
+    rt_adjusted = FALSE,
+    rt_unit = "second",
+    fill_gaps = FALSE
   ),
   mass_traces = list(
     show = FALSE
@@ -23,6 +27,7 @@ default_options <- list(
     mode = 'closest_apex', # One of: closest, closest_apex, across_peak
     ms_level = 1,
     rt = NULL, # For mode=closest
+    scan_index = NULL,
     interval = 3, # mode=across_peak
     spectral_match_db = NULL,
     match_target_index = 1
@@ -69,3 +74,11 @@ default_options <- list(
     design = NULL
   )
 )
+
+get_grouping_variables <- function(opts) {
+  if (!is.null(opts$facets$facets)) {
+    opts$facets$facets
+  } else {
+    c(opts$grid$rows, opts$grid$cols)
+  }
+}

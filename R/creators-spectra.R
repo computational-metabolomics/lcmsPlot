@@ -16,15 +16,17 @@ setMethod(
   definition = function(obj, options) {
     is_standalone <- !options$chromatograms$show & options$spectra$show
 
-    if  (is_standalone) {
-      metadata <- obj@metadata %>%
-        filter(.data$sample_id %in% options$spectra$sample_ids)
-    } else {
-      metadata <- obj@metadata %>%
-        filter(.data$sample_id %in% options$chromatograms$sample_ids)
-    }
+    metadata <- obj@metadata %>%
+      filter(.data$sample_id %in% options$spectra$sample_ids)
+    # if  (is_standalone) {
+    #   metadata <- obj@metadata %>%
+    #     filter(.data$sample_id %in% options$spectra$sample_ids)
+    # } else {
+    #   metadata <- obj@metadata %>%
+    #     filter(.data$sample_id %in% options$chromatograms$sample_ids)
+    # }
 
-    if (!is.matrix(options$chromatograms$features)) {
+    if (!is.null(options$chromatograms$features) & !is.matrix(options$chromatograms$features)) {
       grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
         filter(.data$name %in% options$chromatograms$features)
     } else {
@@ -55,12 +57,12 @@ setMethod(
         spectra <- create_spectra_for_sample(
           raw_obj,
           obj@detected_peaks,
-          sample_metadata$sample_id,
+          sample_metadata,
           options)
 
         spectra <- spectra %>%
           mutate(
-            metadata_index = i,
+            metadata_index = sample_metadata$sample_index,
             additional_metadata_index = NA
           )
         all_spectra <- rbind(all_spectra, spectra)
@@ -84,13 +86,13 @@ setMethod(
           spectra <- create_spectra_for_sample(
             raw_obj,
             obj@detected_peaks,
-            sample_metadata$sample_id,
+            sample_metadata,
             options,
             rt_range = feature$rtr)
 
           spectra <- spectra %>%
             mutate(
-              metadata_index = i,
+              metadata_index = sample_metadata$sample_index,
               additional_metadata_index = additional_metadata_index
             )
           all_spectra <- rbind(all_spectra, spectra)

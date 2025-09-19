@@ -6,10 +6,17 @@
 #' @param parallel_param The BiocParallel object for enabling parallelism
 #' @returns An lcmsPlotClass object
 #' @export
-lcmsPlot <- function(dataset, sample_id_column = "sample_id", metadata = NULL, parallel_param = NULL) {
+lcmsPlot <- function(
+    dataset,
+    sample_id_column = "sample_id",
+    metadata = NULL,
+    parallel_param = NULL,
+    batch_size = NULL
+) {
   opts <- default_options
   opts$sample_id_column <- sample_id_column
   opts$parallel_param <- parallel_param
+  opts$batch_size <- batch_size
 
   new("lcmsPlotClass",
       options = opts,
@@ -30,11 +37,13 @@ setClass(
   slots = list(
     options = "list",
     data = "lcmsPlotDataContainer",
+    history = "list",
     plot = "ANY"
   ),
   prototype = list(
     options = default_options,
     data = NULL,
+    history = list(),
     plot = NULL
   )
 )
@@ -98,6 +107,79 @@ setMethod(
   }
 )
 
+#' Set the plot for an lcmsPlotClass object
+#'
+#' @param object The lcmsPlotClass object
+#' @export
+setGeneric(
+  "next_plot",
+  function(object) standardGeneric("next_plot")
+)
+
+#' @rdname next_plot
+setMethod(
+  f = "next_plot",
+  signature = c("lcmsPlotClass"),
+  function(object) {
+    object@options$batch_index <- object@options$batch_index + 1
+    for (history_item in object@history) {
+      fn <- get(history_item$name, asNamespace("lcmsPlot"))
+      object <- do.call(fn, history_item$args)(object)
+    }
+    return(object)
+  }
+)
+
+#' Iterate on the batches of plots
+#'
+#' @param object The lcmsPlotClass object
+#' @param iter_fn The function to apply to each item being iterated on
+#' @export
+setGeneric(
+  "iterate_plot_batches",
+  function(object, iter_fn) standardGeneric("iterate_plot_batches")
+)
+
+#' @rdname iterate_plot_batches
+setMethod(
+  f = "iterate_plot_batches",
+  signature = c("lcmsPlotClass", "function"),
+  function(object, iter_fn) {
+    # 1. Get sample IDs 
+    
+    # object@options$batch_index <- object@options$batch_index + 1
+    # for (history_item in object@history) {
+    #   fn <- get(history_item$name, asNamespace("lcmsPlot"))
+    #   object <- do.call(fn, history_item$args)(object)
+    # }
+    
+    if (is.null(object@options$batch_size)) {
+      stop("iterate_plot_batches requires batch_size")
+    }
+    
+    # TODO: check this
+    sample_ids <- object@data@metadata$sample_id # object@options$chromatograms$sample_ids
+    
+    if (length(sample_ids) > object@options$batch_size) {
+      batches <- split(sample_ids, ceiling(seq_along(sample_ids) / object@options$batch_size))
+    } else {
+      batches <- list(sample_ids)
+    }
+    
+    object@options$batch_index <- 1
+    for (batch in batches) {
+      for (history_item in object@history) {
+        fn <- get(history_item$name, asNamespace("lcmsPlot"))
+        object <- do.call(fn, history_item$args)(object, FALSE)
+      }
+      iter_fn(object)
+      object@options$batch_index <- object@options$batch_index + 1
+    }
+    
+    # return(object)
+  }
+)
+
 #' Plot the lcmsPlotClass object
 #'
 #' @param object The lcmsPlotClass object
@@ -114,6 +196,16 @@ setMethod(
   }
 )
 
+make_interface_function <- function(name, args_list, fn) {
+  function(obj, record_history = TRUE) {
+    if (record_history) {
+      obj@history <- c(obj@history, list(list(name = name, args = args_list)))
+    }
+    
+    fn(obj)
+  }
+}
+
 #' Define the chromatograms to plot.
 #'
 #' @param features A character vector or a matrix of mz and rt representing features to plot.
@@ -125,6 +217,9 @@ setMethod(
 #' @param highlight_peaks_factor The factor that determines the color.
 #' @param aggregation_fun In case of plotting the full RT range, which aggregation function to use for the spectra intensities.
 #' @param rt_adjusted Whether to plot the RT adjusted version of the chromatograms.
+#' @param rt_unit The unit to use for the RT (one of "minute" or "second").
+#' @param intensity_unit The unit to use for the intensity (one of "absolute" or "relative").
+#' @param fill_gaps Whether to fill gaps in RT with 0 intensity.
 #' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 chromatogram <- function(
@@ -136,36 +231,53 @@ chromatogram <- function(
   highlight_peaks_color = NULL,
   highlight_peaks_factor = "sample_id",
   aggregation_fun = "max",
-  rt_adjusted = FALSE
+  rt_adjusted = FALSE,
+  rt_unit = "second",
+  intensity_unit = "absolute",
+  fill_gaps = FALSE
 ) {
-  function(obj) {
-    if (is.null(sample_ids)) {
-      sample_ids <- obj@data@metadata$sample_id
+  make_interface_function(
+    name = "chromatogram",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      if (is.null(sample_ids)) {
+        sample_ids <- obj@data@metadata$sample_id
+      }
+      
+      if (!is.null(obj@options$batch_size) && length(sample_ids) > obj@options$batch_size) {
+        batches <- split(sample_ids, ceiling(seq_along(sample_ids) / obj@options$batch_size))
+        batch_sample_ids <- batches[[obj@options$batch_index]]
+      } else {
+        batch_sample_ids <- sample_ids
+      }
+      
+      obj@options$chromatograms <- list(
+        show = TRUE,
+        features = features,
+        sample_ids = batch_sample_ids,
+        ppm = ppm,
+        rt_tol = rt_tol,
+        highlight_peaks = highlight_peaks,
+        highlight_peaks_color = highlight_peaks_color,
+        highlight_peaks_factor = highlight_peaks_factor,
+        aggregation_fun = aggregation_fun,
+        rt_adjusted = rt_adjusted,
+        rt_unit = rt_unit,
+        intensity_unit = intensity_unit,
+        fill_gaps = fill_gaps
+      )
+      
+      if (is.null(features)) {
+        obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
+      } else if (is.character(features)) {
+        obj@data <- create_chromatograms_from_feature_ids(obj@data, obj@options)
+      } else {
+        obj@data <- create_chromatograms_from_features(obj@data, obj@options)
+      }
+      
+      return(obj)
     }
-
-    obj@options$chromatograms <- list(
-      show = TRUE,
-      features = features,
-      sample_ids = sample_ids,
-      ppm = ppm,
-      rt_tol = rt_tol,
-      highlight_peaks = highlight_peaks,
-      highlight_peaks_color = highlight_peaks_color,
-      highlight_peaks_factor = highlight_peaks_factor,
-      aggregation_fun = aggregation_fun,
-      rt_adjusted = rt_adjusted
-    )
-
-    if (is.null(features)) {
-      obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
-    } else if (is.character(features)) {
-      obj@data <- create_chromatograms_from_feature_ids(obj@data, obj@options)
-    } else {
-      obj@data <- create_chromatograms_from_features(obj@data, obj@options)
-    }
-
-    return(obj)
-  }
+  )
 }
 
 #' Define the mass trace to plot.
@@ -173,10 +285,14 @@ chromatogram <- function(
 #' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 mass_trace <- function() {
-  function(obj) {
-    obj@options$mass_traces$show <- TRUE
-    return(obj)
-  }
+  make_interface_function(
+    name = "mass_trace",
+    args_list = list(),
+    fn = function(obj) {
+      obj@options$mass_traces$show <- TRUE
+      return(obj)
+    }
+  )
 }
 
 #' Define the spectra to plot
@@ -185,6 +301,7 @@ mass_trace <- function() {
 #' @param mode The method to choose the scan. One of: closest, closest_apex, across_peak.
 #' @param ms_level The MS level to consider for the scan.
 #' @param rt The RT to consider - mode=closest
+#' @param scan_index The scan index to consider
 #' @param interval The RT interval to consider - mode=across_peak
 #' @param spectral_match_db The spectral database to match against
 #' @param match_target_index The target index for the mirror plot (index from the highest scoring)
@@ -195,26 +312,41 @@ spectra <- function(
   mode = 'closest_apex',
   ms_level = 1,
   rt = NULL,
+  scan_index = NULL,
   interval = 3,
   spectral_match_db = NULL,
   match_target_index = NULL
 ) {
-  function(obj) {
-    obj@options$spectra <- list(
-      show = TRUE,
-      sample_ids = sample_ids,
-      mode = mode,
-      ms_level = ms_level,
-      rt = rt,
-      interval = interval,
-      spectral_match_db = spectral_match_db,
-      match_target_index = match_target_index
-    )
-
-    obj@data <- create_spectra(obj@data, obj@options)
-
-    return(obj)
-  }
+  make_interface_function(
+    name = "spectra",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      is_standalone <- !obj@options$chromatograms$show
+      
+      if  (is_standalone) {
+        if (is.null(sample_ids)) {
+          sample_ids <- obj@data@metadata$sample_id
+        }
+      } else {
+        sample_ids <- obj@options$chromatograms$sample_ids
+      }
+      
+      obj@options$spectra <- list(
+        show = TRUE,
+        sample_ids = sample_ids,
+        mode = mode,
+        ms_level = ms_level,
+        rt = rt,
+        scan_index = scan_index,
+        interval = interval,
+        spectral_match_db = spectral_match_db,
+        match_target_index = match_target_index
+      )
+      
+      obj@data <- create_spectra(obj@data, obj@options)
+      return(obj)
+    }
+  )
 }
 
 #' Define the total ion currents.
@@ -299,12 +431,16 @@ rt_diff_plot <- function() {
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 arrange <- function(group_by) {
-  function(obj) {
-    obj@options$arrangement <- list(
-      group_by = group_by
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "arrange",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$arrangement <- list(
+        group_by = group_by
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Define plot's faceting
@@ -317,16 +453,20 @@ arrange <- function(group_by) {
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE) {
-  function(obj) {
-    obj@options$facets <- list(
-      facets = facets,
-      ncol = ncol,
-      nrow = nrow,
-      free_x = free_x,
-      free_y = free_y
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "facets",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$facets <- list(
+        facets = facets,
+        ncol = ncol,
+        nrow = nrow,
+        free_x = free_x,
+        free_y = free_y
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Define a gridded plot
@@ -337,14 +477,18 @@ facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FA
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 grid <- function(rows, cols, free_y = FALSE) {
-  function(obj) {
-    obj@options$grid <- list(
-      rows = rows,
-      cols = cols,
-      free_y = free_y
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "grid",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$grid <- list(
+        rows = rows,
+        cols = cols,
+        free_y = free_y
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Define the labels of the plot, such as title and legend
@@ -354,13 +498,17 @@ grid <- function(rows, cols, free_y = FALSE) {
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 labels <- function(title = NULL, legend = NULL) {
-  function(obj) {
-    obj@options$labels <- list(
-      title = title,
-      legend = legend
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "labels",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$labels <- list(
+        title = title,
+        legend = legend
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Define the legend layout
@@ -369,12 +517,16 @@ labels <- function(title = NULL, legend = NULL) {
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 legend <- function(position = NULL)  {
-  function(obj) {
-    obj@options$legend <- list(
-      position = position
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "legend",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$legend <- list(
+        position = position
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Define a vertical line across a retention time value
@@ -384,15 +536,19 @@ legend <- function(position = NULL)  {
 #' @param color The line color
 #' @export
 rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
-  function(obj) {
-    rt_line_obj <- list(
-      intercept = intercept,
-      line_type = line_type,
-      color = color
-    )
-    obj@options$rt_lines <- append(obj@options$rt_lines, list(rt_line_obj))
-    return(obj)
-  }
+  make_interface_function(
+    name = "rt_line",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      rt_line_obj <- list(
+        intercept = intercept,
+        line_type = line_type,
+        color = color
+      )
+      obj@options$rt_lines <- append(obj@options$rt_lines, list(rt_line_obj))
+      return(obj)
+    }
+  )
 }
 
 #' Define the plot layout
@@ -400,12 +556,16 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design)
 #' @export
 layout <- function(design = NULL) {
-  function(obj) {
-    obj@options$layout = list(
-      design = design
-    )
-    return(obj)
-  }
+  make_interface_function(
+    name = "layout",
+    args_list = as.list(environment()),
+    fn = function(obj) {
+      obj@options$layout = list(
+        design = design
+      )
+      return(obj)
+    }
+  )
 }
 
 #' Get the underlying plot object

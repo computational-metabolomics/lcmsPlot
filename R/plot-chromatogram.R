@@ -11,15 +11,45 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
   )
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
 
+  grouping_vars <- get_grouping_variables(options)
+  
+  dataset = dataset %>%
+    group_by(across(all_of(grouping_vars))) %>%
+    mutate(
+      rt_plot = case_when(
+        options$chromatograms$rt_unit == "minute" ~ rt / 60,
+        TRUE ~ rt),
+      intensity_plot = case_when(
+        options$chromatograms$intensity_unit == "relative" ~ (intensity / max(intensity)) * 100,
+        TRUE ~ intensity)
+    ) %>%
+    ungroup()
+  
+  # TODO: from option
+  top_peak = dataset %>%
+    group_by(across(all_of(grouping_vars))) %>%
+    slice_max(order_by = intensity_plot, n = 1)
+  
+  x_label = ifelse(options$chromatograms$rt_unit == "minute", "RT (minutes)", "RT (seconds)")
+  y_label = ifelse(options$chromatograms$intensity_unit == "relative", "Relative intensity", "Intensity")
+  
   p <- ggplot(
     data = dataset,
-    mapping = build_aes(x = "rt", y = "intensity", options = options, group = "sample_id")
+    mapping = build_aes(x = "rt_plot", y = "intensity_plot", options = options, group = "sample_id")
   ) +
     geom_line() +
-    labs(x = "RT (sec)", y = "Intensity") +
+    geom_text(
+      data = top_peak,
+      aes(label = round(rt_plot, 2)),
+      nudge_y = 0.05 * max(dataset$intensity_plot),
+      size = 3,
+      color = "red"
+    ) +
+    labs(x = x_label, y = y_label) +
     scale_fill_discrete(guide = "none") + # Removes peak highlight legend
+    scale_x_continuous(breaks = scales::pretty_breaks()) +
     theme_minimal() +
     extra_layers
-
+  
   return(p)
 }

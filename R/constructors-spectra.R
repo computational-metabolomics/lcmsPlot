@@ -22,10 +22,25 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt_range, rt, ms_l
   return(spectrum_df)
 }
 
-create_spectra_for_sample <- function(raw_obj, detected_peaks, sid, options, rt_range = NULL) {
-  spectra <- NULL
+create_spectrum_from_scan_index <- function(raw_data, sample_metadata, scan_index) {
+  hdr <- mzR::header(raw_data)
+  sidx <- ifelse(is.character(scan_index), sample_metadata[[scan_index]], scan_index)
+  spectrum_data <- mzR::peaks(raw_data, sidx)
+  spectrum_df <- data.frame(
+    mz = spectrum_data[, 1],
+    intensity = spectrum_data[, 2],
+    rt = hdr$retentionTime[sidx]
+  )
+  return(spectrum_df)
+}
 
-  if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
+create_spectra_for_sample <- function(raw_obj, detected_peaks, sample_metadata, options, rt_range = NULL) {
+  spectra <- NULL
+  sid <- sample_metadata$sample_id
+
+  if (!is.null(options$spectra$scan_index)) {
+    spectra <- create_spectrum_from_scan_index(raw_obj, sample_metadata, options$spectra$scan_index)
+  } else if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
     # TODO: check if RT is outside range
     spectra <- create_spectrum_from_closest_scan_to_rt(
       raw_obj,

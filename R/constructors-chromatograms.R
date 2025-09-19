@@ -44,8 +44,9 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
   ))
 }
 
-create_chromatogram <- function(raw_data, mz_range, rt_range) {
+create_chromatogram <- function(raw_data, mz_range, rt_range, ms_level = 1, fill_gaps = FALSE) {
   hdr <- mzR::header(raw_data)
+  hdr <- hdr[hdr$msLevel == ms_level,]
   scans_in_rt <- hdr[hdr$retentionTime >= rt_range[1] & hdr$retentionTime <= rt_range[2], ]
   spectra <- mzR::peaks(raw_data, scans_in_rt$seqNum)
 
@@ -53,16 +54,30 @@ create_chromatogram <- function(raw_data, mz_range, rt_range) {
   mass_traces <- data.frame()
 
   for (i in seq_len(nrow(scans_in_rt))) {
-    spectrum <- spectra[[i]] #mzR::peaks(raw_data, scan_id)
-    rt <- scans_in_rt[i,]$retentionTime # scans_in_rt$retentionTime[scans_in_rt$seqNum == scan_id]
+    spectrum <- spectra[[i]]
+    rt <- scans_in_rt[i,]$retentionTime
     in_mz_range <- spectrum[spectrum[, 1] >= mz_range[1] & spectrum[, 1] <= mz_range[2], , drop = FALSE]
     total_intensity <- sum(in_mz_range[, 2])
 
     if (nrow(in_mz_range) > 0) {
       chr <- rbind(chr, data.frame(rt = rt, intensity = total_intensity))
       mass_traces <- rbind(mass_traces, data.frame(rt = rt, mz = in_mz_range[, 1]))
+    } else if (fill_gaps) {
+      chr <- rbind(chr, data.frame(rt = rt, intensity = 0))
     }
   }
+  
+  # if (fill_gaps) {
+  #   res = median(diff(sort(unique(chr$rt))))
+  #   rt_full = seq(min(chr$rt), max(chr$rt), by = res)
+  #   chr = merge(
+  #     data.frame(rt = rt_full),
+  #     chr,
+  #     by = "rt",
+  #     all.x = TRUE
+  #   )
+  #   chr$intensity[is.na(chr$intensity)] = 0
+  # }
 
   return(list(
     chromatograms = chr,

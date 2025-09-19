@@ -14,8 +14,6 @@ setMethod(
   f = "create_total_ion_current",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
-    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$total_ion_current$sample_ids)
-
     tc <- xcms::spectra(obj@data_obj) %>%
       Spectra::tic() %>%
       split(f = xcms::fromFile(obj@data_obj))
