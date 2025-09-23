@@ -18,13 +18,6 @@ setMethod(
 
     metadata <- obj@metadata %>%
       filter(.data$sample_id %in% options$spectra$sample_ids)
-    # if  (is_standalone) {
-    #   metadata <- obj@metadata %>%
-    #     filter(.data$sample_id %in% options$spectra$sample_ids)
-    # } else {
-    #   metadata <- obj@metadata %>%
-    #     filter(.data$sample_id %in% options$chromatograms$sample_ids)
-    # }
 
     if (!is.null(options$chromatograms$features) & !is.matrix(options$chromatograms$features)) {
       grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
@@ -43,7 +36,7 @@ setMethod(
       } else {
         source <- Spectra::MsBackendMzR()
       }
-
+      
       spectral_library <- Spectra::Spectra(options$spectra$spectral_match_db, source = source)
     }
 
@@ -116,8 +109,8 @@ setMethod(
         metadata_index = unique(all_spectra$metadata_index),
         rt = unique(all_spectra$rt)
       )
-      query_spectra$mz = lapply(all_spectra_as_list, function (x) x$mz)
-      query_spectra$intensity = lapply(all_spectra_as_list, function (x) x$intensity)
+      query_spectra$mz <- lapply(all_spectra_as_list, function (x) x$mz)
+      query_spectra$intensity <- lapply(all_spectra_as_list, function (x) x$intensity)
       query_spectra <- Spectra::Spectra(query_spectra)
 
       similarities <- Spectra::compareSpectra(query_spectra, spectral_library)

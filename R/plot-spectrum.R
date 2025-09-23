@@ -41,7 +41,7 @@ plot_spectrum <- function(datasets, dataset_type, supporting_datasets, options, 
     labs(x = "m/z", y = "Relative intensity (%)") +
     expand_limits(y = max(dataset_for_plot$intensity) * 1.1) +
     scale_y_continuous(breaks = seq(0, 100, 10)) + # TODO: extract as option
-    scale_x_continuous(breaks = scales::breaks_width(10)) + # TODO: extract as option
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) + # TODO: extract as option
     theme_minimal() +
     extra_layers
 

@@ -220,6 +220,7 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param rt_unit The unit to use for the RT (one of "minute" or "second").
 #' @param intensity_unit The unit to use for the intensity (one of "absolute" or "relative").
 #' @param fill_gaps Whether to fill gaps in RT with 0 intensity.
+#' @param highlight_apices ...
 #' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 chromatogram <- function(
@@ -234,7 +235,8 @@ chromatogram <- function(
   rt_adjusted = FALSE,
   rt_unit = "second",
   intensity_unit = "absolute",
-  fill_gaps = FALSE
+  fill_gaps = TRUE,
+  highlight_apices = list(column = NULL, top_n = NULL)
 ) {
   make_interface_function(
     name = "chromatogram",
@@ -264,7 +266,8 @@ chromatogram <- function(
         rt_adjusted = rt_adjusted,
         rt_unit = rt_unit,
         intensity_unit = intensity_unit,
-        fill_gaps = fill_gaps
+        fill_gaps = fill_gaps,
+        highlight_apices = highlight_apices
       )
       
       if (is.null(features)) {

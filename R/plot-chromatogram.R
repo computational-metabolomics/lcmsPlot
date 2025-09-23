@@ -25,10 +25,29 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
     ) %>%
     ungroup()
   
-  # TODO: from option
-  top_peak = dataset %>%
+  highlight_apices_opts = options$chromatograms$highlight_apices
+  
+  top_peaks = dataset %>%
     group_by(across(all_of(grouping_vars))) %>%
-    slice_max(order_by = intensity_plot, n = 1)
+    group_modify(~ {
+      if (!is.null(highlight_apices_opts$column)) {
+        hp <- unique(.x[[highlight_apices_opts$column]])
+      } else {
+        hp <- NA
+      }
+      
+      if (!is.na(hp)) {
+        # filter within ±5 rt and select max
+        .x %>%
+          filter(rt >= hp - 5, rt <= hp + 5) %>%
+          slice_max(intensity, n = 1)
+      } else if (!is.null(highlight_apices_opts$top_n)) {
+        # take global maximum
+        .x %>% slice_max(intensity, n = highlight_apices_opts$top_n)
+      } else {
+        tibble()
+      }
+    })
   
   x_label = ifelse(options$chromatograms$rt_unit == "minute", "RT (minutes)", "RT (seconds)")
   y_label = ifelse(options$chromatograms$intensity_unit == "relative", "Relative intensity", "Intensity")
@@ -39,7 +58,7 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
   ) +
     geom_line() +
     geom_text(
-      data = top_peak,
+      data = top_peaks,
       aes(label = round(rt_plot, 2)),
       nudge_y = 0.05 * max(dataset$intensity_plot),
       size = 3,
