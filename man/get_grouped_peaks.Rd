@@ -2,7 +2,7 @@
 % Please edit documentation in R/data-adapters.R
 \name{get_grouped_peaks}
 \alias{get_grouped_peaks}
-\alias{get_grouped_peaks.character}
+\alias{get_grouped_peaks.default}
 \alias{get_grouped_peaks.XCMSnExp}
 \alias{get_grouped_peaks.XcmsExperiment}
 \alias{get_grouped_peaks.MsExperiment}
@@ -10,7 +10,7 @@
 \usage{
 get_grouped_peaks(obj)
 
-\method{get_grouped_peaks}{character}(obj)
+\method{get_grouped_peaks}{default}(obj)
 
 \method{get_grouped_peaks}{XCMSnExp}(obj)
 

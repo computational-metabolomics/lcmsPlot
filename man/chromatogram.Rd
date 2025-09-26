@@ -13,7 +13,11 @@ chromatogram(
   highlight_peaks_color = NULL,
   highlight_peaks_factor = "sample_id",
   aggregation_fun = "max",
-  rt_adjusted = FALSE
+  rt_adjusted = FALSE,
+  rt_unit = "second",
+  intensity_unit = "absolute",
+  fill_gaps = FALSE,
+  highlight_apices = list(column = NULL, top_n = NULL)
 )
 }
 \arguments{
@@ -34,6 +38,14 @@ chromatogram(
 \item{aggregation_fun}{In case of plotting the full RT range, which aggregation function to use for the spectra intensities.}
 
 \item{rt_adjusted}{Whether to plot the RT adjusted version of the chromatograms.}
+
+\item{rt_unit}{The unit to use for the RT (one of "minute" or "second").}
+
+\item{intensity_unit}{The unit to use for the intensity (one of "absolute" or "relative").}
+
+\item{fill_gaps}{Whether to fill gaps in RT with 0 intensity.}
+
+\item{highlight_apices}{...}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object.

@@ -99,7 +99,7 @@ get_grouped_peaks <- function(obj) {
 
 #' @rdname get_grouped_peaks
 #' @export
-get_grouped_peaks.character <- function(obj) {
+get_grouped_peaks.default <- function(obj) {
   return(NULL)
 }
 

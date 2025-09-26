@@ -66,18 +66,6 @@ create_chromatogram <- function(raw_data, mz_range, rt_range, ms_level = 1, fill
       chr <- rbind(chr, data.frame(rt = rt, intensity = 0))
     }
   }
-  
-  # if (fill_gaps) {
-  #   res = median(diff(sort(unique(chr$rt))))
-  #   rt_full = seq(min(chr$rt), max(chr$rt), by = res)
-  #   chr = merge(
-  #     data.frame(rt = rt_full),
-  #     chr,
-  #     by = "rt",
-  #     all.x = TRUE
-  #   )
-  #   chr$intensity[is.na(chr$intensity)] = 0
-  # }
 
   return(list(
     chromatograms = chr,

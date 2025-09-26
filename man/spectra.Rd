@@ -9,6 +9,7 @@ spectra(
   mode = "closest_apex",
   ms_level = 1,
   rt = NULL,
+  scan_index = NULL,
   interval = 3,
   spectral_match_db = NULL,
   match_target_index = NULL
@@ -22,6 +23,8 @@ spectra(
 \item{ms_level}{The MS level to consider for the scan.}
 
 \item{rt}{The RT to consider - mode=closest}
+
+\item{scan_index}{The scan index to consider}
 
 \item{interval}{The RT interval to consider - mode=across_peak}
 

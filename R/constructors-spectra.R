@@ -10,8 +10,9 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt_range, rt, ms_l
   rt_diffs <- abs(hdr$retentionTime[ms_level_indices] - rt)
 
   closest_index <- ms_level_indices[which.min(rt_diffs)]
+  closest_scan_id <- hdr[closest_index,]$seqNum
 
-  spectrum_data <- mzR::peaks(raw_data, closest_index)
+  spectrum_data <- mzR::peaks(raw_data, closest_scan_id)
 
   spectrum_df <- data.frame(
     mz = spectrum_data[, 1],
@@ -42,9 +43,16 @@ create_spectra_for_sample <- function(raw_obj, detected_peaks, sample_metadata, 
     spectra <- create_spectrum_from_scan_index(raw_obj, sample_metadata, options$spectra$scan_index)
   } else if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
     # TODO: check if RT is outside range
+    # If different RTs are supplied depending on the sample ID
+    if (!is.null(names(options$spectra$rt))) {
+      rt_to_consider <- unname(options$spectra$rt[sample_metadata$sample_id])
+    } else {
+      rt_to_consider <- options$spectra$rt
+    }
+
     spectra <- create_spectrum_from_closest_scan_to_rt(
       raw_obj,
-      rt = options$spectra$rt,
+      rt = rt_to_consider,
       ms_level = options$spectra$ms_level
     )
   } else if (options$spectra$mode == "closest_apex") {

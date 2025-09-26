@@ -8,7 +8,8 @@ lcmsPlot(
   dataset,
   sample_id_column = "sample_id",
   metadata = NULL,
-  parallel_param = NULL
+  parallel_param = NULL,
+  batch_size = NULL
 )
 }
 \arguments{

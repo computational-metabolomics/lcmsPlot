@@ -1,0 +1,167 @@
+---
+title: "Creating publication-ready LC-MS data plots"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 2  
+    number_sections: true  
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{basic_plotting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+csl: biomed-central.csl
+---
+
+```{r setup, include = FALSE}
+knitr::opts_knit$set(
+  root.dir = dirname(getwd())
+)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r init, message = FALSE, echo = FALSE, results = "hide"}
+library(BiocStyle)
+library(lcmsPlot)
+```
+
+# Installation
+
+`lcmsPlot` is a Bioconductor package and to install it we have to use [BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
+
+```{r, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("lcmsPlot")
+```
+
+# Load data
+
+The dataset used in this vignette originates from a prepared sample that was spiked with known standards, specifically L-Proline and L-Kynurenine. These compounds are highlighted throughout the vignette as examples to demonstrate the workflow.
+
+To support reproducibility and hands-on exploration, example data files are provided in the directory `inst/extdata/mzml`. Two types of file are included:
+
+- One file contains only MS1 scans, making it suitable for tasks such as peak detection, feature alignment, and quantitation.
+- The other file contains a combination of MS1 and MS2 scans, which allows users to additionally explore fragmentation data for compound identification and spectral matching.
+
+```{r load-data, message=FALSE}
+library(lcmsPlot)
+
+# Unzip the file containing the mzML files
+utils::unzip(
+  system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+  exdir = system.file("extdata", package = "lcmsPlot")
+)
+
+mzml_dir <- system.file("extdata", "mzml", package = "lcmsPlot")
+
+if (!dir.exists(mzml_dir)) {
+  
+}
+
+samples_metadata <- data.frame(
+  sample_id = c("l-proline-MS1", "l-proline-MS2", "l-kynurenine-MS1", "l-kynurenine-MS2"),
+  sample_name = c(rep("L-Proline", 2), rep("L-Kynurenine", 2)),
+  ms_level = c(1, 2, 1, 2)
+)
+```
+
+# Overview of the data
+
+The following figure shows the two compounds in the MS1 samples:
+
+```{r}
+ms1_samples_metadata <- samples_metadata %>% filter(ms_level == 1)
+ms1_raw_files <- file.path(mzml_dir, paste0(ms1_samples_metadata$sample_id, ".mzML"))
+
+lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
+  chromatogram(
+    features = data.frame(
+      sample_id = c("l-proline-MS1", "l-kynurenine-MS1"),
+      mz = c(116.0703793, 209.091824),
+      rt = c(425.74, 365.72)
+    ),
+    ppm = 5,
+    rt_tol = 5
+  ) +
+  facets(facets = "sample_name", free_x = TRUE, ncol = 2)
+```
+
+Then we plot the chromatograms with the MS2 spectra at the scan closest to the specified RT:
+
+```{r}
+ms2_samples_metadata <- samples_metadata %>% filter(ms_level == 2)
+ms2_raw_files <- file.path(mzml_dir, paste0(ms2_samples_metadata$sample_id, ".mzML"))
+
+lcmsPlot(ms2_raw_files, metadata = ms2_samples_metadata) +
+  chromatogram(
+    features = data.frame(
+      sample_id = c("l-proline-MS2", "l-kynurenine-MS2"),
+      mz = c(116.0703793, 209.091824),
+      rt = c(425.74, 365.72)
+    ),
+    ppm = 5,
+    rt_tol = 5
+  ) +
+  spectra(rt = c("l-proline-MS2" = 425.74, "l-kynurenine-MS2" = 365.72), mode = "closest", ms_level = 2) +
+  facets(facets = "sample_name", free_x = TRUE, ncol = 2)
+```
+
+# Custom themes
+
+You can fully customise the appearance of your plots by modifying the underlying `ggplot2` object.
+To do this, simply extract the plot using the `get_plot()` function, which returns the raw `ggplot2` object, and then apply any desired theme settings. This gives you complete flexibility to tailor the visualisation to your needs; for example, adjusting fonts, colors, backgrounds, grid lines, or margins.
+By leveraging custom themes, you can ensure consistency with your project/manuscript's style guidelines, improve readability, or highlight specific aspects of your data.
+
+Firstly, define the custom theme using the `ggplot2` `theme` function:
+
+```{r}
+my_custom_theme <- function() {
+  theme(
+    # Title
+    plot.title = element_text(size = 16, margin = margin(b = 15)),
+
+    # Axis labels
+    axis.title = element_text(size = 11, face = "bold", color = "#1d293d"),
+
+    # Facet strip
+    strip.text = element_text(
+      color = "#1d293d",
+      size = 9,
+      hjust = 0,
+      margin = margin(t = 3, r = 10, b = 6, l = 10)
+    ),
+    strip.background = element_rect(color = "#90a1b9", fill = "#e2e8f0", size = 0.8),
+
+    # Box around the panel
+    panel.border = element_rect(color = "#90a1b9", fill = NA, linewidth = 1),
+
+    # Customize grid lines inside the plot
+    panel.grid.major = element_line(color = "#e2e8f0", linewidth = 0.5),
+    panel.grid.minor = element_line(color = "#e2e8f0", linewidth = 0.5)
+  )
+}
+```
+
+Generate the plot with `lcmsPlot`, retrieve the underlying plot object using `get_plot()`, and then apply the custom theme:
+
+```{r}
+lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
+  chromatogram(
+    features = data.frame(
+      sample_id = c("l-proline-MS1", "l-kynurenine-MS1"),
+      mz = c(116.0703793, 209.091824),
+      rt = c(425.74, 365.72)
+    ),
+    ppm = 5,
+    rt_tol = 5
+  ) +
+  facets(facets = "sample_name", free_x = TRUE, ncol = 2) +
+  get_plot() +
+  my_custom_theme()
+```

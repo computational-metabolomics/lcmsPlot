@@ -16,7 +16,7 @@ default_options <- list(
     aggregation_fun = "max",
     rt_adjusted = FALSE,
     rt_unit = "second",
-    fill_gaps = TRUE,
+    fill_gaps = FALSE,
     highlight_apices = list(
       column = NULL,
       top_n = NULL

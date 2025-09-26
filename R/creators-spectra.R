@@ -19,12 +19,9 @@ setMethod(
     metadata <- obj@metadata %>%
       filter(.data$sample_id %in% options$spectra$sample_ids)
 
-    if (!is.null(options$chromatograms$features) & !is.matrix(options$chromatograms$features)) {
-      grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
-        filter(.data$name %in% options$chromatograms$features)
-    } else {
-      grouped_peaks <- NULL
-    }
+    grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
+      { if (!is.null(.) && nrow(.) > 0) filter(., .data$name %in% options$chromatograms$features) else NULL } %>%
+      { if (!is.null(.) && nrow(.) == 0) NULL else . }
 
     all_spectra <- data.frame()
 
@@ -36,12 +33,13 @@ setMethod(
       } else {
         source <- Spectra::MsBackendMzR()
       }
-      
+
       spectral_library <- Spectra::Spectra(options$spectra$spectral_match_db, source = source)
     }
 
     additional_metadata_index <- 1
 
+    # Process each sample
     for (i in seq_len(nrow(metadata))) {
       sample_metadata <- metadata[i,]
       raw_obj <- mzR::openMSfile(sample_metadata$sample_path)
@@ -60,28 +58,17 @@ setMethod(
           )
         all_spectra <- rbind(all_spectra, spectra)
       } else {
-        n_features <- ifelse(
-          is.matrix(options$chromatograms$features),
-          nrow(options$chromatograms$features),
-          length(options$chromatograms$features)
-        )
+        features <- get_features(options, sample_metadata, grouped_peaks = grouped_peaks)
 
-        rt_tol <- options$chromatograms$rt_tol
-
-        for (j in seq_len(n_features)) {
-          if (is.matrix(options$chromatograms$features)) {
-            feature <- options$chromatograms$features[j,]
-          } else {
-            feature <- grouped_peaks[j,]
-          }
-          feature <- get_feature_data(feature, options)
+        for (j in seq_len(length(features))) {
+          feature_data <- features[[j]]
 
           spectra <- create_spectra_for_sample(
             raw_obj,
             obj@detected_peaks,
             sample_metadata,
             options,
-            rt_range = feature$rtr)
+            rt_range = feature_data$rtr)
 
           spectra <- spectra %>%
             mutate(

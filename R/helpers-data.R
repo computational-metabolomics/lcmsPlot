@@ -31,84 +31,81 @@ get_mz_range <- function(mz, ppm = 5) {
 }
 
 get_feature_data <- function(feature, options, full_rt_range) {
-  if (is.vector(feature)) {
-    # Case 1: Single mz and optionally rt
-    if (!is.na(feature['mz'])) {
-      mzr <- get_mz_range(feature['mz'], options$chromatograms$ppm)
-      
-      if (!is.na(feature['rt'])) {
-        rtr <- c(feature['rt'] - options$chromatograms$rt_tol,
-                 feature['rt'] + options$chromatograms$rt_tol)
-        feature_id <- paste0('M', round(feature['mz']), 'T', round(feature['rt']))
-      } else {
-        rtr <- full_rt_range
-        feature_id <- paste0('M', round(feature['mz']))
-      }
-      
-      # Case 2: Range mz and optional rt
-    } else if (!is.na(feature['mzmin']) & !is.na(feature['mzmax'])) {
-      mzr <- c(feature['mzmin'], feature['mzmax'])
-      
-      if (!is.na(feature['rtmin']) & !is.na(feature['rtmax'])) {
-        rtr <- c(feature['rtmin'], feature['rtmax'])
-        feature_id <- paste0('M', round((feature['mzmin'] + feature['mzmax']) / 2),
-                             'T', round((feature['rtmin'] + feature['rtmax']) / 2))
-      } else {
-        rtr <- full_rt_range
-        feature_id <- paste0('M', round((feature['mzmin'] + feature['mzmax']) / 2))
-      }
-      
-    } else {
-      stop("Features format not supported")
+  # Helper: safely extract a value by name from vector or data.frame
+  get_val <- function(x, name) {
+    if (is.data.frame(x)) {
+      if (name %in% names(x)) return(x[[name]][1])
+    } else if (is.vector(x)) {
+      if (name %in% names(x)) return(x[[name]])
     }
-    
-  } else if (is.data.frame(feature)) {
-    feature_id <- feature$name
-    mzr <- get_mz_range(feature$mz, options$chromatograms$ppm)
-    
-    if (!is.null(feature$rt) && !is.na(feature$rt)) {
-      rtr <- c(feature$rt - options$chromatograms$rt_tol,
-               feature$rt + options$chromatograms$rt_tol)
+    return(NA)
+  }
+
+  mz     <- get_val(feature, "mz")
+  rt     <- get_val(feature, "rt")
+  mzmin  <- get_val(feature, "mzmin")
+  mzmax  <- get_val(feature, "mzmax")
+  rtmin  <- get_val(feature, "rtmin")
+  rtmax  <- get_val(feature, "rtmax")
+
+  # Case 1: Single mz (± tolerance) with optional rt
+  if (!is.na(mz)) {
+    mzr <- get_mz_range(mz, options$chromatograms$ppm)
+
+    if (!is.na(rt)) {
+      rtr <- c(rt - options$chromatograms$rt_tol,
+               rt + options$chromatograms$rt_tol)
+      feature_id <- sprintf("M%dT%d", round(mz), round(rt))
     } else {
       rtr <- full_rt_range
+      feature_id <- sprintf("M%d", round(mz))
     }
-    
+
+    # Case 2: Explicit mz range, with optional rt range
+  } else if (!is.na(mzmin) && !is.na(mzmax)) {
+    mzr <- c(mzmin, mzmax)
+
+    if (!is.na(rtmin) && !is.na(rtmax)) {
+      rtr <- c(rtmin, rtmax)
+      feature_id <- sprintf("M%dT%d",
+                            round(mean(c(mzmin, mzmax))),
+                            round(mean(c(rtmin, rtmax))))
+    } else {
+      rtr <- full_rt_range
+      feature_id <- sprintf("M%d", round(mean(c(mzmin, mzmax))))
+    }
+
   } else {
-    stop("Features format not supported")
+    stop("Unsupported feature format: must provide either 'mz' or ('mzmin' and 'mzmax').")
   }
-  
-  return(list(
+
+  list(
     feature_id = feature_id,
     mzr = mzr,
     rtr = rtr
-  ))
+  )
 }
 
+get_features <- function(options, sample_metadata, grouped_peaks = NULL, full_rt_range = NULL) {
+  if (is.null(grouped_peaks)) {
+    input_features <- options$chromatograms$features
+  } else {
+    input_features <- grouped_peaks
+  }
 
-# get_feature_data <- function(feature, options) {
-#   if (is.vector(feature)) {
-#     if (!is.na(feature['mz']) & !is.na(feature['rt'])) {
-#       feature_id <- paste0('M', round(feature['mz']), 'T', round(feature['rt']))
-#       mzr <- get_mz_range(feature['mz'], options$chromatograms$ppm)
-#       rtr <- c(feature['rt'] - options$chromatograms$rt_tol, feature['rt'] + options$chromatograms$rt_tol)
-#     } else if (!is.na(feature['mzmin']) & !is.na(feature['mzmax']) & !is.na(feature['rtmin']) & !is.na(feature['rtmax'])) {
-#       mzr <- c(feature['mzmin'], feature['mzmax'])
-#       rtr <- c(feature['rtmin'], feature['rtmax'])
-#       feature_id <- paste0('M', round((feature['mzmin'] + feature['mzmax']) / 2), 'T', round((feature['rtmin'] + feature['rtmax']) / 2))
-#     } else {
-#       stop("Features format not supported")
-#     }
-#   } else if (is.data.frame(feature)) {
-#     feature_id <- feature$name
-#     mzr <- get_mz_range(feature$mz, options$chromatograms$ppm)
-#     rtr <- c(feature$rt - options$chromatograms$rt_tol, feature$rt + options$chromatograms$rt_tol)
-#   } else {
-#     stop("Features format not supported")
-#   }
-# 
-#   return(list(
-#     feature_id = feature_id,
-#     mzr = mzr,
-#     rtr = rtr
-#   ))
-# }
+  if (is.data.frame(input_features) && "sample_id" %in% colnames(input_features)) {
+    feature_indices <- which(input_features$sample_id == sample_metadata$sample_id)
+  } else {
+    feature_indices <- seq_len(nrow(input_features))
+  }
+
+  features <- list()
+
+  for (i in seq_len(length(feature_indices))) {
+    feature_index <- feature_indices[i]
+    feature <- input_features[feature_index, ]
+    features[[i]] <- get_feature_data(feature, options, full_rt_range)
+  }
+
+  return(features)
+}

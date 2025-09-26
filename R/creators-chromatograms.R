@@ -14,6 +14,10 @@ setMethod(
   f = "create_chromatograms_from_feature_ids",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
+    if (!is_xcms_object(obj)) {
+      stop("To use feature IDs from the grouped peaks you need to provide an xcms object.")
+    }
+
     metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_get_raw_data(metadata$sample_path)
     all_detected_peaks <- get_detected_peaks(obj@data_obj)
@@ -117,16 +121,11 @@ setMethod(
       additional_metadata_list <- list()
       detected_peaks_list <- list()
 
-      if (is.data.frame(options$chromatograms$features) && "sample_id" %in% colnames(options$chromatograms$features)) {
-        feature_indices <- which(options$chromatograms$features$sample_id == sample_metadata$sample_id)
-      } else {
-        feature_indices <- seq_len(nrow(options$chromatograms$features))
-      }
-      
-      for (j in feature_indices) {
-        feature <- options$chromatograms$features[j, ]
-        feature_data <- get_feature_data(feature, options, full_rt_range)
-        
+      features <- get_features(options, sample_metadata, full_rt_range = full_rt_range)
+
+      for (j in seq_len(length(features))) {
+        feature_data <- features[[j]]
+
         data <- create_chromatogram(
           raw_obj,
           mz_range = feature_data$mzr,
@@ -221,13 +220,13 @@ setMethod(
   definition = function(obj, options) {
     metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_get_raw_data(metadata$sample_path)
-    
+
     process_sample <- function(i) {
       sample_metadata <- metadata[i, ]
       raw_obj <- raw_data[[sample_metadata$sample_path]]
 
       if (options$chromatograms$rt_adjusted) {
-        if (!inherits(object@data_obj, c("XCMSnExp", "MsExperiment"))) {
+        if (!is_xcms_object(obj)) {
           stop("The data object should be XCMSnExp or MsExperiment to plot the RT adjusted chromatograms")
         }
 

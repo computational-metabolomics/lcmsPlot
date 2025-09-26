@@ -78,6 +78,44 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
   }
 }
 
+highlight_apices <- function(dataset, options, grouping_vars) {
+  highlight_apices_opts = options$chromatograms$highlight_apices
+
+  top_peaks = dataset %>%
+    group_by(across(all_of(grouping_vars))) %>%
+    group_modify(~ {
+      if (!is.null(highlight_apices_opts$column)) {
+        hp <- unique(.x[[highlight_apices_opts$column]])
+      } else {
+        hp <- NA
+      }
+
+      if (!is.na(hp)) {
+        # filter within ±5 rt and select max
+        .x %>%
+          filter(rt >= hp - 5, rt <= hp + 5) %>%
+          slice_max(intensity, n = 1)
+      } else if (!is.null(highlight_apices_opts$top_n)) {
+        # take global maximum
+        .x %>% slice_max(intensity, n = highlight_apices_opts$top_n)
+      } else {
+        tibble()
+      }
+    })
+
+  if (nrow(top_peaks) > 0) {
+    geom_text(
+      data = top_peaks,
+      aes(label = round(rt_plot, 2)),
+      nudge_y = 0.05 * max(dataset$intensity_plot),
+      size = 3,
+      color = "red"
+    )
+  } else {
+    NULL
+  }
+}
+
 highlight_spectra_scans <- function(dataset, options) {
   if (options$spectra$show) {
     geom_vline(data = dataset, aes(xintercept = .data$rt), color = "black", linetype = "dashed")

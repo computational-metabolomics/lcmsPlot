@@ -30,7 +30,6 @@ library(BiocStyle)
 library(xcms)
 library(faahKO)
 library(MsExperiment)
-library(patchwork)
 library(lcmsPlot)
 register(SerialParam())
 ```
@@ -184,12 +183,15 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
   chromatogram(
     features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900)),
     highlight_peaks = TRUE,
-    highlight_peaks_color = "#121212"
+    highlight_peaks_color = "#121212",
+    highlight_apices = list(top_n = 1)
   ) +
   facets(facets = c('feature_id', 'sample_id'), ncol = 4) +
   labels(legend = "Sample") +
   legend(position = "bottom")
 ```
+
+Moreover, with the `highlight_apices` option, we highlighted the apex with its RT value.
 
 On the other hand, gridded plots (`grid` function), arrange panels in a matrix defined by two variables, allowing structured comparisons across both dimensions.
 
@@ -216,7 +218,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
   rt_line(intercept = 2850, line_type = 'dashed', color = 'blue')
 ```
 
-# Plot retention time alignment. effect
+# Plot retention time alignment effect
 
 Next, let’s explore some plots that illustrate the effect of retention time alignment.
 
@@ -447,22 +449,4 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
     mode = "closest",
     ms_level = 1) +
   legend(position = "bottom")
-```
-
-```{r}
-# TODO: think about this
-# sample_ids = c(
-#   'Human_Plasma_HILP_Ch1_Col1_scIC_062',
-#   'Human_Plasma_HILP_Ch1_Col1_scIC_064'
-# )
-# 
-# lcmsPlot(xdata, 'sample_id') +
-#   spectra(
-#     sample_ids = sample_ids,
-#     rt = 580,
-#     mode = "closest",
-#     ms_level = 1,
-#     spectral_match_db = dir(system.file("sciex", package = "msdata"), full.names = TRUE),
-#     match_target_index = 1) +
-#   legend(position = "bottom")
 ```

@@ -145,27 +145,27 @@ setMethod(
   f = "iterate_plot_batches",
   signature = c("lcmsPlotClass", "function"),
   function(object, iter_fn) {
-    # 1. Get sample IDs 
-    
+    # 1. Get sample IDs
+
     # object@options$batch_index <- object@options$batch_index + 1
     # for (history_item in object@history) {
     #   fn <- get(history_item$name, asNamespace("lcmsPlot"))
     #   object <- do.call(fn, history_item$args)(object)
     # }
-    
+
     if (is.null(object@options$batch_size)) {
       stop("iterate_plot_batches requires batch_size")
     }
-    
+
     # TODO: check this
     sample_ids <- object@data@metadata$sample_id # object@options$chromatograms$sample_ids
-    
+
     if (length(sample_ids) > object@options$batch_size) {
       batches <- split(sample_ids, ceiling(seq_along(sample_ids) / object@options$batch_size))
     } else {
       batches <- list(sample_ids)
     }
-    
+
     object@options$batch_index <- 1
     for (batch in batches) {
       for (history_item in object@history) {
@@ -175,7 +175,7 @@ setMethod(
       iter_fn(object)
       object@options$batch_index <- object@options$batch_index + 1
     }
-    
+
     # return(object)
   }
 )
@@ -201,7 +201,7 @@ make_interface_function <- function(name, args_list, fn) {
     if (record_history) {
       obj@history <- c(obj@history, list(list(name = name, args = args_list)))
     }
-    
+
     fn(obj)
   }
 }
@@ -235,7 +235,7 @@ chromatogram <- function(
   rt_adjusted = FALSE,
   rt_unit = "second",
   intensity_unit = "absolute",
-  fill_gaps = TRUE,
+  fill_gaps = FALSE,
   highlight_apices = list(column = NULL, top_n = NULL)
 ) {
   make_interface_function(
@@ -245,14 +245,14 @@ chromatogram <- function(
       if (is.null(sample_ids)) {
         sample_ids <- obj@data@metadata$sample_id
       }
-      
+
       if (!is.null(obj@options$batch_size) && length(sample_ids) > obj@options$batch_size) {
         batches <- split(sample_ids, ceiling(seq_along(sample_ids) / obj@options$batch_size))
         batch_sample_ids <- batches[[obj@options$batch_index]]
       } else {
         batch_sample_ids <- sample_ids
       }
-      
+
       obj@options$chromatograms <- list(
         show = TRUE,
         features = features,
@@ -269,7 +269,7 @@ chromatogram <- function(
         fill_gaps = fill_gaps,
         highlight_apices = highlight_apices
       )
-      
+
       if (is.null(features)) {
         obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
       } else if (is.character(features)) {
@@ -277,7 +277,7 @@ chromatogram <- function(
       } else {
         obj@data <- create_chromatograms_from_features(obj@data, obj@options)
       }
-      
+
       return(obj)
     }
   )
@@ -325,7 +325,7 @@ spectra <- function(
     args_list = as.list(environment()),
     fn = function(obj) {
       is_standalone <- !obj@options$chromatograms$show
-      
+
       if  (is_standalone) {
         if (is.null(sample_ids)) {
           sample_ids <- obj@data@metadata$sample_id
@@ -333,7 +333,7 @@ spectra <- function(
       } else {
         sample_ids <- obj@options$chromatograms$sample_ids
       }
-      
+
       obj@options$spectra <- list(
         show = TRUE,
         sample_ids = sample_ids,
@@ -345,7 +345,7 @@ spectra <- function(
         spectral_match_db = spectral_match_db,
         match_target_index = match_target_index
       )
-      
+
       obj@data <- create_spectra(obj@data, obj@options)
       return(obj)
     }
@@ -359,7 +359,7 @@ spectra <- function(
 #' @export
 total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
   function(obj) {
-    if (!inherits(obj@data@data_obj, c("XCMSnExp", "MsExperiment"))) {
+    if (!is_xcms_object(obj@data)) {
       stop("total_ion_current: to plot the total ion current the data object should be either of class XCMSnExp or MsExperiment.")
     }
 
@@ -413,7 +413,7 @@ intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE
 #' @export
 rt_diff_plot <- function() {
   function(obj) {
-    if (!inherits(obj@data@data_obj, c("XCMSnExp", "MsExperiment"))) {
+    if (!is_xcms_object(obj@data)) {
       stop("rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
     }
 

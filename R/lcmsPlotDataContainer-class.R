@@ -115,3 +115,21 @@ setValidity("lcmsPlotDataContainer", function(object) {
 
   ret
 })
+
+#' Check if the lcmsPlotDataContainer data object is an xcms object
+#'
+#' @param object The lcmsPlotDataContainer object
+#' @export
+setGeneric(
+  "is_xcms_object",
+  function(object) standardGeneric("is_xcms_object")
+)
+
+#' @rdname is_xcms_object
+setMethod(
+  f = "is_xcms_object",
+  signature = c("lcmsPlotDataContainer"),
+  function(object) {
+    inherits(object@data_obj, c("XCMSnExp", "MsExperiment"))
+  }
+)
