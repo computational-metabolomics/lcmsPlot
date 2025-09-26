@@ -12,6 +12,23 @@ is_xcms_object(object)
 \arguments{
 \item{object}{The lcmsPlotDataContainer object}
 }
+\value{
+Whether the data object is an xcms object
+}
 \description{
 Check if the lcmsPlotDataContainer data object is an xcms object
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+data_container <- create_data_container_from_obj(
+  data_obj = raw_files,
+  sample_id_column = NULL,
+  metadata = NULL
+)
+
+is_xcms_object(data_container)
 }

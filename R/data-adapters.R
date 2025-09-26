@@ -4,6 +4,10 @@
 #' @param sample_id_column The column that should be associated with the sample ID
 #' @param metadata The metadata data frame if not already included in the data object
 #' @export
+#' @examples
+#' # Get metadata from sample paths
+#' paths <- c("test01.mzML", "test02.mzML")
+#' metadata <- get_metadata(paths, sample_id_column = NULL, metadata = NULL)
 get_metadata <- function(obj, sample_id_column, metadata) {
   UseMethod("get_metadata")
 }
@@ -46,7 +50,7 @@ get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
 #' @export
 get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
   if (!is.null(metadata)) {
-    MsExperiment::sampleData(obj) <- metadata # TODO: test this
+    MsExperiment::sampleData(obj) <- metadata
   }
 
   MsExperiment::sampleData(obj) %>%
@@ -62,13 +66,34 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
 #'
 #' @param obj The data object
 #' @export
+#' @examples
+#' cdfs <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[c(1, 7)]
+#' sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+#'
+#' pd <- data.frame(sample_name = sample_names,
+#'                  sample_group = c("KO", "WT"),
+#'                  stringsAsFactors = FALSE)
+#'
+#' faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+#'
+#' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
+#' faahko <- xcms::findChromPeaks(faahko, param = cwp)
+#'
+#' detected_peaks <- get_detected_peaks(faahko)
 get_detected_peaks <- function(obj) {
   UseMethod("get_detected_peaks")
 }
 
 .get_detected_peaks_xcms <- function(obj) {
-  as.data.frame(xcms::chromPeaks(obj)) %>%
-    dplyr::rename(sample_index = .data$sample)
+  if (xcms::hasChromPeaks(obj)) {
+    as.data.frame(xcms::chromPeaks(obj)) %>%
+      dplyr::rename(sample_index = sample)
+  } else {
+    NULL
+  }
 }
 
 #' @rdname get_detected_peaks
@@ -93,6 +118,29 @@ get_detected_peaks.MsExperiment <- function(obj) {
 #'
 #' @param obj The data object
 #' @export
+#' @examples
+#' cdfs <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[c(1, 7)]
+#' sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+#'
+#' pd <- data.frame(sample_name = sample_names,
+#'                  sample_group = c("KO", "WT"),
+#'                  stringsAsFactors = FALSE)
+#'
+#' faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+#'
+#' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
+#' faahko <- xcms::findChromPeaks(faahko, param = cwp)
+#'
+#' pdp <- xcms::PeakDensityParam(
+#'     sampleGroups = pd$sample_group,
+#'     minFraction = 0.4,
+#'     bw = 30)
+#' faahko <- xcms::groupChromPeaks(faahko, param = pdp)
+#'
+#' grouped_peaks <- get_grouped_peaks(faahko)
 get_grouped_peaks <- function(obj) {
   UseMethod("get_grouped_peaks")
 }
@@ -105,7 +153,7 @@ get_grouped_peaks.default <- function(obj) {
 
 .get_grouped_peaks_xcms = function(obj) {
   as.data.frame(xcms::featureDefinitions(obj)) %>%
-    rename(mz = .data$mzmed, rt = .data$rtmed) %>%
+    rename(mz = mzmed, rt = rtmed) %>%
     mutate(name = xcms_utils$group_names(obj)) %>%
     xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
 }

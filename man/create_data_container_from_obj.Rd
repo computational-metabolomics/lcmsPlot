@@ -13,6 +13,21 @@ create_data_container_from_obj(data_obj, sample_id_column, metadata)
 
 \item{metadata}{The sample metadata in case it's not provided in the data object}
 }
+\value{
+The created lcmsPlotDataContainer object
+}
 \description{
 Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+data_container <- create_data_container_from_obj(
+  data_obj = raw_files,
+  sample_id_column = NULL,
+  metadata = NULL
+)
 }

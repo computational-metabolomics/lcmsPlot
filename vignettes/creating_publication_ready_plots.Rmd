@@ -60,10 +60,6 @@ utils::unzip(
 
 mzml_dir <- system.file("extdata", "mzml", package = "lcmsPlot")
 
-if (!dir.exists(mzml_dir)) {
-  
-}
-
 samples_metadata <- data.frame(
   sample_id = c("l-proline-MS1", "l-proline-MS2", "l-kynurenine-MS1", "l-kynurenine-MS2"),
   sample_name = c(rep("L-Proline", 2), rep("L-Kynurenine", 2)),
@@ -76,7 +72,7 @@ samples_metadata <- data.frame(
 The following figure shows the two compounds in the MS1 samples:
 
 ```{r}
-ms1_samples_metadata <- samples_metadata %>% filter(ms_level == 1)
+ms1_samples_metadata <- samples_metadata %>% dplyr::filter(ms_level == 1)
 ms1_raw_files <- file.path(mzml_dir, paste0(ms1_samples_metadata$sample_id, ".mzML"))
 
 lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
@@ -95,7 +91,7 @@ lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
 Then we plot the chromatograms with the MS2 spectra at the scan closest to the specified RT:
 
 ```{r}
-ms2_samples_metadata <- samples_metadata %>% filter(ms_level == 2)
+ms2_samples_metadata <- samples_metadata %>% dplyr::filter(ms_level == 2)
 ms2_raw_files <- file.path(mzml_dir, paste0(ms2_samples_metadata$sample_id, ".mzML"))
 
 lcmsPlot(ms2_raw_files, metadata = ms2_samples_metadata) +
@@ -122,28 +118,28 @@ Firstly, define the custom theme using the `ggplot2` `theme` function:
 
 ```{r}
 my_custom_theme <- function() {
-  theme(
+  ggplot2::theme(
     # Title
-    plot.title = element_text(size = 16, margin = margin(b = 15)),
+    plot.title = ggplot2::element_text(size = 16, margin = ggplot2::margin(b = 15)),
 
     # Axis labels
-    axis.title = element_text(size = 11, face = "bold", color = "#1d293d"),
+    axis.title = ggplot2::element_text(size = 11, face = "bold", color = "#1d293d"),
 
     # Facet strip
-    strip.text = element_text(
+    strip.text = ggplot2::element_text(
       color = "#1d293d",
       size = 9,
       hjust = 0,
-      margin = margin(t = 3, r = 10, b = 6, l = 10)
+      margin = ggplot2::margin(t = 3, r = 10, b = 6, l = 10)
     ),
-    strip.background = element_rect(color = "#90a1b9", fill = "#e2e8f0", size = 0.8),
+    strip.background = ggplot2::element_rect(color = "#90a1b9", fill = "#e2e8f0", size = 0.8),
 
     # Box around the panel
-    panel.border = element_rect(color = "#90a1b9", fill = NA, linewidth = 1),
+    panel.border = ggplot2::element_rect(color = "#90a1b9", fill = NA, linewidth = 1),
 
     # Customize grid lines inside the plot
-    panel.grid.major = element_line(color = "#e2e8f0", linewidth = 0.5),
-    panel.grid.minor = element_line(color = "#e2e8f0", linewidth = 0.5)
+    panel.grid.major = ggplot2::element_line(color = "#e2e8f0", linewidth = 0.5),
+    panel.grid.minor = ggplot2::element_line(color = "#e2e8f0", linewidth = 0.5)
   )
 }
 ```

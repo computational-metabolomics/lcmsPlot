@@ -15,3 +15,15 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define the legend layout
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files, batch_size = 2) +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  arrange(group_by = "sample_id") +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
+}

@@ -21,3 +21,12 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define a 2D intensity map
 }
+\examples{
+raw_files <- dir(
+  system.file("cdf", package = "faahKO"),
+  full.names = TRUE,
+  recursive = TRUE)[1]
+
+p <- lcmsPlot(raw_files) +
+  intensity_map(mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE)
+}

@@ -14,6 +14,8 @@ lcmsPlotClass class
 
 \item{\code{data}}{The lcmsPlotDataContainer object}
 
+\item{\code{history}}{The list of the applied layers}
+
 \item{\code{plot}}{The underlying plot object}
 }}
 

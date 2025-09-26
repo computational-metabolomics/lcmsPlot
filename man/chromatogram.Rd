@@ -45,11 +45,23 @@ chromatogram(
 
 \item{fill_gaps}{Whether to fill gaps in RT with 0 intensity.}
 
-\item{highlight_apices}{...}
+\item{highlight_apices}{Options to highlight apices in a chromatogram.}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object.
 }
 \description{
 Define the chromatograms to plot.
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  chromatogram(aggregation_fun = "max") +
+  arrange(group_by = "sample_id") +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
 }

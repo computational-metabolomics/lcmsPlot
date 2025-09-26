@@ -1,4 +1,4 @@
-create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt_range, rt, ms_level) {
+create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
   hdr <- mzR::header(raw_data)
 
   ms_level_indices <- which(hdr$msLevel == ms_level)

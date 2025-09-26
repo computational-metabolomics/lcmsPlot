@@ -14,3 +14,14 @@ total_ion_current(sample_ids = NULL, type = "boxplot")
 \description{
 Define the total ion currents.
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+  total_ion_current(type = "violin") +
+  arrange(group_by = "sample_id") +
+  labels(title = "Total ion current", legend = "Sample ID")
+}

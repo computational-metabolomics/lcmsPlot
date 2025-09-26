@@ -27,7 +27,6 @@ knitr::opts_chunk$set(
 
 ```{r init, message = FALSE, echo = FALSE, results = "hide"}
 library(BiocStyle)
-library(xcms)
 library(faahKO)
 library(MsExperiment)
 library(lcmsPlot)
@@ -82,11 +81,14 @@ of the fatty acid amide hydrolase (FAAH) gene in mice was investigated (same dat
 
 
 ```{r load-data, message=FALSE}
-library(xcms)
 library(faahKO)
 library(MsExperiment)
 library(patchwork)
 library(lcmsPlot)
+
+# Making sure that these functions are from the lcmsPlot library
+chromatogram <- lcmsPlot::chromatogram
+spectra <- lcmsPlot::spectra
 
 cdfs <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE,
             recursive = TRUE)[c(1, 2, 5, 6, 7, 8, 11, 12)]
@@ -163,8 +165,8 @@ lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = MulticorePar
 To begin, we'll perform peak detection to enable highlighting of detected peaks in the chromatogram plots, while retaining the option to plot chromatograms directly from the raw data.
 
 ```{r}
-cwp <- CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
-faahko <- findChromPeaks(faahko, param = cwp)
+cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
+faahko <- xcms::findChromPeaks(faahko, param = cwp)
 ```
 
 Next, we will plot chromatograms for a feature detected by `xcms` in all considered samples.
@@ -225,7 +227,7 @@ Next, let’s explore some plots that illustrate the effect of retention time al
 First, we’ll perform the retention time alignment/adjustment:
 
 ```{r}
-faahko <- adjustRtime(faahko, param = ObiwarpParam(binSize = 0.6))
+faahko <- xcms::adjustRtime(faahko, param = ObiwarpParam(binSize = 0.6))
 ```
 
 Now, we can visualise the BPC for the raw and corrected datasets:
@@ -266,11 +268,11 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
 The next step in LC-MS preprocessing is grouping signals/peaks across samples.
 
 ```{r}
-pdp <- PeakDensityParam(
+pdp <- xcms::PeakDensityParam(
   sampleGroups = sampleData(faahko)$sample_group,
   minFraction = 0.4,
   bw = 30)
-faahko <- groupChromPeaks(faahko, param = pdp)
+faahko <- xcms::groupChromPeaks(faahko, param = pdp)
 ```
 
 Grouped peaks are assigned unique IDs based on their m/z values and retention times.
@@ -328,7 +330,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
 
 Or multiple factors (`feature_id` and `sample_id`):
 
-```{r, fig.height=8, fig.width=5}
+```{r, fig.height=12, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
   chromatogram(
     features = c('M283T3890', 'M205T2792'),
@@ -402,7 +404,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
 
 To select the closest scan to a detected peak apex you can use `mode = "closest_apex"`:
 
-```{r, fig.height=3}
+```{r, fig.height=10}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
   chromatogram(
     features = rbind(
@@ -422,7 +424,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
 
 To select multiple scans across a detected peak, given an RT interval, you can use `mode = "across_peak"`:
 
-```{r, fig.height=5, fig.width=3}
+```{r, fig.height=10, fig.width=5}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
   chromatogram(
     features = "M205T2792",

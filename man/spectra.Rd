@@ -38,3 +38,13 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define the spectra to plot
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1]
+
+p <- lcmsPlot(raw_files) +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  spectra(mode = "closest", rt = 2785)
+}

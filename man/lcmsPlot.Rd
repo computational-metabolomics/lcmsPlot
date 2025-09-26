@@ -20,6 +20,8 @@ lcmsPlot(
 \item{metadata}{The metadata in case it's not provided in the dataset object}
 
 \item{parallel_param}{The BiocParallel object for enabling parallelism}
+
+\item{batch_size}{The number of samples per batch}
 }
 \value{
 An lcmsPlotClass object

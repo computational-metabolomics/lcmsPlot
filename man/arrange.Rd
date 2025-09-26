@@ -15,3 +15,15 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define the arrangement of chromatograms
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  chromatogram(aggregation_fun = "max") +
+  arrange(group_by = "sample_id") +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
+}

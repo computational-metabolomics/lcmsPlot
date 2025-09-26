@@ -39,6 +39,18 @@ DATASET_TYPES <- c(
 #' @param data_obj The data object (e.g., XCMSnExp)
 #' @param sample_id_column The sample ID column
 #' @param metadata The sample metadata in case it's not provided in the data object
+#' @returns The created lcmsPlotDataContainer object
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' data_container <- create_data_container_from_obj(
+#'   data_obj = raw_files,
+#'   sample_id_column = NULL,
+#'   metadata = NULL
+#' )
 create_data_container_from_obj <- function(data_obj, sample_id_column, metadata) {
   new("lcmsPlotDataContainer",
       data_obj = data_obj,
@@ -119,7 +131,21 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #' Check if the lcmsPlotDataContainer data object is an xcms object
 #'
 #' @param object The lcmsPlotDataContainer object
+#' @returns Whether the data object is an xcms object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' data_container <- create_data_container_from_obj(
+#'   data_obj = raw_files,
+#'   sample_id_column = NULL,
+#'   metadata = NULL
+#' )
+#'
+#' is_xcms_object(data_container)
 setGeneric(
   "is_xcms_object",
   function(object) standardGeneric("is_xcms_object")

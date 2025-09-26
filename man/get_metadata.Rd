@@ -25,3 +25,8 @@ get_metadata(obj, sample_id_column, metadata)
 \description{
 Get the metadata associated with the input object
 }
+\examples{
+# Get metadata from sample paths
+paths <- c("test01.mzML", "test02.mzML")
+metadata <- get_metadata(paths, sample_id_column = NULL, metadata = NULL)
+}

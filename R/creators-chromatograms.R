@@ -80,7 +80,7 @@ setMethod(
     obj@chromatograms <- chromatograms
     obj@mass_traces <- mass_traces
     obj@additional_metadata <- additional_metadata
-    obj@detected_peaks = detected_peaks
+    obj@detected_peaks <- detected_peaks
 
     validObject(obj)
 

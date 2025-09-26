@@ -12,3 +12,16 @@ A function that takes and returns a lcmsPlotClass object.
 \description{
 Define the mass trace to plot.
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  mass_trace() +
+  arrange(group_by = "sample_id") +
+  legend(position = "bottom") +
+  labels(legend = "Sample")
+}

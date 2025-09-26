@@ -39,7 +39,7 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
   all_plots <- metadata %>%
     group_by(!!!syms(facets)) %>%
     group_map(~ {
-      metadata_df = .y
+      metadata_df <- .y
 
       datasets_subset <- lapply(datasets, function (ds) {
         ds %>% filter(across(all_of(facets), ~ . == metadata_df[[cur_column()]]))

@@ -4,6 +4,7 @@
 #' @param sample_id_column Which column should be used as the sample ID
 #' @param metadata The metadata in case it's not provided in the dataset object
 #' @param parallel_param The BiocParallel object for enabling parallelism
+#' @param batch_size The number of samples per batch
 #' @returns An lcmsPlotClass object
 #' @export
 lcmsPlot <- function(
@@ -30,6 +31,7 @@ setOldClass(c("gg", "ggplot"))
 #'
 #' @slot options The object options
 #' @slot data The lcmsPlotDataContainer object
+#' @slot history The list of the applied layers
 #' @slot plot The underlying plot object
 #' @export
 setClass(
@@ -84,7 +86,7 @@ setMethod(
         }
 
         if (nrow(data_df) == 0) {
-          stop(paste0("Empty dataset ", dataset_name))
+          stop("Empty dataset ", dataset_name)
         }
 
         data_df <- merge_by_index(data_df, object@data@metadata, index_col = 'metadata_index')
@@ -111,6 +113,19 @@ setMethod(
 #'
 #' @param object The lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files, batch_size = 2) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
+#'
+#' p <- next_plot(p)
 setGeneric(
   "next_plot",
   function(object) standardGeneric("next_plot")
@@ -135,6 +150,21 @@ setMethod(
 #' @param object The lcmsPlotClass object
 #' @param iter_fn The function to apply to each item being iterated on
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files, batch_size = 2) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
+#'
+#' iterate_plot_batches(p, function(plot_obj) {
+#'   print(plot_obj)
+#' })
 setGeneric(
   "iterate_plot_batches",
   function(object, iter_fn) standardGeneric("iterate_plot_batches")
@@ -145,19 +175,11 @@ setMethod(
   f = "iterate_plot_batches",
   signature = c("lcmsPlotClass", "function"),
   function(object, iter_fn) {
-    # 1. Get sample IDs
-
-    # object@options$batch_index <- object@options$batch_index + 1
-    # for (history_item in object@history) {
-    #   fn <- get(history_item$name, asNamespace("lcmsPlot"))
-    #   object <- do.call(fn, history_item$args)(object)
-    # }
-
     if (is.null(object@options$batch_size)) {
       stop("iterate_plot_batches requires batch_size")
     }
 
-    # TODO: check this
+    # TODO: needs to be reviewed
     sample_ids <- object@data@metadata$sample_id # object@options$chromatograms$sample_ids
 
     if (length(sample_ids) > object@options$batch_size) {
@@ -175,8 +197,6 @@ setMethod(
       iter_fn(object)
       object@options$batch_index <- object@options$batch_index + 1
     }
-
-    # return(object)
   }
 )
 
@@ -220,9 +240,20 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param rt_unit The unit to use for the RT (one of "minute" or "second").
 #' @param intensity_unit The unit to use for the intensity (one of "absolute" or "relative").
 #' @param fill_gaps Whether to fill gaps in RT with 0 intensity.
-#' @param highlight_apices ...
+#' @param highlight_apices Options to highlight apices in a chromatogram.
 #' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(aggregation_fun = "max") +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
 chromatogram <- function(
   features = NULL,
   sample_ids = NULL,
@@ -287,6 +318,18 @@ chromatogram <- function(
 #'
 #' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   mass_trace() +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
 mass_trace <- function() {
   make_interface_function(
     name = "mass_trace",
@@ -310,6 +353,15 @@ mass_trace <- function() {
 #' @param match_target_index The target index for the mirror plot (index from the highest scoring)
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   spectra(mode = "closest", rt = 2785)
 spectra <- function(
   sample_ids = NULL,
   mode = 'closest_apex',
@@ -357,6 +409,16 @@ spectra <- function(
 #' @param sample_ids The sample IDs to select.
 #' @param type The type of plot; one of "boxplot", "violin", "jitter".
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+#'   total_ion_current(type = "violin") +
+#'   arrange(group_by = "sample_id") +
+#'   labels(title = "Total ion current", legend = "Sample ID")
 total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
   function(obj) {
     if (!is_xcms_object(obj@data)) {
@@ -387,6 +449,14 @@ total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' @param density Whether to show a density or a point-cloud plot
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'   system.file("cdf", package = "faahKO"),
+#'   full.names = TRUE,
+#'   recursive = TRUE)[1]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   intensity_map(mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE)
 intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE) {
   function(obj) {
     if (is.null(sample_ids)) {
@@ -433,6 +503,17 @@ rt_diff_plot <- function() {
 #' @param group_by The column to group by (in the samples metadata)
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(aggregation_fun = "max") +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
 arrange <- function(group_by) {
   make_interface_function(
     name = "arrange",
@@ -455,6 +536,15 @@ arrange <- function(group_by) {
 #' @param free_y Allow scales to vary across y
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(aggregation_fun = "max") +
+#'   facets(facets = "sample_id")
 facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE) {
   make_interface_function(
     name = "facets",
@@ -500,6 +590,17 @@ grid <- function(rows, cols, free_y = FALSE) {
 #' @param legend The legend's title
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files, batch_size = 2) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
 labels <- function(title = NULL, legend = NULL) {
   make_interface_function(
     name = "labels",
@@ -519,6 +620,17 @@ labels <- function(title = NULL, legend = NULL) {
 #' @param position The legend position
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files, batch_size = 2) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   arrange(group_by = "sample_id") +
+#'   legend(position = "bottom") +
+#'   labels(legend = "Sample")
 legend <- function(position = NULL)  {
   make_interface_function(
     name = "legend",
@@ -538,6 +650,16 @@ legend <- function(position = NULL)  {
 #' @param line_type The line type
 #' @param color The line color
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:4]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   facets(facets = 'sample_id', ncol = 4) +
+#'   rt_line(intercept = 2800, line_type = 'solid', color = 'red')
 rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
   make_interface_function(
     name = "rt_line",
@@ -572,7 +694,20 @@ layout <- function(design = NULL) {
 }
 
 #' Get the underlying plot object
+#'
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:4]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   facets(facets = 'sample_id', ncol = 4) +
+#'   rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+#'   get_plot() +
+#'   theme_bw()
 get_plot <- function() {
   function(obj) {
     obj <- set_plot(obj, additional_datasets = list())

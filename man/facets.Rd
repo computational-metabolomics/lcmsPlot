@@ -23,3 +23,13 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define plot's faceting
 }
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  chromatogram(aggregation_fun = "max") +
+  facets(facets = "sample_id")
+}
