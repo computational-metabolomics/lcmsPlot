@@ -161,3 +161,9 @@ lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
   get_plot() +
   my_custom_theme()
 ```
+
+# Session Info
+
+```{r}
+sessionInfo()
+```

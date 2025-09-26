@@ -20,3 +20,13 @@ A lcmsPlotDataContainer object
 \description{
 Creates a lcmsPlotDataContainer from a features matrix
 }
+\examples{
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
+data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+opts <- default_options()
+opts$chromatograms$features <- rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2750))
+opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+
+data_container <- create_chromatograms_from_features(data_container, opts)
+}

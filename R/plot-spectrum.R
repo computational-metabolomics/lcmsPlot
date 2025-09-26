@@ -15,10 +15,10 @@ plot_spectrum <- function(datasets, dataset_type, supporting_datasets, options, 
     mutate(sample_id_rt = paste0(.data$sample_id, " RT: ", round(.data$rt, 3), " sec."))
 
   # TODO: extract as option
-  top_peaks = dataset_for_plot %>%
+  top_peaks <- dataset_for_plot %>%
     group_by(sample_id_rt) %>%
     slice_max(order_by = intensity, n = 3)
-  
+
   if (length(unique(dataset_for_plot$reference)) == 2) {
     p_aes <- build_aes(x = "mz", y = "intensity", options = options, color = "reference")
   } else {

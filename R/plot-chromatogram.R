@@ -3,7 +3,7 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
 
   grouping_vars <- get_grouping_variables(options)
 
-  dataset = dataset %>%
+  dataset <- dataset %>%
     group_by(across(all_of(grouping_vars))) %>%
     mutate(
       rt_plot = case_when(
@@ -26,8 +26,8 @@ plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, optio
   )
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
 
-  x_label = ifelse(options$chromatograms$rt_unit == "minute", "RT (minutes)", "RT (seconds)")
-  y_label = ifelse(options$chromatograms$intensity_unit == "relative", "Relative intensity", "Intensity")
+  x_label <- ifelse(options$chromatograms$rt_unit == "minute", "RT (minutes)", "RT (seconds)")
+  y_label <- ifelse(options$chromatograms$intensity_unit == "relative", "Relative intensity", "Intensity")
 
   p <- ggplot(
     data = dataset,

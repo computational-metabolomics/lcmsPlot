@@ -3,7 +3,7 @@ test_that("create_spectra creates standalone spectra (i.e., without chromatogram
   data_obj <- get_test_sample_paths()
   data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_id", metadata = NULL)
 
-  opts <- default_options
+  opts <- default_options()
   opts$chromatograms$show <- FALSE
   opts$spectra$show <- TRUE
   opts$spectra$sample_ids <- c('ko15', 'wt15')

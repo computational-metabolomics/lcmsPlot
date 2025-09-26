@@ -20,3 +20,14 @@ A lcmsPlotDataContainer object
 \description{
 Creates an lcmsPlotDataContainer from an intensity map
 }
+\examples{
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
+data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+opts <- default_options()
+opts$intensity_maps$rt_range <- c(2000, 2100)
+opts$intensity_maps$mz_range <- c(200, 300)
+opts$intensity_maps$sample_ids <- c('ko15', 'wt15')
+
+data_container <- create_intensity_map(data_container, opts)
+}

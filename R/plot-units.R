@@ -79,9 +79,9 @@ highlight_peaks <- function(dataset, detected_peaks, options) {
 }
 
 highlight_apices <- function(dataset, options, grouping_vars) {
-  highlight_apices_opts = options$chromatograms$highlight_apices
+  highlight_apices_opts <- options$chromatograms$highlight_apices
 
-  top_peaks = dataset %>%
+  top_peaks <- dataset %>%
     group_by(across(all_of(grouping_vars))) %>%
     group_modify(~ {
       if (!is.null(highlight_apices_opts$column)) {

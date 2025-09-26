@@ -20,3 +20,9 @@ A lcmsPlotDataContainer object
 \description{
 Creates an lcmsPlotDataContainer from a TIC
 }
+\examples{
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
+data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+opts <- default_options()
+data_container <- create_total_ion_current(data_container, opts)
+}

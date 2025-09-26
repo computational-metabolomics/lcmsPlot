@@ -20,3 +20,14 @@ A lcmsPlotDataContainer object
 \description{
 Creates/updates an lcmsPlotDataContainer from spectra
 }
+\examples{
+data_obj <- get_XCMSnExp_object_example(indices = 1)
+data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+opts <- default_options()
+opts$spectra$show <- TRUE
+opts$spectra$sample_ids <- 'ko15'
+opts$spectra$scan_index <- 456
+
+data_container <- create_spectra(data_container, opts)
+}

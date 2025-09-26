@@ -20,3 +20,15 @@ A lcmsPlotDataContainer object
 \description{
 Creates a lcmsPlotDataContainer from feature IDs
 }
+\examples{
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_detect_peaks = TRUE, should_group_peaks = TRUE)
+data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+opts <- default_options()
+opts$chromatograms$features <- c('M205T2785', 'M207T2713')
+opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+opts$chromatograms$ppm <- 5
+opts$chromatograms$rt_tol <- 10
+
+data_container <- create_chromatograms_from_feature_ids(data_container, opts)
+}

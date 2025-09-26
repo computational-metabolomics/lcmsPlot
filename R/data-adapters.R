@@ -151,11 +151,15 @@ get_grouped_peaks.default <- function(obj) {
   return(NULL)
 }
 
-.get_grouped_peaks_xcms = function(obj) {
-  as.data.frame(xcms::featureDefinitions(obj)) %>%
-    rename(mz = mzmed, rt = rtmed) %>%
-    mutate(name = xcms_utils$group_names(obj)) %>%
-    xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
+.get_grouped_peaks_xcms <- function(obj) {
+  if (xcms::hasFeatures(obj)) {
+    as.data.frame(xcms::featureDefinitions(obj)) %>%
+      rename(mz = mzmed, rt = rtmed) %>%
+      mutate(name = xcms_utils$group_names(obj)) %>%
+      xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
+  } else {
+    NULL
+  }
 }
 
 #' @rdname get_grouped_peaks

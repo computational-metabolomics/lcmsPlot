@@ -22,7 +22,7 @@ Description: lcmsPlot is an R package designed for visualising
     aesthetics and annotation options.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Depends:
   R (>= 4.3.0)
 Imports:

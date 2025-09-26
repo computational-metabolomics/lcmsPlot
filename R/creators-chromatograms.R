@@ -4,6 +4,17 @@
 #' @param options The options
 #' @returns A lcmsPlotDataContainer object
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_detect_peaks = TRUE, should_group_peaks = TRUE)
+#' data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+#'
+#' opts <- default_options()
+#' opts$chromatograms$features <- c('M205T2785', 'M207T2713')
+#' opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+#' opts$chromatograms$ppm <- 5
+#' opts$chromatograms$rt_tol <- 10
+#'
+#' data_container <- create_chromatograms_from_feature_ids(data_container, opts)
 setGeneric(
   "create_chromatograms_from_feature_ids",
   function(obj, options) standardGeneric("create_chromatograms_from_feature_ids")
@@ -94,6 +105,15 @@ setMethod(
 #' @param options The options
 #' @returns A lcmsPlotDataContainer object
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
+#' data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+#'
+#' opts <- default_options()
+#' opts$chromatograms$features <- rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2750))
+#' opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+#'
+#' data_container <- create_chromatograms_from_features(data_container, opts)
 setGeneric(
   "create_chromatograms_from_features",
   function(obj, options) standardGeneric("create_chromatograms_from_features")
@@ -208,6 +228,15 @@ setMethod(
 #' @param options The options
 #' @returns A lcmsPlotDataContainer object
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
+#' data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+#'
+#' opts <- default_options()
+#' opts$chromatograms$aggregation_fun <- 'max'
+#' opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+#'
+#' data_container <- create_full_rt_chromatograms(data_container, opts)
 setGeneric(
   "create_full_rt_chromatograms",
   function(obj, options) standardGeneric("create_full_rt_chromatograms")

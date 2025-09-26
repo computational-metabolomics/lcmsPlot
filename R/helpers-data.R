@@ -13,6 +13,49 @@
 #' @return The result of calling `rhs(lhs)`.
 NULL
 
+#' Get an XCMSnExp example object
+#'
+#' @param indices The faahKO package data samples indices
+#' @param should_detect_peaks Whether to detect peaks
+#' @param should_group_peaks Whether to group the detected peaks
+#' @returns The XCMSnExp object
+#' @examples
+#' get_XCMSnExp_object_example(indices = 1:5, should_detect_peaks = TRUE)
+get_XCMSnExp_object_example <- function(indices = 1:3, should_detect_peaks = FALSE, should_group_peaks = FALSE) {
+  cdfs <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE,
+              recursive = TRUE)[indices]
+  sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+
+  pd <- data.frame(
+    sample_name = sample_names,
+    sample_group = toupper(sub("[0-9]+", "", sample_names)),
+    stringsAsFactors = FALSE)
+
+  raw_data <- MSnbase::readMSData(
+    files = cdfs,
+    pdata = new("NAnnotatedDataFrame", pd),
+    mode = "onDisk",
+    msLevel = 1)
+
+  xdata <- as(raw_data, "XCMSnExp")
+
+  if (should_detect_peaks) {
+    cwp <- CentWaveParam(peakwidth = c(20, 80), noise = 10000, prefilter = c(6, 10000))
+    xdata <- findChromPeaks(xdata, param = cwp)
+  }
+
+  if (should_detect_peaks && should_group_peaks) {
+    xdata <- adjustRtime(xdata, param = ObiwarpParam(binSize = 0.6))
+    pdp <- PeakDensityParam(
+      sampleGroups = pd$sample_group,
+      minFraction = 1,
+      bw = 30)
+    xdata <- groupChromPeaks(xdata, param = pdp)
+  }
+
+  xdata
+}
+
 merge_by_index <- function(a, b, index_col) {
   b_mod <- b %>%
     mutate(row_id = row_number())

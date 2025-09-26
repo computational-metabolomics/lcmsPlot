@@ -3,7 +3,7 @@ test_that("create_chromatograms_from_feature_ids creates correct chromatograms f
   data_obj <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)
   data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 
-  opts <- default_options
+  opts <- default_options()
   opts$chromatograms$features <- c('M205T2785', 'M207T2713')
   opts$chromatograms$sample_ids <- c('ko15', 'wt15')
   opts$chromatograms$ppm <- 5
@@ -25,7 +25,7 @@ test_that("create_chromatograms_from_features creates correct chromatograms from
   data_obj <- get_XCMSnExp_object()
   data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 
-  opts <- default_options
+  opts <- default_options()
   opts$chromatograms$features <- rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2750))
   opts$chromatograms$sample_ids <- c('ko15', 'wt15')
 
@@ -45,7 +45,7 @@ test_that("create_full_rt_chromatograms creates BPCs or TICs from an xcms object
   data_obj <- get_XCMSnExp_object()
   data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 
-  opts <- default_options
+  opts <- default_options()
   opts$chromatograms$sample_ids <- c('ko15', 'wt15')
   opts$chromatograms$aggregation_fun <- 'max'
 

@@ -8,7 +8,7 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
     rt <- rt_adjusted
   }
 
-  if (class(raw_data)[1] == "mzRnetCDF") {
+  if (is(raw_data, "mzRnetCDF")) {
     scan_nums <- ms1_header$seqNum
     bpi <- numeric(length(scan_nums))
 

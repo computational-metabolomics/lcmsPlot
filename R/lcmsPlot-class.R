@@ -14,7 +14,7 @@ lcmsPlot <- function(
     parallel_param = NULL,
     batch_size = NULL
 ) {
-  opts <- default_options
+  opts <- default_options()
   opts$sample_id_column <- sample_id_column
   opts$parallel_param <- parallel_param
   opts$batch_size <- batch_size
@@ -43,7 +43,7 @@ setClass(
     plot = "ANY"
   ),
   prototype = list(
-    options = default_options,
+    options = default_options(),
     data = NULL,
     history = list(),
     plot = NULL
@@ -481,6 +481,10 @@ intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE
 #'
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_detect_peaks = TRUE, should_group_peaks = TRUE)
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+#'   rt_diff_plot()
 rt_diff_plot <- function() {
   function(obj) {
     if (!is_xcms_object(obj@data)) {
@@ -569,6 +573,22 @@ facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FA
 #' @param free_y Whether the y-axis is free for each row
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'   system.file("cdf", package = "faahKO"),
+#'   full.names = TRUE,
+#'   recursive = TRUE
+#' )[1:4]
+#'
+#' metadata <- data.frame(
+#'   sample_id = sub("\\.CDF", "", basename(raw_files)),
+#'   factor1 = c("S", "S", "C", "C"),
+#'   factor2 = c("T", "U", "T", "U")
+#' )
+#'
+#' p <- lcmsPlot(raw_files, metadata = metadata) +
+#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   grid(rows = "factor1", cols = "factor2")
 grid <- function(rows, cols, free_y = FALSE) {
   make_interface_function(
     name = "grid",
@@ -680,12 +700,29 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #'
 #' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design)
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = 1, should_detect_peaks = TRUE)
+#'
+#' p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
+#'   chromatogram(
+#'     features = rbind(
+#'       c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+#'       c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+#'     ),
+#'     sample_ids = 'ko15',
+#'     highlight_peaks = TRUE
+#'   ) +
+#'   spectra(mode = "closest_apex", ms_level = 1) +
+#'   facets(facets = "feature_id", ncol = 2) +
+#'   labels(legend = "Sample") +
+#'   legend(position = "bottom") +
+#'   layout(design = "C\nS\nS")
 layout <- function(design = NULL) {
   make_interface_function(
     name = "layout",
     args_list = as.list(environment()),
     fn = function(obj) {
-      obj@options$layout = list(
+      obj@options$layout <- list(
         design = design
       )
       return(obj)

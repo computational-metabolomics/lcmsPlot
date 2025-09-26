@@ -4,6 +4,16 @@
 #' @param options The lcmsPlot options
 #' @returns A lcmsPlotDataContainer object
 #' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(indices = 1)
+#' data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+#'
+#' opts <- default_options()
+#' opts$spectra$show <- TRUE
+#' opts$spectra$sample_ids <- 'ko15'
+#' opts$spectra$scan_index <- 456
+#'
+#' data_container <- create_spectra(data_container, opts)
 setGeneric(
   "create_spectra",
   function(obj, options) standardGeneric("create_spectra")
@@ -84,7 +94,7 @@ setMethod(
       mzR::close(raw_obj)
     }
 
-    all_spectra = all_spectra %>%
+    all_spectra <- all_spectra %>%
       mutate(reference = FALSE)
 
     if (!is.null(spectral_library)) {
@@ -115,7 +125,7 @@ setMethod(
         which(similarities[i, ] == target_values[i])
       }) %>% unlist()
 
-      i = 1
+      i <- 1
       for (target_index in target_indices) {
         hit_mzs <- Spectra::mz(spectral_library)[[target_index]]
         hit_intensities <- Spectra::intensity(spectral_library)[[target_index]]

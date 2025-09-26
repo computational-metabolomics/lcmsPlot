@@ -19,3 +19,20 @@ A function that takes and returns a lcmsPlotClass object
 \description{
 Define a gridded plot
 }
+\examples{
+raw_files <- dir(
+  system.file("cdf", package = "faahKO"),
+  full.names = TRUE,
+  recursive = TRUE
+)[1:4]
+
+metadata <- data.frame(
+  sample_id = sub("\\\\.CDF", "", basename(raw_files)),
+  factor1 = c("S", "S", "C", "C"),
+  factor2 = c("T", "U", "T", "U")
+)
+
+p <- lcmsPlot(raw_files, metadata = metadata) +
+  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  grid(rows = "factor1", cols = "factor2")
+}
