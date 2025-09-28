@@ -106,7 +106,7 @@ highlight_apices <- function(dataset, options, grouping_vars) {
   if (nrow(top_peaks) > 0) {
     geom_text(
       data = top_peaks,
-      aes(label = round(rt_plot, 2)),
+      aes(label = round(.data$rt_plot, 2)),
       nudge_y = 0.05 * max(dataset$intensity_plot),
       size = 3,
       color = "red"

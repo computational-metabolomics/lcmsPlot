@@ -28,8 +28,8 @@ plot_spectrum <- function(
 
   # TODO: extract as option
   top_peaks <- dataset_for_plot %>%
-    group_by(sample_id_rt) %>%
-    slice_max(order_by = intensity, n = 3)
+    group_by(.data$sample_id_rt) %>%
+    slice_max(order_by = .data$intensity, n = 3)
 
   if (length(unique(dataset_for_plot$reference)) == 2) {
     p_aes <- build_aes(x = "mz", y = "intensity", options = options, color = "reference")
@@ -44,7 +44,7 @@ plot_spectrum <- function(
     geom_segment(aes(xend = .data$mz, yend = 0), show.legend = single) +
     geom_text(
       data = top_peaks,
-      aes(label = round(mz, 4)),
+      aes(label = round(.data$mz, 4)),
       nudge_y = 0.05 * max(dataset_for_plot$intensity),
       size = 3,
       color = "red"

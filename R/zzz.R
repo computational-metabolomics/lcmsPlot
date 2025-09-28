@@ -4,4 +4,4 @@
 #' @import ggplot2
 NULL
 
-utils::globalVariables(".")
+utils::globalVariables(c(".", ".data"))

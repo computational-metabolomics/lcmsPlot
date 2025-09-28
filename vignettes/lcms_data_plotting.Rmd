@@ -35,33 +35,26 @@ register(SerialParam())
 
 # Introduction
 
-LC-MS (or generally X-MS) data visualisation is important when inspecting the quality of the data
-as well as during the publication process.
-Plots are a quick way to show acquisition anomalies such as retention time shifts,
-internal standards inconsistencies, gradual signal drops, and so on.
+Visualisation of LC-MS (and more generally X-MS) data is essential for both quality control and communication of results. Plots help reveal acquisition issues such as retention time shifts, internal standard inconsistencies, or signal drifts, and they provide clear figures for publications.
 
-# Current landscape
+Most LC-MS visualisation currently relies on:
 
-The current LC-MS data visualisation landscape is mainly covered by `xcms`'s
-base R plotting routines.
+- xcms: base R plotting routines that cover common needs but offer limited flexibility and aesthetics.
+- Other tools (LCMSQA, MetaboAnalystR, CAMERA): provide plotting but are tightly coupled to specific workflows, reducing general usability.
+- Custom plotting using ggplot2: requires knowledge of ggplot2 and for advanced usage it is less intuitive.
 
-Outside `xcms`, many plotting functionalities are tightly coupled specific applications, such as:
+Overall, existing options are either too specialised or too rigid for flexible, cross-platform use.
 
-- [LCMSQA](https://cran.r-project.org/web/packages/LCMSQA/index.html)
-- [MetaboAnalystR](https://www.metaboanalyst.ca/docs/RTutorial.xhtml)
-- [CAMERA](https://www.bioconductor.org/packages/release/bioc/html/CAMERA.html)
+## Objectives
 
-# Objectives
+`lcmsPlot` aims to provide a modern, generic solution for LC-MS visualisation, focused on:
 
-`lcmsPlot` aims to be a generic, flexible, and interoperable solution for plotting LC-MS data, such
-as chromatograms, mass traces, mass spectra, and more.
+- Flexible plotting: chromatograms, mass traces, spectra, and more.
+- Building-blocks design: [ggplot](https://ggplot2.tidyverse.org/)-like interface for customisable, reproducible plots.
+- Interoperability: works seamlessly with xcms outputs or raw formats (e.g., mzML).
+- Efficiency: scales better to large datasets than current solutions.
 
-`lcmsPlot` focuses on the following objectives:
-
-- Generic and flexible plotting capabilities.
-- Easy-to-use programming interface using a building-blocks approach such as [ggplot](https://ggplot2.tidyverse.org/).
-- Interoperability: it can be seamlessly used with `xcms` or raw data (e.g., from mzML).
-- Efficiency: better performance when scaling, compared to current solutions.
+The goal is for `lcmsPlot` to become the community standard for LC-MS data visualisation: versatile for exploration, efficient for large studies, and capable of producing publication-ready figures with minimal effort.
 
 # Installation
 

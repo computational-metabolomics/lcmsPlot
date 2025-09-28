@@ -154,7 +154,7 @@ get_grouped_peaks.default <- function(obj) {
 .get_grouped_peaks_xcms <- function(obj) {
   if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
     as.data.frame(xcms::featureDefinitions(obj)) %>%
-      rename(mz = mzmed, rt = rtmed) %>%
+      rename(all_of(c(mz = "mzmed", rt = "rtmed"))) %>%
       mutate(name = xcms_utils$group_names(obj)) %>%
       xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
   } else {
