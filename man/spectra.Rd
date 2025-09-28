@@ -2,7 +2,7 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{spectra}
 \alias{spectra}
-\title{Define the spectra to plot}
+\title{Define the spectra to plot.}
 \usage{
 spectra(
   sample_ids = NULL,
@@ -22,21 +22,21 @@ spectra(
 
 \item{ms_level}{The MS level to consider for the scan.}
 
-\item{rt}{The RT to consider - mode=closest}
+\item{rt}{The RT to consider - mode=closest.}
 
-\item{scan_index}{The scan index to consider}
+\item{scan_index}{The scan index to consider.}
 
-\item{interval}{The RT interval to consider - mode=across_peak}
+\item{interval}{The RT interval to consider - mode=across_peak.}
 
-\item{spectral_match_db}{The spectral database to match against}
+\item{spectral_match_db}{The spectral database to match against.}
 
-\item{match_target_index}{The target index for the mirror plot (index from the highest scoring)}
+\item{match_target_index}{The target index for the mirror plot (index from the highest scoring).}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the spectra to plot
+Define the spectra to plot.
 }
 \examples{
 raw_files <- dir(
@@ -45,6 +45,6 @@ raw_files <- dir(
    recursive = TRUE)[1]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  spectra(mode = "closest", rt = 2785)
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::spectra(mode = "closest", rt = 2785)
 }

@@ -4,16 +4,10 @@
 \alias{get_XCMSnExp_object_example}
 \title{Get an XCMSnExp example object}
 \usage{
-get_XCMSnExp_object_example(
-  indices = 1:3,
-  should_detect_peaks = FALSE,
-  should_group_peaks = FALSE
-)
+get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = FALSE)
 }
 \arguments{
 \item{indices}{The faahKO package data samples indices}
-
-\item{should_detect_peaks}{Whether to detect peaks}
 
 \item{should_group_peaks}{Whether to group the detected peaks}
 }
@@ -24,5 +18,5 @@ The XCMSnExp object
 Get an XCMSnExp example object
 }
 \examples{
-get_XCMSnExp_object_example(indices = 1:5, should_detect_peaks = TRUE)
+get_XCMSnExp_object_example(indices = 1:5)
 }

@@ -2,22 +2,22 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{grid}
 \alias{grid}
-\title{Define a gridded plot}
+\title{Define a gridded plot.}
 \usage{
 grid(rows, cols, free_y = FALSE)
 }
 \arguments{
-\item{rows}{The factors that represent rows}
+\item{rows}{The factors that represent rows.}
 
-\item{cols}{The factors that represent columns}
+\item{cols}{The factors that represent columns.}
 
-\item{free_y}{Whether the y-axis is free for each row}
+\item{free_y}{Whether the y-axis is free for each row.}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define a gridded plot
+Define a gridded plot.
 }
 \examples{
 raw_files <- dir(
@@ -33,6 +33,6 @@ metadata <- data.frame(
 )
 
 p <- lcmsPlot(raw_files, metadata = metadata) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   grid(rows = "factor1", cols = "factor2")
 }

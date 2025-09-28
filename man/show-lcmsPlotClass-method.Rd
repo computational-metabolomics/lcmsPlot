@@ -2,13 +2,13 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{show,lcmsPlotClass-method}
 \alias{show,lcmsPlotClass-method}
-\title{Plot the lcmsPlotClass object}
+\title{Plot the lcmsPlotClass object.}
 \usage{
 \S4method{show}{lcmsPlotClass}(object)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object}
+\item{object}{The lcmsPlotClass object.}
 }
 \description{
-Plot the lcmsPlotClass object
+Plot the lcmsPlotClass object.
 }

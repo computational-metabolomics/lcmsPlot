@@ -3,19 +3,19 @@
 \docType{class}
 \name{lcmsPlotClass-class}
 \alias{lcmsPlotClass-class}
-\title{lcmsPlotClass class}
+\title{lcmsPlotClass class.}
 \description{
-lcmsPlotClass class
+lcmsPlotClass class.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{options}}{The object options}
+\item{\code{options}}{The object options.}
 
-\item{\code{data}}{The lcmsPlotDataContainer object}
+\item{\code{data}}{The lcmsPlotDataContainer object.}
 
-\item{\code{history}}{The list of the applied layers}
+\item{\code{history}}{The list of the applied layers.}
 
-\item{\code{plot}}{The underlying plot object}
+\item{\code{plot}}{The underlying plot object.}
 }}
 

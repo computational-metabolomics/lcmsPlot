@@ -2,21 +2,21 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{layout}
 \alias{layout}
-\title{Define the plot layout}
+\title{Define the plot layout.}
 \usage{
 layout(design = NULL)
 }
 \arguments{
-\item{design}{Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design)}
+\item{design}{Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design).}
 }
 \description{
-Define the plot layout
+Define the plot layout.
 }
 \examples{
-data_obj <- get_XCMSnExp_object_example(indices = 1, should_detect_peaks = TRUE)
+data_obj <- get_XCMSnExp_object_example(indices = 1)
 
 p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
-  chromatogram(
+  lcmsPlot::chromatogram(
     features = rbind(
       c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
       c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
@@ -24,7 +24,7 @@ p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
     sample_ids = 'ko15',
     highlight_peaks = TRUE
   ) +
-  spectra(mode = "closest_apex", ms_level = 1) +
+  lcmsPlot::spectra(mode = "closest_apex", ms_level = 1) +
   facets(facets = "feature_id", ncol = 2) +
   labels(legend = "Sample") +
   legend(position = "bottom") +

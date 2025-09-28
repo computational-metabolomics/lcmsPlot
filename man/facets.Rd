@@ -2,26 +2,26 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{facets}
 \alias{facets}
-\title{Define plot's faceting}
+\title{Define plot's faceting.}
 \usage{
 facets(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE)
 }
 \arguments{
-\item{facets}{The facet factors from the sample metadata}
+\item{facets}{The facet factors from the sample metadata.}
 
-\item{ncol}{The number of columns}
+\item{ncol}{The number of columns.}
 
-\item{nrow}{The number of rows}
+\item{nrow}{The number of rows.}
 
-\item{free_x}{Allow scales to vary across x}
+\item{free_x}{Allow scales to vary across x.}
 
-\item{free_y}{Allow scales to vary across y}
+\item{free_y}{Allow scales to vary across y.}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define plot's faceting
+Define plot's faceting.
 }
 \examples{
 raw_files <- dir(
@@ -30,6 +30,6 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(aggregation_fun = "max") +
+  lcmsPlot::chromatogram(aggregation_fun = "max") +
   facets(facets = "sample_id")
 }

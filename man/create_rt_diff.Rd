@@ -21,7 +21,7 @@ A lcmsPlotDataContainer object
 Creates an lcmsPlotDataContainer from an RT diff dataset
 }
 \examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_detect_peaks = TRUE, should_group_peaks = TRUE)
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_group_peaks = TRUE)
 data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 opts <- default_options()
 data_container <- create_rt_diff(data_container, opts)

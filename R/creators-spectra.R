@@ -38,7 +38,8 @@ setMethod(
     # Retrieve the spectral library
     spectral_library <- NULL
     if (!is.null(options$spectra$spectral_match_db)) {
-      if (length(options$spectra$spectral_match_db) == 1 & all(endsWith(options$spectra$spectral_match_db, ".msp"))) {
+      if (length(options$spectra$spectral_match_db) == 1 &&
+          all(endsWith(options$spectra$spectral_match_db, ".msp"))) {
         source <- MsBackendMsp::MsBackendMsp()
       } else {
         source <- Spectra::MsBackendMzR()
@@ -68,7 +69,11 @@ setMethod(
           )
         all_spectra <- rbind(all_spectra, spectra)
       } else {
-        features <- get_features(options, sample_metadata, grouped_peaks = grouped_peaks)
+        features <- get_features(
+          options,
+          sample_metadata,
+          grouped_peaks = grouped_peaks
+        )
 
         for (j in seq_len(length(features))) {
           feature_data <- features[[j]]

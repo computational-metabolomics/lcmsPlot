@@ -3,20 +3,20 @@
 \name{is_xcms_object}
 \alias{is_xcms_object}
 \alias{is_xcms_object,lcmsPlotDataContainer-method}
-\title{Check if the lcmsPlotDataContainer data object is an xcms object}
+\title{Check if the lcmsPlotDataContainer data object is an xcms object.}
 \usage{
 is_xcms_object(object)
 
 \S4method{is_xcms_object}{lcmsPlotDataContainer}(object)
 }
 \arguments{
-\item{object}{The lcmsPlotDataContainer object}
+\item{object}{The lcmsPlotDataContainer object.}
 }
 \value{
-Whether the data object is an xcms object
+Whether the data object is an xcms object.
 }
 \description{
-Check if the lcmsPlotDataContainer data object is an xcms object
+Check if the lcmsPlotDataContainer data object is an xcms object.
 }
 \examples{
 raw_files <- dir(

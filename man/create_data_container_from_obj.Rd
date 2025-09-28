@@ -2,22 +2,22 @@
 % Please edit documentation in R/lcmsPlotDataContainer-class.R
 \name{create_data_container_from_obj}
 \alias{create_data_container_from_obj}
-\title{Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)}
+\title{Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp).}
 \usage{
 create_data_container_from_obj(data_obj, sample_id_column, metadata)
 }
 \arguments{
-\item{data_obj}{The data object (e.g., XCMSnExp)}
+\item{data_obj}{The data object (e.g., XCMSnExp).}
 
-\item{sample_id_column}{The sample ID column}
+\item{sample_id_column}{The sample ID column.}
 
-\item{metadata}{The sample metadata in case it's not provided in the data object}
+\item{metadata}{The sample metadata in case it's not provided in the data object.}
 }
 \value{
-The created lcmsPlotDataContainer object
+The created lcmsPlotDataContainer object.
 }
 \description{
-Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
+Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp).
 }
 \examples{
 raw_files <- dir(

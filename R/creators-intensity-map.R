@@ -35,7 +35,8 @@ setMethod(
       rt_range <- options$intensity_maps$rt_range
       mz_range <- options$intensity_maps$mz_range
 
-      idx <- which(hdr$retentionTime >= rt_range[1] & hdr$retentionTime <= rt_range[2])
+      idx <- which(hdr$retentionTime >= rt_range[1] &
+                     hdr$retentionTime <= rt_range[2])
 
       scans <- lapply(idx, function(j) {
         pk <- mzR::peaks(ms, j)
@@ -77,7 +78,11 @@ setMethod(
     }
 
     if (!is.null(options$parallel_param)) {
-      results <- BiocParallel::bplapply(seq_len(nrow(metadata)), process_sample, BPPARAM = options$parallel_param)
+      results <- BiocParallel::bplapply(
+        seq_len(nrow(metadata)),
+        process_sample,
+        BPPARAM = options$parallel_param
+      )
     } else {
       results <- lapply(seq_len(nrow(metadata)), process_sample)
     }

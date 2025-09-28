@@ -453,24 +453,6 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
   legend(position = "bottom")
 ```
 
-```{r}
- data_obj <- get_XCMSnExp_object_example(indices = 1, should_detect_peaks = TRUE)
-
-lcmsPlot(data_obj, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = rbind(
-      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
-    ),
-    sample_ids = 'ko15',
-    highlight_peaks = TRUE) +
-  spectra(mode = "closest_apex", ms_level = 1) +
-  facets(facets = "feature_id", ncol = 2) +
-  labels(legend = "Sample") +
-  legend(position = "bottom") +
-  layout(design = "C\nS\nS")
-```
-
 # Session Info
 
 ```{r}

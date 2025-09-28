@@ -2,7 +2,7 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{lcmsPlot}
 \alias{lcmsPlot}
-\title{Create an lcmsPlotClass object}
+\title{Create an lcmsPlotClass object.}
 \usage{
 lcmsPlot(
   dataset,
@@ -13,19 +13,19 @@ lcmsPlot(
 )
 }
 \arguments{
-\item{dataset}{An object of type XCMSnExp, MsExperiment, or character}
+\item{dataset}{An object of type XCMSnExp, MsExperiment, or character.}
 
-\item{sample_id_column}{Which column should be used as the sample ID}
+\item{sample_id_column}{Which column should be used as the sample ID.}
 
-\item{metadata}{The metadata in case it's not provided in the dataset object}
+\item{metadata}{The metadata in case it's not provided in the dataset object.}
 
-\item{parallel_param}{The BiocParallel object for enabling parallelism}
+\item{parallel_param}{The BiocParallel object for enabling parallelism.}
 
-\item{batch_size}{The number of samples per batch}
+\item{batch_size}{The number of samples per batch.}
 }
 \value{
-An lcmsPlotClass object
+An lcmsPlotClass object.
 }
 \description{
-Create an lcmsPlotClass object
+Create an lcmsPlotClass object.
 }

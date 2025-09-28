@@ -34,12 +34,13 @@ DATASET_TYPES <- c(
   "rt_diff"
 )
 
-#' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp)
+#' Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp).
 #'
-#' @param data_obj The data object (e.g., XCMSnExp)
-#' @param sample_id_column The sample ID column
-#' @param metadata The sample metadata in case it's not provided in the data object
-#' @returns The created lcmsPlotDataContainer object
+#' @param data_obj The data object (e.g., XCMSnExp).
+#' @param sample_id_column The sample ID column.
+#' @param metadata The sample metadata in case it's not provided in the data object.
+#' @returns The created lcmsPlotDataContainer object.
+#' @export
 #' @examples
 #' raw_files <- dir(
 #'    system.file("cdf", package = "faahKO"),
@@ -65,21 +66,21 @@ create_data_container_from_obj <- function(data_obj, sample_id_column, metadata)
       detected_peaks = data.frame())
 }
 
-#' lcmsPlotDataContainer class
+#' lcmsPlotDataContainer class.
 #'
 #' @slot data_obj The data object. One of:
 #' - XCMSnExp
 #' - MsExperiment
 #' - character: vector of sample paths
-#' @slot metadata The sample metadata
-#' @slot chromatograms The chromatograms
-#' @slot mass_traces The mass traces
-#' @slot spectra The spectra
-#' @slot total_ion_current The Total Ion Current (TIC)
-#' @slot intensity_maps The 2D intensity maps
-#' @slot rt_diff The RT difference dataset for RT alignment
-#' @slot additional_metadata Additional information attached to datasets
-#' @slot detected_peaks The detected peaks
+#' @slot metadata The sample metadata.
+#' @slot chromatograms The chromatograms.
+#' @slot mass_traces The mass traces.
+#' @slot spectra The spectra.
+#' @slot total_ion_current The Total Ion Current (TIC).
+#' @slot intensity_maps The 2D intensity maps.
+#' @slot rt_diff The RT difference dataset for RT alignment.
+#' @slot additional_metadata Additional information attached to datasets.
+#' @slot detected_peaks The detected peaks.
 #' @export
 setClass(
   "lcmsPlotDataContainer",
@@ -128,10 +129,10 @@ setValidity("lcmsPlotDataContainer", function(object) {
   ret
 })
 
-#' Check if the lcmsPlotDataContainer data object is an xcms object
+#' Check if the lcmsPlotDataContainer data object is an xcms object.
 #'
-#' @param object The lcmsPlotDataContainer object
-#' @returns Whether the data object is an xcms object
+#' @param object The lcmsPlotDataContainer object.
+#' @returns Whether the data object is an xcms object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -156,6 +157,7 @@ setMethod(
   f = "is_xcms_object",
   signature = c("lcmsPlotDataContainer"),
   function(object) {
-    inherits(object@data_obj, c("XCMSnExp", "MsExperiment"))
+    is_xcms_data(object@data_obj)
+    # inherits(object@data_obj, c("XCMSnExp", "MsExperiment"))
   }
 )

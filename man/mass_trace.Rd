@@ -19,7 +19,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   mass_trace() +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +

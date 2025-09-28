@@ -1,5 +1,17 @@
-plot_total_ion_current <- function(datasets, dataset_type, supporting_datasets, options, single = FALSE) {
-  dataset <- datasets[[dataset_type]]
+#' Plot total ion current.
+#'
+#' @param datasets A list of data frames each corresponding to a dataset to plot.
+#' @param supporting_datasets The supporting datasets (e.g., detected peaks).
+#' @param options The plot object's options.
+#' @param single Whether it is a single dataset variant.
+#' @returns The plot as a ggplot2 object.
+plot_total_ion_current <- function(
+  datasets,
+  supporting_datasets,
+  options,
+  single = FALSE
+) {
+  dataset <- datasets$total_ion_current
 
   extra_layers <- list(legend_title(options))
   extra_layers <- extra_layers[!sapply(extra_layers, is.null)]

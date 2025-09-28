@@ -2,20 +2,20 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{labels}
 \alias{labels}
-\title{Define the labels of the plot, such as title and legend}
+\title{Define the labels of the plot, such as title and legend.}
 \usage{
 labels(title = NULL, legend = NULL)
 }
 \arguments{
-\item{title}{The plot title}
+\item{title}{The plot title.}
 
-\item{legend}{The legend's title}
+\item{legend}{The legend's title.}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the labels of the plot, such as title and legend
+Define the labels of the plot, such as title and legend.
 }
 \examples{
 raw_files <- dir(
@@ -24,7 +24,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")

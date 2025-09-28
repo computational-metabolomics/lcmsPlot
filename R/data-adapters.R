@@ -77,7 +77,7 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
 #'                  sample_group = c("KO", "WT"),
 #'                  stringsAsFactors = FALSE)
 #'
-#' faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+#' faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
 #'
 #' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
 #' faahko <- xcms::findChromPeaks(faahko, param = cwp)
@@ -88,7 +88,7 @@ get_detected_peaks <- function(obj) {
 }
 
 .get_detected_peaks_xcms <- function(obj) {
-  if (xcms::hasChromPeaks(obj)) {
+  if (is_xcms_processed_data(obj) &&xcms::hasChromPeaks(obj)) {
     as.data.frame(xcms::chromPeaks(obj)) %>%
       dplyr::rename(sample_index = sample)
   } else {
@@ -129,7 +129,7 @@ get_detected_peaks.MsExperiment <- function(obj) {
 #'                  sample_group = c("KO", "WT"),
 #'                  stringsAsFactors = FALSE)
 #'
-#' faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+#' faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
 #'
 #' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
 #' faahko <- xcms::findChromPeaks(faahko, param = cwp)
@@ -152,7 +152,7 @@ get_grouped_peaks.default <- function(obj) {
 }
 
 .get_grouped_peaks_xcms <- function(obj) {
-  if (xcms::hasFeatures(obj)) {
+  if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
     as.data.frame(xcms::featureDefinitions(obj)) %>%
       rename(mz = mzmed, rt = rtmed) %>%
       mutate(name = xcms_utils$group_names(obj)) %>%

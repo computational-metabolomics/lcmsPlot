@@ -1,11 +1,11 @@
-#' Create an lcmsPlotClass object
+#' Create an lcmsPlotClass object.
 #'
-#' @param dataset An object of type XCMSnExp, MsExperiment, or character
-#' @param sample_id_column Which column should be used as the sample ID
-#' @param metadata The metadata in case it's not provided in the dataset object
-#' @param parallel_param The BiocParallel object for enabling parallelism
-#' @param batch_size The number of samples per batch
-#' @returns An lcmsPlotClass object
+#' @param dataset An object of type XCMSnExp, MsExperiment, or character.
+#' @param sample_id_column Which column should be used as the sample ID.
+#' @param metadata The metadata in case it's not provided in the dataset object.
+#' @param parallel_param The BiocParallel object for enabling parallelism.
+#' @param batch_size The number of samples per batch.
+#' @returns An lcmsPlotClass object.
 #' @export
 lcmsPlot <- function(
     dataset,
@@ -27,12 +27,12 @@ lcmsPlot <- function(
 
 setOldClass(c("gg", "ggplot"))
 
-#' lcmsPlotClass class
+#' lcmsPlotClass class.
 #'
-#' @slot options The object options
-#' @slot data The lcmsPlotDataContainer object
-#' @slot history The list of the applied layers
-#' @slot plot The underlying plot object
+#' @slot options The object options.
+#' @slot data The lcmsPlotDataContainer object.
+#' @slot history The list of the applied layers.
+#' @slot plot The underlying plot object.
 #' @export
 setClass(
   "lcmsPlotClass",
@@ -50,10 +50,10 @@ setClass(
   )
 )
 
-#' Apply a function to the lcmsPlotClass object
+#' Apply a function to the lcmsPlotClass object.
 #'
-#' @param e1 A lcmsPlotClass object
-#' @param e2 A function that takes a lcmsPlotClass object and returns another
+#' @param e1 A lcmsPlotClass object.
+#' @param e2 A function that takes a lcmsPlotClass object and returns another.
 #' @export
 setMethod(
   f = "+",
@@ -61,10 +61,10 @@ setMethod(
   definition = function(e1, e2) { e2(e1) }
 )
 
-#' Set the plot for an lcmsPlotClass object
+#' Set the plot for an lcmsPlotClass object.
 #'
-#' @param object The lcmsPlotClass object
-#' @param additional_datasets Additional datasets to include in the plotting
+#' @param object The lcmsPlotClass object.
+#' @param additional_datasets Additional datasets to include in the plotting.
 #' @export
 setGeneric(
   "set_plot",
@@ -89,10 +89,18 @@ setMethod(
           stop("Empty dataset ", dataset_name)
         }
 
-        data_df <- merge_by_index(data_df, object@data@metadata, index_col = 'metadata_index')
+        data_df <- merge_by_index(
+          data_df,
+          object@data@metadata,
+          index_col = 'metadata_index'
+        )
 
         if (nrow(object@data@additional_metadata) > 0) {
-          data_df <- merge_by_index(data_df, object@data@additional_metadata, index_col = 'additional_metadata_index')
+          data_df <- merge_by_index(
+            data_df,
+            object@data@additional_metadata,
+            index_col = 'additional_metadata_index'
+          )
         }
 
         return(data_df)
@@ -109,9 +117,9 @@ setMethod(
   }
 )
 
-#' Set the plot for an lcmsPlotClass object
+#' Set the plot for an lcmsPlotClass object.
 #'
-#' @param object The lcmsPlotClass object
+#' @param object The lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -120,7 +128,7 @@ setMethod(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -145,10 +153,10 @@ setMethod(
   }
 )
 
-#' Iterate on the batches of plots
+#' Iterate on the batches of plots.
 #'
-#' @param object The lcmsPlotClass object
-#' @param iter_fn The function to apply to each item being iterated on
+#' @param object The lcmsPlotClass object.
+#' @param iter_fn The function to apply to each item being iterated on.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -157,7 +165,7 @@ setMethod(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -183,7 +191,8 @@ setMethod(
     sample_ids <- object@data@metadata$sample_id # object@options$chromatograms$sample_ids
 
     if (length(sample_ids) > object@options$batch_size) {
-      batches <- split(sample_ids, ceiling(seq_along(sample_ids) / object@options$batch_size))
+      split_f <- ceiling(seq_along(sample_ids) / object@options$batch_size)
+      batches <- split(sample_ids, split_f)
     } else {
       batches <- list(sample_ids)
     }
@@ -200,9 +209,9 @@ setMethod(
   }
 )
 
-#' Plot the lcmsPlotClass object
+#' Plot the lcmsPlotClass object.
 #'
-#' @param object The lcmsPlotClass object
+#' @param object The lcmsPlotClass object.
 #' @export
 setMethod(
   f = "show",
@@ -250,7 +259,7 @@ make_interface_function <- function(name, args_list, fn) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(aggregation_fun = "max") +
+#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -277,8 +286,10 @@ chromatogram <- function(
         sample_ids <- obj@data@metadata$sample_id
       }
 
-      if (!is.null(obj@options$batch_size) && length(sample_ids) > obj@options$batch_size) {
-        batches <- split(sample_ids, ceiling(seq_along(sample_ids) / obj@options$batch_size))
+      if (!is.null(obj@options$batch_size) &&
+          length(sample_ids) > obj@options$batch_size) {
+        split_f <- ceiling(seq_along(sample_ids) / obj@options$batch_size)
+        batches <- split(sample_ids, split_f)
         batch_sample_ids <- batches[[obj@options$batch_index]]
       } else {
         batch_sample_ids <- sample_ids
@@ -325,7 +336,7 @@ chromatogram <- function(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   mass_trace() +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
@@ -341,17 +352,17 @@ mass_trace <- function() {
   )
 }
 
-#' Define the spectra to plot
+#' Define the spectra to plot.
 #'
 #' @param sample_ids The sample IDs to consider. If NULL it will use the chromatogram ones.
 #' @param mode The method to choose the scan. One of: closest, closest_apex, across_peak.
 #' @param ms_level The MS level to consider for the scan.
-#' @param rt The RT to consider - mode=closest
-#' @param scan_index The scan index to consider
-#' @param interval The RT interval to consider - mode=across_peak
-#' @param spectral_match_db The spectral database to match against
-#' @param match_target_index The target index for the mirror plot (index from the highest scoring)
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param rt The RT to consider - mode=closest.
+#' @param scan_index The scan index to consider.
+#' @param interval The RT interval to consider - mode=across_peak.
+#' @param spectral_match_db The spectral database to match against.
+#' @param match_target_index The target index for the mirror plot (index from the highest scoring).
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -360,8 +371,8 @@ mass_trace <- function() {
 #'    recursive = TRUE)[1]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   spectra(mode = "closest", rt = 2785)
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::spectra(mode = "closest", rt = 2785)
 spectra <- function(
   sample_ids = NULL,
   mode = 'closest_apex',
@@ -410,12 +421,9 @@ spectra <- function(
 #' @param type The type of plot; one of "boxplot", "violin", "jitter".
 #' @export
 #' @examples
-#' raw_files <- dir(
-#'    system.file("cdf", package = "faahKO"),
-#'    full.names = TRUE,
-#'    recursive = TRUE)[1:5]
+#' data_obj <- get_XCMSnExp_object_example()
 #'
-#' p <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
 #'   total_ion_current(type = "violin") +
 #'   arrange(group_by = "sample_id") +
 #'   labels(title = "Total ion current", legend = "Sample ID")
@@ -441,13 +449,13 @@ total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
   }
 }
 
-#' Define a 2D intensity map
+#' Define a 2D intensity map.
 #'
-#' @param mz_range The m/z range of the map
-#' @param rt_range The RT range of the map
-#' @param sample_ids The sample IDs to select
-#' @param density Whether to show a density or a point-cloud plot
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param mz_range The m/z range of the map.
+#' @param rt_range The RT range of the map.
+#' @param sample_ids The sample IDs to select.
+#' @param density Whether to show a density or a point-cloud plot.
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -457,7 +465,12 @@ total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #'
 #' p <- lcmsPlot(raw_files) +
 #'   intensity_map(mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE)
-intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE) {
+intensity_map <- function(
+  mz_range,
+  rt_range,
+  sample_ids = NULL,
+  density = FALSE
+) {
   function(obj) {
     if (is.null(sample_ids)) {
       sample_ids <- obj@data@metadata$sample_id
@@ -477,12 +490,12 @@ intensity_map <- function(mz_range, rt_range, sample_ids = NULL, density = FALSE
   }
 }
 
-#' Define the RT difference plot between raw and adjusted datasets
+#' Define the RT difference plot between raw and adjusted datasets.
 #'
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
-#' data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_detect_peaks = TRUE, should_group_peaks = TRUE)
+#' data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = TRUE)
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
 #'   rt_diff_plot()
 rt_diff_plot <- function() {
@@ -502,10 +515,10 @@ rt_diff_plot <- function() {
   }
 }
 
-#' Define the arrangement of chromatograms
+#' Define the arrangement of chromatograms.
 #'
-#' @param group_by The column to group by (in the samples metadata)
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param group_by The column to group by (in the samples metadata).
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -514,7 +527,7 @@ rt_diff_plot <- function() {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(aggregation_fun = "max") +
+#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -531,14 +544,14 @@ arrange <- function(group_by) {
   )
 }
 
-#' Define plot's faceting
+#' Define plot's faceting.
 #'
-#' @param facets The facet factors from the sample metadata
-#' @param ncol The number of columns
-#' @param nrow The number of rows
-#' @param free_x Allow scales to vary across x
-#' @param free_y Allow scales to vary across y
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param facets The facet factors from the sample metadata.
+#' @param ncol The number of columns.
+#' @param nrow The number of rows.
+#' @param free_x Allow scales to vary across x.
+#' @param free_y Allow scales to vary across y.
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -547,9 +560,15 @@ arrange <- function(group_by) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(aggregation_fun = "max") +
+#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
 #'   facets(facets = "sample_id")
-facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FALSE) {
+facets <- function(
+  facets,
+  ncol = NULL,
+  nrow = NULL,
+  free_x = FALSE,
+  free_y = FALSE
+) {
   make_interface_function(
     name = "facets",
     args_list = as.list(environment()),
@@ -566,12 +585,12 @@ facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FA
   )
 }
 
-#' Define a gridded plot
+#' Define a gridded plot.
 #'
-#' @param rows The factors that represent rows
-#' @param cols The factors that represent columns
-#' @param free_y Whether the y-axis is free for each row
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param rows The factors that represent rows.
+#' @param cols The factors that represent columns.
+#' @param free_y Whether the y-axis is free for each row.
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -587,7 +606,7 @@ facets <- function(facets, ncol = NULL, nrow = NULL, free_x = FALSE, free_y = FA
 #' )
 #'
 #' p <- lcmsPlot(raw_files, metadata = metadata) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   grid(rows = "factor1", cols = "factor2")
 grid <- function(rows, cols, free_y = FALSE) {
   make_interface_function(
@@ -604,11 +623,11 @@ grid <- function(rows, cols, free_y = FALSE) {
   )
 }
 
-#' Define the labels of the plot, such as title and legend
+#' Define the labels of the plot, such as title and legend.
 #'
-#' @param title The plot title
-#' @param legend The legend's title
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @param title The plot title.
+#' @param legend The legend's title.
+#' @returns A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -617,7 +636,7 @@ grid <- function(rows, cols, free_y = FALSE) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -635,9 +654,9 @@ labels <- function(title = NULL, legend = NULL) {
   )
 }
 
-#' Define the legend layout
+#' Define the legend layout.
 #'
-#' @param position The legend position
+#' @param position The legend's position.
 #' @returns A function that takes and returns a lcmsPlotClass object
 #' @export
 #' @examples
@@ -647,7 +666,7 @@ labels <- function(title = NULL, legend = NULL) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   arrange(group_by = "sample_id") +
 #'   legend(position = "bottom") +
 #'   labels(legend = "Sample")
@@ -677,7 +696,7 @@ legend <- function(position = NULL)  {
 #'    recursive = TRUE)[1:4]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   facets(facets = 'sample_id', ncol = 4) +
 #'   rt_line(intercept = 2800, line_type = 'solid', color = 'red')
 rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
@@ -696,15 +715,15 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
   )
 }
 
-#' Define the plot layout
+#' Define the plot layout.
 #'
-#' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design)
+#' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design).
 #' @export
 #' @examples
-#' data_obj <- get_XCMSnExp_object_example(indices = 1, should_detect_peaks = TRUE)
+#' data_obj <- get_XCMSnExp_object_example(indices = 1)
 #'
 #' p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
-#'   chromatogram(
+#'   lcmsPlot::chromatogram(
 #'     features = rbind(
 #'       c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
 #'       c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
@@ -712,7 +731,7 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #'     sample_ids = 'ko15',
 #'     highlight_peaks = TRUE
 #'   ) +
-#'   spectra(mode = "closest_apex", ms_level = 1) +
+#'   lcmsPlot::spectra(mode = "closest_apex", ms_level = 1) +
 #'   facets(facets = "feature_id", ncol = 2) +
 #'   labels(legend = "Sample") +
 #'   legend(position = "bottom") +
@@ -730,7 +749,7 @@ layout <- function(design = NULL) {
   )
 }
 
-#' Get the underlying plot object
+#' Get the underlying plot object.
 #'
 #' @export
 #' @examples
@@ -740,11 +759,11 @@ layout <- function(design = NULL) {
 #'    recursive = TRUE)[1:4]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
 #'   facets(facets = 'sample_id', ncol = 4) +
 #'   rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
 #'   get_plot() +
-#'   theme_bw()
+#'   ggplot2::theme_bw()
 get_plot <- function() {
   function(obj) {
     obj <- set_plot(obj, additional_datasets = list())

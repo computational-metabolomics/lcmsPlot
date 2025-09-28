@@ -1,5 +1,17 @@
-plot_chromatogram <- function(datasets, dataset_type, supporting_datasets, options, single = FALSE) {
-  dataset <- datasets[[dataset_type]]
+#' Plot a chromatogram.
+#'
+#' @param datasets A list of data frames each corresponding to a dataset to plot.
+#' @param supporting_datasets The supporting datasets (e.g., detected peaks).
+#' @param options The plot object's options.
+#' @param single Whether it is a single dataset variant.
+#' @returns The plot as a ggplot2 object.
+plot_chromatogram <- function(
+  datasets,
+  supporting_datasets,
+  options,
+  single = FALSE
+) {
+  dataset <- datasets$chromatograms
 
   grouping_vars <- get_grouping_variables(options)
 

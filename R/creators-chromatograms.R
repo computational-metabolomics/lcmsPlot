@@ -1,11 +1,11 @@
-#' Creates a lcmsPlotDataContainer from feature IDs
+#' Create a lcmsPlotDataContainer from feature IDs.
 #'
-#' @param obj A lcmsPlotDataContainer object
-#' @param options The options
-#' @returns A lcmsPlotDataContainer object
+#' @param obj A lcmsPlotDataContainer object.
+#' @param options The plot object's options.
+#' @returns A lcmsPlotDataContainer object.
 #' @export
 #' @examples
-#' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_detect_peaks = TRUE, should_group_peaks = TRUE)
+#' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_group_peaks = TRUE)
 #' data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 #'
 #' opts <- default_options()
@@ -29,10 +29,12 @@ setMethod(
       stop("To use feature IDs from the grouped peaks you need to provide an xcms object.")
     }
 
-    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
+    metadata <- obj@metadata %>%
+      filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_get_raw_data(metadata$sample_path)
     all_detected_peaks <- get_detected_peaks(obj@data_obj)
-    grouped_peaks <- get_grouped_peaks(obj@data_obj) %>% filter(.data$name %in% options$chromatograms$features)
+    grouped_peaks <- get_grouped_peaks(obj@data_obj) %>%
+      filter(.data$name %in% options$chromatograms$features)
     detected_peaks <- data.frame()
 
     chromatograms <- data.frame()
@@ -41,8 +43,15 @@ setMethod(
 
     for (i in seq_len(nrow(grouped_peaks))) {
       feature <- grouped_peaks[i,]
-      rtr <- c(feature$rt - options$chromatograms$rt_tol, feature$rt + options$chromatograms$rt_tol)
-      peak_indices <- as.numeric(unlist(strsplit(feature %>% pull(.data$peakidx), ',')))
+      rtr <- c(
+        feature$rt - options$chromatograms$rt_tol,
+        feature$rt + options$chromatograms$rt_tol
+      )
+      peak_indices <- feature %>%
+        pull(.data$peakidx) %>%
+        strsplit(',') %>%
+        unlist() %>%
+        as.numeric()
       peaks <- all_detected_peaks %>%
         filter(
           row_number() %in% peak_indices,
@@ -55,7 +64,8 @@ setMethod(
       for (j in seq_len(nrow(peaks))) {
         peak <- peaks[j,]
         mzr <- get_mz_range(peak$mz, options$chromatograms$ppm)
-        sample_metadata <- metadata %>% filter(.data$sample_index == peak$sample_index)
+        sample_metadata <- metadata %>%
+          filter(.data$sample_index == peak$sample_index)
         raw_obj <- raw_data[[sample_metadata$sample_path]]
 
         data <- create_chromatogram(
@@ -141,7 +151,11 @@ setMethod(
       additional_metadata_list <- list()
       detected_peaks_list <- list()
 
-      features <- get_features(options, sample_metadata, full_rt_range = full_rt_range)
+      features <- get_features(
+        options,
+        sample_metadata,
+        full_rt_range = full_rt_range
+      )
 
       for (j in seq_len(length(features))) {
         feature_data <- features[[j]]
@@ -247,7 +261,8 @@ setMethod(
   f = "create_full_rt_chromatograms",
   signature = c("lcmsPlotDataContainer", "list"),
   definition = function(obj, options) {
-    metadata <- obj@metadata %>% filter(.data$sample_id %in% options$chromatograms$sample_ids)
+    metadata <- obj@metadata %>%
+      filter(.data$sample_id %in% options$chromatograms$sample_ids)
     raw_data <- io_get_raw_data(metadata$sample_path)
 
     process_sample <- function(i) {
@@ -265,7 +280,11 @@ setMethod(
         rt_adjusted <- NULL
       }
 
-      data <- create_bpc_tic(raw_obj, options$chromatograms$aggregation_fun, rt_adjusted)
+      data <- create_bpc_tic(
+        raw_obj,
+        options$chromatograms$aggregation_fun,
+        rt_adjusted
+      )
 
       data.frame(
         rt = data$chromatograms$rt,

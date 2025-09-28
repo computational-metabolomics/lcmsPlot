@@ -2,18 +2,18 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{legend}
 \alias{legend}
-\title{Define the legend layout}
+\title{Define the legend layout.}
 \usage{
 legend(position = NULL)
 }
 \arguments{
-\item{position}{The legend position}
+\item{position}{The legend's position.}
 }
 \value{
 A function that takes and returns a lcmsPlotClass object
 }
 \description{
-Define the legend layout
+Define the legend layout.
 }
 \examples{
 raw_files <- dir(
@@ -22,7 +22,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")

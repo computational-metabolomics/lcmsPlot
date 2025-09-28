@@ -2,15 +2,15 @@
 % Please edit documentation in R/options.R
 \name{default_options}
 \alias{default_options}
-\title{Get the default options}
+\title{Get the default options.}
 \usage{
 default_options()
 }
 \value{
-The default options
+The default options.
 }
 \description{
-Get the default options
+Get the default options.
 }
 \examples{
 def_opts <- default_options()

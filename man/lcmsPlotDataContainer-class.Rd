@@ -3,9 +3,9 @@
 \docType{class}
 \name{lcmsPlotDataContainer-class}
 \alias{lcmsPlotDataContainer-class}
-\title{lcmsPlotDataContainer class}
+\title{lcmsPlotDataContainer class.}
 \description{
-lcmsPlotDataContainer class
+lcmsPlotDataContainer class.
 }
 \section{Slots}{
 
@@ -17,22 +17,22 @@ lcmsPlotDataContainer class
 \item character: vector of sample paths
 }}
 
-\item{\code{metadata}}{The sample metadata}
+\item{\code{metadata}}{The sample metadata.}
 
-\item{\code{chromatograms}}{The chromatograms}
+\item{\code{chromatograms}}{The chromatograms.}
 
-\item{\code{mass_traces}}{The mass traces}
+\item{\code{mass_traces}}{The mass traces.}
 
-\item{\code{spectra}}{The spectra}
+\item{\code{spectra}}{The spectra.}
 
-\item{\code{total_ion_current}}{The Total Ion Current (TIC)}
+\item{\code{total_ion_current}}{The Total Ion Current (TIC).}
 
-\item{\code{intensity_maps}}{The 2D intensity maps}
+\item{\code{intensity_maps}}{The 2D intensity maps.}
 
-\item{\code{rt_diff}}{The RT difference dataset for RT alignment}
+\item{\code{rt_diff}}{The RT difference dataset for RT alignment.}
 
-\item{\code{additional_metadata}}{Additional information attached to datasets}
+\item{\code{additional_metadata}}{Additional information attached to datasets.}
 
-\item{\code{detected_peaks}}{The detected peaks}
+\item{\code{detected_peaks}}{The detected peaks.}
 }}
 

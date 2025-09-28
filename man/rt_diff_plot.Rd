@@ -2,18 +2,18 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{rt_diff_plot}
 \alias{rt_diff_plot}
-\title{Define the RT difference plot between raw and adjusted datasets}
+\title{Define the RT difference plot between raw and adjusted datasets.}
 \usage{
 rt_diff_plot()
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the RT difference plot between raw and adjusted datasets
+Define the RT difference plot between raw and adjusted datasets.
 }
 \examples{
-data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_detect_peaks = TRUE, should_group_peaks = TRUE)
+data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = TRUE)
 p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
   rt_diff_plot()
 }

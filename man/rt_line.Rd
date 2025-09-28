@@ -23,7 +23,7 @@ raw_files <- dir(
    recursive = TRUE)[1:4]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   facets(facets = 'sample_id', ncol = 4) +
   rt_line(intercept = 2800, line_type = 'solid', color = 'red')
 }

@@ -3,17 +3,17 @@
 \name{set_plot}
 \alias{set_plot}
 \alias{set_plot,lcmsPlotClass,list-method}
-\title{Set the plot for an lcmsPlotClass object}
+\title{Set the plot for an lcmsPlotClass object.}
 \usage{
 set_plot(object, additional_datasets)
 
 \S4method{set_plot}{lcmsPlotClass,list}(object, additional_datasets)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object}
+\item{object}{The lcmsPlotClass object.}
 
-\item{additional_datasets}{Additional datasets to include in the plotting}
+\item{additional_datasets}{Additional datasets to include in the plotting.}
 }
 \description{
-Set the plot for an lcmsPlotClass object
+Set the plot for an lcmsPlotClass object.
 }

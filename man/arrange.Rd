@@ -2,18 +2,18 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{arrange}
 \alias{arrange}
-\title{Define the arrangement of chromatograms}
+\title{Define the arrangement of chromatograms.}
 \usage{
 arrange(group_by)
 }
 \arguments{
-\item{group_by}{The column to group by (in the samples metadata)}
+\item{group_by}{The column to group by (in the samples metadata).}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define the arrangement of chromatograms
+Define the arrangement of chromatograms.
 }
 \examples{
 raw_files <- dir(
@@ -22,7 +22,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(aggregation_fun = "max") +
+  lcmsPlot::chromatogram(aggregation_fun = "max") +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")

@@ -8,7 +8,9 @@ plot_variants <- list(
     variant = plot_single_dataset
   ),
   list(
-    condition = function(datasets, options) !is_facet(options) & !is_grid(options),
+    condition = function(datasets, options) {
+      !is_facet(options) && !is_grid(options)
+    },
     variant = plot_multiple_datasets
   ),
   list(
@@ -21,6 +23,11 @@ plot_variants <- list(
   )
 )
 
+#' Execute the suitable plot variant given the datasets and options.
+#'
+#' @param datasets A list of data frames each corresponding to a dataset to plot.
+#' @param obj The lcmsPlot object.
+#' @returns The patchwork plot object.
 run_matching_plot_variant <- function(datasets, obj) {
   plot_config <- list(
     chromatograms = plot_chromatogram,
@@ -40,14 +47,18 @@ run_matching_plot_variant <- function(datasets, obj) {
   stop("No plot variant applicable")
 }
 
+#' Plot the processed data (e.g., chromatograms)
+#'
+#' @param datasets A list of data frames each corresponding to a dataset to plot.
+#' @param obj The lcmsPlot object.
+#' @returns The patchwork plot object.
 plot_data <- function(datasets, obj) {
   result_plot <- run_matching_plot_variant(datasets, obj)
 
   result_plot <- result_plot +
     patchwork::plot_annotation(title = obj@options$labels$title) +
-    patchwork::plot_layout(axes = "collect", guides = "collect") & theme(legend.position = obj@options$legend$position)
+    patchwork::plot_layout(axes = "collect", guides = "collect") &
+    theme(legend.position = obj@options$legend$position)
 
   return(result_plot)
 }
-
-

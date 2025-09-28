@@ -2,24 +2,24 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{intensity_map}
 \alias{intensity_map}
-\title{Define a 2D intensity map}
+\title{Define a 2D intensity map.}
 \usage{
 intensity_map(mz_range, rt_range, sample_ids = NULL, density = FALSE)
 }
 \arguments{
-\item{mz_range}{The m/z range of the map}
+\item{mz_range}{The m/z range of the map.}
 
-\item{rt_range}{The RT range of the map}
+\item{rt_range}{The RT range of the map.}
 
-\item{sample_ids}{The sample IDs to select}
+\item{sample_ids}{The sample IDs to select.}
 
-\item{density}{Whether to show a density or a point-cloud plot}
+\item{density}{Whether to show a density or a point-cloud plot.}
 }
 \value{
-A function that takes and returns a lcmsPlotClass object
+A function that takes and returns a lcmsPlotClass object.
 }
 \description{
-Define a 2D intensity map
+Define a 2D intensity map.
 }
 \examples{
 raw_files <- dir(

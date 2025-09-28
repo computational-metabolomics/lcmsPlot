@@ -1,3 +1,8 @@
+#' Create a spectrum of the closest scan to the specified RT.
+#'
+#' @param raw_data An mzR object.
+#' @param rt The RT to consider.
+#' @param ms_level The MS level of the scans.
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
   hdr <- mzR::header(raw_data)
 
@@ -23,9 +28,22 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
   return(spectrum_df)
 }
 
-create_spectrum_from_scan_index <- function(raw_data, sample_metadata, scan_index) {
+#' Create a spectrum of the specified scan.
+#'
+#' @param raw_data An mzR object.
+#' @param sample_metadata The sample metadata.
+#' @param scan_index The scan index.
+create_spectrum_from_scan_index <- function(
+  raw_data,
+  sample_metadata,
+  scan_index
+) {
   hdr <- mzR::header(raw_data)
-  sidx <- ifelse(is.character(scan_index), sample_metadata[[scan_index]], scan_index)
+  if (is.character(scan_index)) {
+    sidx <- sample_metadata[[scan_index]]
+  } else {
+    sidx <- scan_index
+  }
   spectrum_data <- mzR::peaks(raw_data, sidx)
   spectrum_df <- data.frame(
     mz = spectrum_data[, 1],
@@ -35,12 +53,32 @@ create_spectrum_from_scan_index <- function(raw_data, sample_metadata, scan_inde
   return(spectrum_df)
 }
 
-create_spectra_for_sample <- function(raw_obj, detected_peaks, sample_metadata, options, rt_range = NULL) {
+#' Create spectra for a single sample.
+#'
+#' @param raw_obj An mzR object.
+#' @param detected_peaks The detected peaks to consider.
+#' Only for modes 'closest_apex' and 'across_peak'.
+#' @param sample_metadata The sample's metadata.
+#' @param options The plot object's options.
+#' @param rt_range The RT range to apply to the detected peaks.
+#' @returns A data frame representing spectra
+#' with columns 'mz', 'intensity', and 'rt'.
+create_spectra_for_sample <- function(
+  raw_obj,
+  detected_peaks,
+  sample_metadata,
+  options,
+  rt_range = NULL
+) {
   spectra <- NULL
   sid <- sample_metadata$sample_id
 
   if (!is.null(options$spectra$scan_index)) {
-    spectra <- create_spectrum_from_scan_index(raw_obj, sample_metadata, options$spectra$scan_index)
+    spectra <- create_spectrum_from_scan_index(
+      raw_obj,
+      sample_metadata,
+      options$spectra$scan_index
+    )
   } else if (options$spectra$mode == "closest" & !is.null(options$spectra$rt)) {
     # TODO: check if RT is outside range
     # If different RTs are supplied depending on the sample ID

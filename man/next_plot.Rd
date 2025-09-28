@@ -3,17 +3,17 @@
 \name{next_plot}
 \alias{next_plot}
 \alias{next_plot,lcmsPlotClass-method}
-\title{Set the plot for an lcmsPlotClass object}
+\title{Set the plot for an lcmsPlotClass object.}
 \usage{
 next_plot(object)
 
 \S4method{next_plot}{lcmsPlotClass}(object)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object}
+\item{object}{The lcmsPlotClass object.}
 }
 \description{
-Set the plot for an lcmsPlotClass object
+Set the plot for an lcmsPlotClass object.
 }
 \examples{
 raw_files <- dir(
@@ -22,7 +22,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")

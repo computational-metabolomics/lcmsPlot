@@ -3,25 +3,25 @@
 \name{create_chromatograms_from_feature_ids}
 \alias{create_chromatograms_from_feature_ids}
 \alias{create_chromatograms_from_feature_ids,lcmsPlotDataContainer,list-method}
-\title{Creates a lcmsPlotDataContainer from feature IDs}
+\title{Create a lcmsPlotDataContainer from feature IDs.}
 \usage{
 create_chromatograms_from_feature_ids(obj, options)
 
 \S4method{create_chromatograms_from_feature_ids}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object}
+\item{obj}{A lcmsPlotDataContainer object.}
 
-\item{options}{The options}
+\item{options}{The plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object
+A lcmsPlotDataContainer object.
 }
 \description{
-Creates a lcmsPlotDataContainer from feature IDs
+Create a lcmsPlotDataContainer from feature IDs.
 }
 \examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_detect_peaks = TRUE, should_group_peaks = TRUE)
+data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_group_peaks = TRUE)
 data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 
 opts <- default_options()

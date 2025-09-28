@@ -32,7 +32,7 @@ pd <- data.frame(sample_name = sample_names,
                  sample_group = c("KO", "WT"),
                  stringsAsFactors = FALSE)
 
-faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
 
 cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
 faahko <- xcms::findChromPeaks(faahko, param = cwp)

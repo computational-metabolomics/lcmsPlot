@@ -3,19 +3,19 @@
 \name{iterate_plot_batches}
 \alias{iterate_plot_batches}
 \alias{iterate_plot_batches,lcmsPlotClass,function-method}
-\title{Iterate on the batches of plots}
+\title{Iterate on the batches of plots.}
 \usage{
 iterate_plot_batches(object, iter_fn)
 
 \S4method{iterate_plot_batches}{lcmsPlotClass,function}(object, iter_fn)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object}
+\item{object}{The lcmsPlotClass object.}
 
-\item{iter_fn}{The function to apply to each item being iterated on}
+\item{iter_fn}{The function to apply to each item being iterated on.}
 }
 \description{
-Iterate on the batches of plots
+Iterate on the batches of plots.
 }
 \examples{
 raw_files <- dir(
@@ -24,7 +24,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
+  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")

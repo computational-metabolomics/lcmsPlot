@@ -2,15 +2,15 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{+,lcmsPlotClass,function-method}
 \alias{+,lcmsPlotClass,function-method}
-\title{Apply a function to the lcmsPlotClass object}
+\title{Apply a function to the lcmsPlotClass object.}
 \usage{
 \S4method{+}{lcmsPlotClass,function}(e1, e2)
 }
 \arguments{
-\item{e1}{A lcmsPlotClass object}
+\item{e1}{A lcmsPlotClass object.}
 
-\item{e2}{A function that takes a lcmsPlotClass object and returns another}
+\item{e2}{A function that takes a lcmsPlotClass object and returns another.}
 }
 \description{
-Apply a function to the lcmsPlotClass object
+Apply a function to the lcmsPlotClass object.
 }

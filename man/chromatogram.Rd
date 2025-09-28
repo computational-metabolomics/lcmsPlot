@@ -60,7 +60,7 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files) +
-  chromatogram(aggregation_fun = "max") +
+  lcmsPlot::chromatogram(aggregation_fun = "max") +
   arrange(group_by = "sample_id") +
   legend(position = "bottom") +
   labels(legend = "Sample")
