@@ -35,7 +35,7 @@ get_metadata.character <- function(obj, sample_id_column, metadata) {
 #' @export
 get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
   if (!is.null(metadata)) {
-    xcms::phenoData(obj) <- new("NAnnotatedDataFrame", metadata)
+    xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
   }
 
   xcms::phenoData(obj)@data %>%

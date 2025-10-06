@@ -36,7 +36,7 @@ get_XCMSnExp_object <- function(should_detect_peaks = FALSE, should_group_peaks 
 
   raw_data <- MSnbase::readMSData(
     files = cdfs,
-    pdata = new("NAnnotatedDataFrame", pd),
+    pdata = new("AnnotatedDataFrame", pd),
     mode = "onDisk",
     msLevel = 1)
 

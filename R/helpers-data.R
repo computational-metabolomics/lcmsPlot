@@ -58,7 +58,7 @@ get_XCMSnExp_object_example <- function(
 
   raw_data <- MSnbase::readMSData(
     files = cdfs,
-    pdata = new("NAnnotatedDataFrame", pd),
+    pdata = new("AnnotatedDataFrame", pd),
     mode = "onDisk",
     msLevel = 1
   )
