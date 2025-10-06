@@ -43,17 +43,17 @@ get_XCMSnExp_object <- function(should_detect_peaks = FALSE, should_group_peaks 
   xdata <- as(raw_data, "XCMSnExp")
 
   if (should_detect_peaks) {
-    cwp <- CentWaveParam(peakwidth = c(20, 80), noise = 10000, prefilter = c(6, 10000))
-    xdata <- findChromPeaks(xdata, param = cwp)
+    cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 10000, prefilter = c(6, 10000))
+    xdata <- xcms::findChromPeaks(xdata, param = cwp)
   }
 
   if (should_detect_peaks && should_group_peaks) {
-    xdata <- adjustRtime(xdata, param = ObiwarpParam(binSize = 0.6))
-    pdp <- PeakDensityParam(
+    xdata <- xcms::adjustRtime(xdata, param = xcms::ObiwarpParam(binSize = 0.6))
+    pdp <- xcms::PeakDensityParam(
       sampleGroups = pd$sample_group,
       minFraction = 1,
       bw = 30)
-    xdata <- groupChromPeaks(xdata, param = pdp)
+    xdata <- xcms::groupChromPeaks(xdata, param = pdp)
   }
 
   xdata
