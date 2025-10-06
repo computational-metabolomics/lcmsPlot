@@ -221,7 +221,7 @@ Next, let’s explore some plots that illustrate the effect of retention time al
 First, we’ll perform the retention time alignment/adjustment:
 
 ```{r}
-faahko <- xcms::adjustRtime(faahko, param = ObiwarpParam(binSize = 0.6))
+faahko <- xcms::adjustRtime(faahko, param = xcms::ObiwarpParam(binSize = 0.6))
 ```
 
 Now, we can visualise the BPC for the raw and corrected datasets:
@@ -242,7 +242,7 @@ bpc_rt_adjusted <- lcmsPlot(faahko, sample_id_column = "sample_name") +
   get_plot()
 
 (bpc[[1]] / bpc_rt_adjusted[[1]]) +
-  plot_layout(guides = "collect", axes = "collect") &
+  patchwork::plot_layout(guides = "collect", axes = "collect") &
   ggplot2::theme(legend.position = "bottom")
 ```
 
