@@ -30,7 +30,8 @@ library(BiocStyle)
 library(faahKO)
 library(MsExperiment)
 library(lcmsPlot)
-register(SerialParam())
+
+BiocParallel::register(BiocParallel::SerialParam())
 ```
 
 # Introduction
