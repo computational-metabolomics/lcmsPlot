@@ -149,7 +149,7 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
 Below, we build intensity density maps from two samples:
 
 ```{r}
-lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = MulticoreParam(workers = 2)) +
+lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = BiocParallel::MulticoreParam(workers = 2)) +
   intensity_map(sample_ids = c("ko15", "wt15"), mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE) +
   facets(facets = "sample_id", ncol = 2)
 ```
