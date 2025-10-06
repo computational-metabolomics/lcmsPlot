@@ -5,7 +5,7 @@
 #' @param metadata The metadata in case it's not provided in the dataset object.
 #' @param parallel_param The BiocParallel object for enabling parallelism.
 #' @param batch_size The number of samples per batch.
-#' @returns An lcmsPlotClass object.
+#' @return An lcmsPlotClass object.
 #' @export
 lcmsPlot <- function(
     dataset,
@@ -54,6 +54,7 @@ setClass(
 #'
 #' @param e1 A lcmsPlotClass object.
 #' @param e2 A function that takes a lcmsPlotClass object and returns another.
+#' @return An lcmsPlotClass object.
 #' @export
 setMethod(
   f = "+",
@@ -65,6 +66,7 @@ setMethod(
 #'
 #' @param object The lcmsPlotClass object.
 #' @param additional_datasets Additional datasets to include in the plotting.
+#' @return An lcmsPlotClass object.
 #' @export
 setGeneric(
   "set_plot",
@@ -117,10 +119,11 @@ setMethod(
   }
 )
 
-#' Set the plot for an lcmsPlotClass object.
+#' Move to the next plot object (batch-mode).
 #'
 #' @param object The lcmsPlotClass object.
 #' @export
+#' @return An lcmsPlotClass object.
 #' @examples
 #' raw_files <- dir(
 #'    system.file("cdf", package = "faahKO"),
@@ -157,6 +160,7 @@ setMethod(
 #'
 #' @param object The lcmsPlotClass object.
 #' @param iter_fn The function to apply to each item being iterated on.
+#' @return NULL.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -212,6 +216,7 @@ setMethod(
 #' Plot the lcmsPlotClass object.
 #'
 #' @param object The lcmsPlotClass object.
+#' @return NULL.
 #' @export
 setMethod(
   f = "show",
@@ -250,7 +255,7 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param intensity_unit The unit to use for the intensity (one of "absolute" or "relative").
 #' @param fill_gaps Whether to fill gaps in RT with 0 intensity.
 #' @param highlight_apices Options to highlight apices in a chromatogram.
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -327,7 +332,7 @@ chromatogram <- function(
 
 #' Define the mass trace to plot.
 #'
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -362,7 +367,7 @@ mass_trace <- function() {
 #' @param interval The RT interval to consider - mode=across_peak.
 #' @param spectral_match_db The spectral database to match against.
 #' @param match_target_index The target index for the mirror plot (index from the highest scoring).
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -419,6 +424,7 @@ spectra <- function(
 #'
 #' @param sample_ids The sample IDs to select.
 #' @param type The type of plot; one of "boxplot", "violin", "jitter".
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example()
@@ -455,7 +461,7 @@ total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' @param rt_range The RT range of the map.
 #' @param sample_ids The sample IDs to select.
 #' @param density Whether to show a density or a point-cloud plot.
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -492,7 +498,7 @@ intensity_map <- function(
 
 #' Define the RT difference plot between raw and adjusted datasets.
 #'
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = TRUE)
@@ -518,7 +524,7 @@ rt_diff_plot <- function() {
 #' Define the arrangement of chromatograms.
 #'
 #' @param group_by The column to group by (in the samples metadata).
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -551,7 +557,7 @@ arrange <- function(group_by) {
 #' @param nrow The number of rows.
 #' @param free_x Allow scales to vary across x.
 #' @param free_y Allow scales to vary across y.
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -590,7 +596,7 @@ facets <- function(
 #' @param rows The factors that represent rows.
 #' @param cols The factors that represent columns.
 #' @param free_y Whether the y-axis is free for each row.
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -627,7 +633,7 @@ grid <- function(rows, cols, free_y = FALSE) {
 #'
 #' @param title The plot title.
 #' @param legend The legend's title.
-#' @returns A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -657,7 +663,7 @@ labels <- function(title = NULL, legend = NULL) {
 #' Define the legend layout.
 #'
 #' @param position The legend's position.
-#' @returns A function that takes and returns a lcmsPlotClass object
+#' @return A function that takes and returns a lcmsPlotClass object
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -688,6 +694,7 @@ legend <- function(position = NULL)  {
 #' @param intercept The x-axis intercept
 #' @param line_type The line type
 #' @param color The line color
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -718,6 +725,7 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #' Define the plot layout.
 #'
 #' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design).
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example(indices = 1)
@@ -751,6 +759,7 @@ layout <- function(design = NULL) {
 
 #' Get the underlying plot object.
 #'
+#' @return A function that takes and returns a lcmsPlotClass object.
 #' @export
 #' @examples
 #' raw_files <- dir(

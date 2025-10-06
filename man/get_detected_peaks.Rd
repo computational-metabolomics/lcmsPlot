@@ -5,7 +5,7 @@
 \alias{get_detected_peaks.character}
 \alias{get_detected_peaks.XCMSnExp}
 \alias{get_detected_peaks.MsExperiment}
-\title{Get the detected peaks from the data object (e.g. XCMSnExp)}
+\title{Get the detected peaks from the data object (e.g. XCMSnExp).}
 \usage{
 get_detected_peaks(obj)
 
@@ -16,10 +16,13 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{MsExperiment}(obj)
 }
 \arguments{
-\item{obj}{The data object}
+\item{obj}{The data object.}
+}
+\value{
+A data frame representing the detected peaks.
 }
 \description{
-Get the detected peaks from the data object (e.g. XCMSnExp)
+Get the detected peaks from the data object (e.g. XCMSnExp).
 }
 \examples{
 cdfs <- dir(

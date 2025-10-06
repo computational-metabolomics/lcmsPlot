@@ -23,6 +23,9 @@ create_chromatogram(
 
 \item{fill_gaps}{Whether to fill gaps between scans with zeros.}
 }
+\value{
+A list  with chromatograms and mass traces data frames
+}
 \description{
 Create an extracted ion chromatogram.
 }

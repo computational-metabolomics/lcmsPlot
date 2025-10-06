@@ -14,6 +14,9 @@ set_plot(object, additional_datasets)
 
 \item{additional_datasets}{Additional datasets to include in the plotting.}
 }
+\value{
+An lcmsPlotClass object.
+}
 \description{
 Set the plot for an lcmsPlotClass object.
 }

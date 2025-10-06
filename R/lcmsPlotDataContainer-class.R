@@ -39,7 +39,7 @@ DATASET_TYPES <- c(
 #' @param data_obj The data object (e.g., XCMSnExp).
 #' @param sample_id_column The sample ID column.
 #' @param metadata The sample metadata in case it's not provided in the data object.
-#' @returns The created lcmsPlotDataContainer object.
+#' @return The created lcmsPlotDataContainer object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -132,7 +132,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #' Check if the lcmsPlotDataContainer data object is an xcms object.
 #'
 #' @param object The lcmsPlotDataContainer object.
-#' @returns Whether the data object is an xcms object.
+#' @return Whether the data object is an xcms object.
 #' @export
 #' @examples
 #' raw_files <- dir(

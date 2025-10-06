@@ -11,6 +11,9 @@
 
 \item{e2}{A function that takes a lcmsPlotClass object and returns another.}
 }
+\value{
+An lcmsPlotClass object.
+}
 \description{
 Apply a function to the lcmsPlotClass object.
 }

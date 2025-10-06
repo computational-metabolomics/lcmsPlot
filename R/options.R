@@ -1,6 +1,6 @@
 #' Get the default options.
 #'
-#' @returns The default options.
+#' @return The default options.
 #' @export
 #' @examples
 #' def_opts <- default_options()
@@ -91,7 +91,7 @@ default_options <- function() {
 #' Get the grouping variables for a plot
 #'
 #' @param opts The plot object's options.
-#' @returns The grouping variables as a character vector.
+#' @return The grouping variables as a character vector.
 get_grouping_variables <- function(opts) {
   if (!is.null(opts$facets$facets)) {
     opts$facets$facets

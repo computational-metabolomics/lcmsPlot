@@ -13,6 +13,9 @@ create_spectrum_from_closest_scan_to_rt(raw_data, rt, ms_level)
 
 \item{ms_level}{The MS level of the scans.}
 }
+\value{
+A spectrum data frame.
+}
 \description{
 Create a spectrum of the closest scan to the specified RT.
 }

@@ -3,6 +3,7 @@
 #' @param obj The data object
 #' @param sample_id_column The column that should be associated with the sample ID
 #' @param metadata The metadata data frame if not already included in the data object
+#' @return A data frame representing the metadata.
 #' @export
 #' @examples
 #' # Get metadata from sample paths
@@ -62,9 +63,10 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
     )
 }
 
-#' Get the detected peaks from the data object (e.g. XCMSnExp)
+#' Get the detected peaks from the data object (e.g. XCMSnExp).
 #'
-#' @param obj The data object
+#' @param obj The data object.
+#' @return A data frame representing the detected peaks.
 #' @export
 #' @examples
 #' cdfs <- dir(
@@ -114,9 +116,10 @@ get_detected_peaks.MsExperiment <- function(obj) {
   .get_detected_peaks_xcms(obj)
 }
 
-#' Get the grouped peaks across samples (features) from the data object
+#' Get the grouped peaks across samples (features) from the data object.
 #'
-#' @param obj The data object
+#' @param obj The data object.
+#' @return A data frame representing the grouped peaks.
 #' @export
 #' @examples
 #' cdfs <- dir(

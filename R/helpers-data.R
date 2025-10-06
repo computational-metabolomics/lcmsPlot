@@ -16,7 +16,7 @@ NULL
 #' Check whether an object is from XCMS.
 #'
 #' @param obj The input object.
-#' @returns Whether the object is an XCMS one.
+#' @return Whether the object is an XCMS one.
 is_xcms_data <- function(obj) {
   inherits(obj, c("XCMSnExp", "MsExperiment"))
 }
@@ -24,16 +24,16 @@ is_xcms_data <- function(obj) {
 #' Check whether an object is from XCMS and processed (e.g., peak detection).
 #'
 #' @param obj The input object.
-#' @returns Whether the object is an XCMS one.
+#' @return Whether the object is an XCMS one.
 is_xcms_processed_data <- function(obj) {
   inherits(obj, c("XCMSnExp", "XcmsExperiment"))
 }
 
-#' Get an XCMSnExp example object
+#' Get an XCMSnExp example object.
 #'
-#' @param indices The faahKO package data samples indices
-#' @param should_group_peaks Whether to group the detected peaks
-#' @returns The XCMSnExp object
+#' @param indices The faahKO package data samples indices.
+#' @param should_group_peaks Whether to group the detected peaks.
+#' @return The XCMSnExp object.
 #' @export
 #' @examples
 #' get_XCMSnExp_object_example(indices = 1:5)
@@ -87,7 +87,7 @@ get_XCMSnExp_object_example <- function(
 #' @param a The first data frame.
 #' @param b The second data frame.
 #' @param index_col The indexing column in data frame 'b'.
-#' @returns The merged data frame.
+#' @return The merged data frame.
 merge_by_index <- function(a, b, index_col) {
   b_mod <- b %>%
     mutate(row_id = row_number())
@@ -99,7 +99,7 @@ merge_by_index <- function(a, b, index_col) {
 #' Remove NULL values from a list.
 #'
 #' @param lst The input list.
-#' @returns The list without NULL values.
+#' @return The list without NULL values.
 remove_null_elements <- function(lst) {
   return(lst[!sapply(lst, is.null)])
 }
@@ -108,7 +108,7 @@ remove_null_elements <- function(lst) {
 #'
 #' @param mz The m/z value to calculate the range for.
 #' @param ppm The ppm tolerance for the range.
-#' @returns A vector with two values indicating the m/z range.
+#' @return A vector with two values indicating the m/z range.
 get_mz_range <- function(mz, ppm = 5) {
   mzdev <- mz * (ppm / 1000000)
   return(c(mz - mzdev, mz + mzdev))
@@ -122,7 +122,7 @@ get_mz_range <- function(mz, ppm = 5) {
 #' - mzmin, mzmax, rtmin (optional), rtmax (optional)
 #' @param options The plot object's options.
 #' @param full_rt_range The full RT range if an RT range is not given.
-#' @returns A named list defining a feature with names: feature_id, mzr, rtr.
+#' @return A named list defining a feature with names: feature_id, mzr, rtr.
 get_feature_data <- function(feature, options, full_rt_range) {
   # Helper: safely extract a value by name from vector or data.frame
   get_val <- function(x, name) {
@@ -185,7 +185,7 @@ get_feature_data <- function(feature, options, full_rt_range) {
 #' @param sample_metadata The sample's metadata.
 #' @param grouped_peaks The grouped peaks to use as input features.
 #' @param full_rt_range The full RT range if an RT range is not given.
-#' @returns A list of feature data (see get_feature_data).
+#' @return A list of feature data (see get_feature_data).
 get_features <- function(
   options,
   sample_metadata,

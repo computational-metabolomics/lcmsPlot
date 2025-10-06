@@ -13,6 +13,9 @@ create_spectrum_from_scan_index(raw_data, sample_metadata, scan_index)
 
 \item{scan_index}{The scan index.}
 }
+\value{
+A spectrum data frame.
+}
 \description{
 Create a spectrum of the specified scan.
 }

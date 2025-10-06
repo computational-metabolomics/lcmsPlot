@@ -2,20 +2,20 @@
 % Please edit documentation in R/helpers-data.R
 \name{get_XCMSnExp_object_example}
 \alias{get_XCMSnExp_object_example}
-\title{Get an XCMSnExp example object}
+\title{Get an XCMSnExp example object.}
 \usage{
 get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = FALSE)
 }
 \arguments{
-\item{indices}{The faahKO package data samples indices}
+\item{indices}{The faahKO package data samples indices.}
 
-\item{should_group_peaks}{Whether to group the detected peaks}
+\item{should_group_peaks}{Whether to group the detected peaks.}
 }
 \value{
-The XCMSnExp object
+The XCMSnExp object.
 }
 \description{
-Get an XCMSnExp example object
+Get an XCMSnExp example object.
 }
 \examples{
 get_XCMSnExp_object_example(indices = 1:5)

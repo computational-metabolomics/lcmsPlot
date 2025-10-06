@@ -9,6 +9,9 @@ io_close_raw_data(raw_data)
 \arguments{
 \item{raw_data}{A list of mzR object connections.}
 }
+\value{
+NULL.
+}
 \description{
 Close a list of mzR object connections.
 }

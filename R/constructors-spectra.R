@@ -3,6 +3,7 @@
 #' @param raw_data An mzR object.
 #' @param rt The RT to consider.
 #' @param ms_level The MS level of the scans.
+#' @return A spectrum data frame.
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
   hdr <- mzR::header(raw_data)
 
@@ -33,6 +34,7 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
 #' @param raw_data An mzR object.
 #' @param sample_metadata The sample metadata.
 #' @param scan_index The scan index.
+#' @return A spectrum data frame.
 create_spectrum_from_scan_index <- function(
   raw_data,
   sample_metadata,
@@ -61,7 +63,7 @@ create_spectrum_from_scan_index <- function(
 #' @param sample_metadata The sample's metadata.
 #' @param options The plot object's options.
 #' @param rt_range The RT range to apply to the detected peaks.
-#' @returns A data frame representing spectra
+#' @return A data frame representing spectra
 #' with columns 'mz', 'intensity', and 'rt'.
 create_spectra_for_sample <- function(
   raw_obj,

@@ -27,7 +27,7 @@ plot_variants <- list(
 #'
 #' @param datasets A list of data frames each corresponding to a dataset to plot.
 #' @param obj The lcmsPlot object.
-#' @returns The patchwork plot object.
+#' @return The patchwork plot object.
 run_matching_plot_variant <- function(datasets, obj) {
   plot_config <- list(
     chromatograms = plot_chromatogram,
@@ -51,7 +51,7 @@ run_matching_plot_variant <- function(datasets, obj) {
 #'
 #' @param datasets A list of data frames each corresponding to a dataset to plot.
 #' @param obj The lcmsPlot object.
-#' @returns The patchwork plot object.
+#' @return The patchwork plot object.
 plot_data <- function(datasets, obj) {
   result_plot <- run_matching_plot_variant(datasets, obj)
 

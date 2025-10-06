@@ -9,6 +9,9 @@
 \arguments{
 \item{object}{The lcmsPlotClass object.}
 }
+\value{
+NULL.
+}
 \description{
 Plot the lcmsPlotClass object.
 }

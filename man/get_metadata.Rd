@@ -22,6 +22,9 @@ get_metadata(obj, sample_id_column, metadata)
 
 \item{metadata}{The metadata data frame if not already included in the data object}
 }
+\value{
+A data frame representing the metadata.
+}
 \description{
 Get the metadata associated with the input object
 }

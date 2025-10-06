@@ -4,7 +4,7 @@
 #' @param obj The lcmsPlot object.
 #' @param plot_config The plot configuration.
 #' A list that specifies the plot function to use for each dataset type.
-#' @returns The patchwork plot object.
+#' @return The patchwork plot object.
 plot_single_dataset <- function(datasets, obj, plot_config) {
   dataset_name <- names(datasets)
 
@@ -25,7 +25,7 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
 #' @param obj The lcmsPlot object.
 #' @param plot_config The plot configuration.
 #' A list that specifies the plot function to use for each dataset type.
-#' @returns The patchwork plot object.
+#' @return The patchwork plot object.
 plot_multiple_datasets <- function(datasets, obj, plot_config) {
   datasets_plots <- lapply(names(datasets), function (ds_name) {
     plot_config[[ds_name]](
@@ -46,7 +46,7 @@ plot_multiple_datasets <- function(datasets, obj, plot_config) {
 #' @param obj The lcmsPlot object.
 #' @param plot_config The plot configuration.
 #' A list that specifies the plot function to use for each dataset type.
-#' @returns The patchwork plot object.
+#' @return The patchwork plot object.
 plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
   facets_options <- obj@options$facets
   facets <- facets_options$facets

@@ -9,6 +9,9 @@ layout(design = NULL)
 \arguments{
 \item{design}{Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design).}
 }
+\value{
+A function that takes and returns a lcmsPlotClass object.
+}
 \description{
 Define the plot layout.
 }

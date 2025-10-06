@@ -14,6 +14,9 @@ iterate_plot_batches(object, iter_fn)
 
 \item{iter_fn}{The function to apply to each item being iterated on.}
 }
+\value{
+NULL.
+}
 \description{
 Iterate on the batches of plots.
 }

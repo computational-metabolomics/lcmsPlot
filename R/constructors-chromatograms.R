@@ -3,7 +3,7 @@
 #' @param aggregation_fun The aggregation function to create the chromatogram.
 #' One of 'sum' or 'max'.
 #' @param rt_adjusted The RT adjusted values to use instead of the raw ones.
-#' @returns A list with one data frame containing the chromatograms.
+#' @return A list with one data frame containing the chromatograms.
 create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
   hdr <- mzR::header(raw_data)
   ms1_header <- hdr[hdr$msLevel == 1, ]
@@ -57,6 +57,7 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
 #' @param rt_range The RT range of the chromatogram.
 #' @param ms_level The MS level of the scans to consider.
 #' @param fill_gaps Whether to fill gaps between scans with zeros.
+#' @return A list  with chromatograms and mass traces data frames
 create_chromatogram <- function(
   raw_data,
   mz_range,

@@ -6,6 +6,9 @@
 \usage{
 get_plot()
 }
+\value{
+A function that takes and returns a lcmsPlotClass object.
+}
 \description{
 Get the underlying plot object.
 }

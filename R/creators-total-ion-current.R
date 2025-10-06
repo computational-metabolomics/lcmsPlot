@@ -2,7 +2,7 @@
 #'
 #' @param obj A lcmsPlotDataContainer object
 #' @param options The lcmsPlot options
-#' @returns A lcmsPlotDataContainer object
+#' @return A lcmsPlotDataContainer object
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))

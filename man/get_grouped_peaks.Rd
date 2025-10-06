@@ -6,7 +6,7 @@
 \alias{get_grouped_peaks.XCMSnExp}
 \alias{get_grouped_peaks.XcmsExperiment}
 \alias{get_grouped_peaks.MsExperiment}
-\title{Get the grouped peaks across samples (features) from the data object}
+\title{Get the grouped peaks across samples (features) from the data object.}
 \usage{
 get_grouped_peaks(obj)
 
@@ -19,10 +19,13 @@ get_grouped_peaks(obj)
 \method{get_grouped_peaks}{MsExperiment}(obj)
 }
 \arguments{
-\item{obj}{The data object}
+\item{obj}{The data object.}
+}
+\value{
+A data frame representing the grouped peaks.
 }
 \description{
-Get the grouped peaks across samples (features) from the data object
+Get the grouped peaks across samples (features) from the data object.
 }
 \examples{
 cdfs <- dir(

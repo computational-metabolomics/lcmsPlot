@@ -13,6 +13,9 @@ rt_line(intercept, line_type = "dashed", color = "black")
 
 \item{color}{The line color}
 }
+\value{
+A function that takes and returns a lcmsPlotClass object.
+}
 \description{
 Define a vertical line across a retention time value
 }

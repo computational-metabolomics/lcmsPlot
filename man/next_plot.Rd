@@ -3,7 +3,7 @@
 \name{next_plot}
 \alias{next_plot}
 \alias{next_plot,lcmsPlotClass-method}
-\title{Set the plot for an lcmsPlotClass object.}
+\title{Move to the next plot object (batch-mode).}
 \usage{
 next_plot(object)
 
@@ -12,8 +12,11 @@ next_plot(object)
 \arguments{
 \item{object}{The lcmsPlotClass object.}
 }
+\value{
+An lcmsPlotClass object.
+}
 \description{
-Set the plot for an lcmsPlotClass object.
+Move to the next plot object (batch-mode).
 }
 \examples{
 raw_files <- dir(

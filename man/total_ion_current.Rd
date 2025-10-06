@@ -11,6 +11,9 @@ total_ion_current(sample_ids = NULL, type = "boxplot")
 
 \item{type}{The type of plot; one of "boxplot", "violin", "jitter".}
 }
+\value{
+A function that takes and returns a lcmsPlotClass object.
+}
 \description{
 Define the total ion currents.
 }

@@ -4,7 +4,7 @@
 #' @param supporting_datasets The supporting datasets (e.g., detected peaks).
 #' @param options The plot object's options.
 #' @param single Whether it is a single dataset variant.
-#' @returns The plot as a ggplot2 object.
+#' @return The plot as a ggplot2 object.
 plot_intensity_map <- function(
   datasets,
   supporting_datasets,
