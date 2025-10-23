@@ -21,7 +21,10 @@ knitr::opts_knit$set(
 
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  dpi = 96,
+  fig.retina = 1,
+  fig.small = TRUE
 )
 ```
 
