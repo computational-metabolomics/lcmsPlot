@@ -36,6 +36,3 @@ The \code{lcmsPlotClass} class can be used directly to instantiate an object,
 however the preferred approach is to use the \code{lcmsPlot} function.
 }
 
-\examples{
-lp_obj <- new("lcmsPlotClass", options = NULL, data = NULL, plot = NULL)
-}
