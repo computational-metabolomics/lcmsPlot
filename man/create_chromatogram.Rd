@@ -2,30 +2,37 @@
 % Please edit documentation in R/constructors-chromatograms.R
 \name{create_chromatogram}
 \alias{create_chromatogram}
-\title{Create an extracted ion chromatogram.}
+\title{Create an extracted ion chromatogram}
 \usage{
 create_chromatogram(
   raw_data,
   mz_range,
   rt_range,
   ms_level = 1,
-  fill_gaps = FALSE
+  fill_gaps = FALSE,
+  adjusted_rt = NULL
 )
 }
 \arguments{
-\item{raw_data}{An mzR object.}
+\item{raw_data}{An instance of class \code{mzR}.}
 
-\item{mz_range}{The m/z range of the chromatogram.}
+\item{mz_range}{A \code{numeric} vector indicating the m/z range.}
 
-\item{rt_range}{The RT range of the chromatogram.}
+\item{rt_range}{A \code{numeric} vector indicating the RT range.}
 
-\item{ms_level}{The MS level of the scans to consider.}
+\item{ms_level}{A \code{numeric} value indicating the MS level
+of the scans to consider.}
 
-\item{fill_gaps}{Whether to fill gaps between scans with zeros.}
+\item{fill_gaps}{A \code{logical} indicating whether to fill gaps
+between scans with zeros.}
+
+\item{adjusted_rt}{A \code{data.frame}}
 }
 \value{
-A list  with chromatograms and mass traces data frames
+A \code{list} with two data frames (\code{chromatograms} and \code{mass_traces})
+containing the chromatograms with columns \code{rt} and \code{intensity}
+and mass traces with columns \code{rt} and \code{mz}.
 }
 \description{
-Create an extracted ion chromatogram.
+Create an extracted ion chromatogram
 }

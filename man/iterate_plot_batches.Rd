@@ -3,22 +3,23 @@
 \name{iterate_plot_batches}
 \alias{iterate_plot_batches}
 \alias{iterate_plot_batches,lcmsPlotClass,function-method}
-\title{Iterate on the batches of plots.}
+\title{Iterate on the batches of plots}
 \usage{
 iterate_plot_batches(object, iter_fn)
 
 \S4method{iterate_plot_batches}{lcmsPlotClass,function}(object, iter_fn)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object.}
+\item{object}{An instance of class \code{lcmsPlotClass}.}
 
 \item{iter_fn}{The function to apply to each item being iterated on.}
 }
 \value{
-NULL.
+\code{NULL} (called for its side effect).
 }
 \description{
-Iterate on the batches of plots.
+\code{iterate_plot_batches} iterates over batches of plots defined by the
+\code{batch_size} parameter passed to the \code{lcmsPlot} constructor function.
 }
 \examples{
 raw_files <- dir(
@@ -27,10 +28,14 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  arrange(group_by = "sample_id") +
-  legend(position = "bottom") +
-  labels(legend = "Sample")
+  lp_chromatogram(features = rbind(c(
+    mzmin = 334.9,
+    mzmax = 335.1,
+    rtmin = 2700,
+    rtmax = 2900))) +
+  lp_arrange(group_by = "sample_id") +
+  lp_legend(position = "bottom") +
+  lp_labels(legend = "Sample")
 
 iterate_plot_batches(p, function(plot_obj) {
   print(plot_obj)

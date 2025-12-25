@@ -2,21 +2,28 @@
 % Please edit documentation in R/plot-variants.R
 \name{plot_multiple_datasets}
 \alias{plot_multiple_datasets}
-\title{Plot multiple dataset types.}
+\title{Plot multiple dataset types}
 \usage{
 plot_multiple_datasets(datasets, obj, plot_config)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named \code{list} of data frames, where each element represents
+a dataset to be plotted. The names must match the supported dataset types
+defined in \code{plot_config}.}
 
-\item{obj}{The lcmsPlot object.}
+\item{obj}{An instance of class \code{lcmsPlotClass}.}
 
-\item{plot_config}{The plot configuration.
-A list that specifies the plot function to use for each dataset type.}
+\item{plot_config}{A named \code{list} defining the plotting functions to use for
+each dataset type. List names correspond to dataset types, and values are
+functions that return ggplot objects.}
 }
 \value{
-The patchwork plot object.
+A \code{patchwork} object combining all generated plots.
 }
 \description{
-Plot multiple dataset types.
+\code{plot_multiple_datasets()} iterates over the provided datasets, dispatches
+each one to its corresponding plotting function as defined in
+\code{plot_config}, and combines the resulting plots into a single patchwork
+object.
 }
+\keyword{internal}

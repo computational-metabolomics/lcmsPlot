@@ -2,21 +2,28 @@
 % Please edit documentation in R/plot-variants.R
 \name{plot_multiple_faceted_datasets}
 \alias{plot_multiple_faceted_datasets}
-\title{Plot multiple faceted dataset types.}
+\title{Plot multiple faceted dataset types}
 \usage{
 plot_multiple_faceted_datasets(datasets, obj, plot_config)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named \code{list} of data frames, where each element represents
+a dataset to be plotted. The names must match the supported dataset types
+defined in \code{plot_config}.}
 
-\item{obj}{The lcmsPlot object.}
+\item{obj}{An instance of class \code{lcmsPlotClass}.}
 
-\item{plot_config}{The plot configuration.
-A list that specifies the plot function to use for each dataset type.}
+\item{plot_config}{A named \code{list} defining the plotting functions to use for
+each dataset type. List names correspond to dataset types, and values are
+functions that return ggplot objects.}
 }
 \value{
-The patchwork plot object.
+A \code{patchwork} object combining all generated plots.
 }
 \description{
-Plot multiple faceted dataset types.
+\code{plot_multiple_faceted_datasets()} generates plots for multiple dataset types
+and arranges them into a faceted grid. Datasets are split according to the
+faceting variables defined in \code{obj@options$facets}, with each facet panel
+containing a vertically stacked set of dataset-specific plots.
 }
+\keyword{internal}

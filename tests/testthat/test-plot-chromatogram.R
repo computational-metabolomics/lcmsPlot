@@ -2,7 +2,7 @@ test_that("plot_chromatogram plots an extracted ion chromatogram", {
   # arrange
   datasets <- generate_datasets_for_plots()
   supporting_datasets <- list(detected_peaks = TRUE)
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   opts$facets$facets <- "sample_id"
 
   # act
@@ -21,7 +21,7 @@ test_that("plot_chromatogram plots an extracted ion chromatogram with facets", {
   # arrange
   datasets <- generate_datasets_for_plots()
   supporting_datasets <- list(detected_peaks = TRUE)
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   opts$facets$facets <- "sample_id"
 
   # act
@@ -40,7 +40,7 @@ test_that("plot_chromatogram plots an extracted ion chromatogram with a vertical
   # arrange
   datasets <- generate_datasets_for_plots()
   supporting_datasets <- list(detected_peaks = TRUE)
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   opts$facets$facets <- "sample_id"
   opts$rt_lines <- list(
     list(

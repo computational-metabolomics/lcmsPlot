@@ -2,7 +2,7 @@
 % Please edit documentation in R/constructors-spectra.R
 \name{create_spectra_for_sample}
 \alias{create_spectra_for_sample}
-\title{Create spectra for a single sample.}
+\title{Create spectra for a single sample}
 \usage{
 create_spectra_for_sample(
   raw_obj,
@@ -13,21 +13,22 @@ create_spectra_for_sample(
 )
 }
 \arguments{
-\item{raw_obj}{An mzR object.}
+\item{raw_obj}{An instance of class \code{mzR}.}
 
-\item{detected_peaks}{The detected peaks to consider.
-Only for modes 'closest_apex' and 'across_peak'.}
+\item{detected_peaks}{A \code{data.frame} containing the detected peaks to
+consider. Only applicable for modes \code{"closest_apex"} and \code{"across_peak"}.}
 
-\item{sample_metadata}{The sample's metadata.}
+\item{sample_metadata}{A \code{data.frame} containing the sample's metadata.}
 
-\item{options}{The plot object's options.}
+\item{options}{A \code{list} representing the plot object's options.}
 
-\item{rt_range}{The RT range to apply to the detected peaks.}
+\item{rt_range}{A \code{numeric} value indicating the RT range to apply to the
+detected peaks.}
 }
 \value{
-A data frame representing spectra
-with columns 'mz', 'intensity', and 'rt'.
+A \code{data.frame} representing spectra with columns \code{mz}, \code{intensity},
+and \code{rt}.
 }
 \description{
-Create spectra for a single sample.
+Create spectra for a single sample
 }

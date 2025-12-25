@@ -2,22 +2,27 @@
 % Please edit documentation in R/lcmsPlotDataContainer-class.R
 \name{create_data_container_from_obj}
 \alias{create_data_container_from_obj}
-\title{Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp).}
+\title{Create an instance of class \code{lcmsPlotDataContainer} from a data object}
 \usage{
 create_data_container_from_obj(data_obj, sample_id_column, metadata)
 }
 \arguments{
-\item{data_obj}{The data object (e.g., XCMSnExp).}
+\item{data_obj}{The data object (see \code{lcmsPlotDataContainer}).}
 
-\item{sample_id_column}{The sample ID column.}
+\item{sample_id_column}{A \code{character} value indicating the sample ID column.}
 
-\item{metadata}{The sample metadata in case it's not provided in the data object.}
+\item{metadata}{A \code{data.frame} containing the samples metadata
+in case it is not provided in the dataset object.}
 }
 \value{
-The created lcmsPlotDataContainer object.
+An instance of class \code{lcmsPlotDataContainer}. The object
+contains the input data and the standardised metadata.
 }
 \description{
-Create an lcmsPlotDataContainer object from a data object (e.g., XCMSnExp).
+The \code{create_data_container_from_obj} function creates an instance
+of class \code{lcmsPlotDataContainer} given a data object.
+See \code{lcmsPlotDataContainer} for more information about the
+supported data objects.
 }
 \examples{
 raw_files <- dir(

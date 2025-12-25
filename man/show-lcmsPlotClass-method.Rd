@@ -2,16 +2,30 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{show,lcmsPlotClass-method}
 \alias{show,lcmsPlotClass-method}
-\title{Plot the lcmsPlotClass object.}
+\title{Plot the \code{lcmsPlotClass} object}
 \usage{
 \S4method{show}{lcmsPlotClass}(object)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object.}
+\item{object}{An instance of class \code{lcmsPlotClass}.}
 }
 \value{
-NULL.
+Invisible \code{NULL}
 }
 \description{
-Plot the lcmsPlotClass object.
+Display an instance of \code{lcmsPlotClass} class to the selected device.
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  lp_chromatogram(aggregation_fun = "max") +
+  lp_arrange(group_by = "sample_id") +
+  lp_legend(position = "bottom") +
+  lp_labels(legend = "Sample")
+
+print(p)
 }

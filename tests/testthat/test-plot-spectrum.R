@@ -2,7 +2,7 @@ test_that("plot_spectrum plots a spectrum of a scan in a sample", {
   # arrange
   datasets <- generate_datasets_for_plots()
   supporting_datasets <- NULL
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   opts$facets$facets <- "sample_id"
 
   # act

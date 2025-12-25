@@ -1,6 +1,6 @@
 test_that("get_feature_data returns feature data when specifying mz and rt", {
   # arrange
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   opts$chromatograms$ppm <- 5
   opts$chromatograms$rt_tol <- 10
   feature <- c(mz = 334.908, rt = 2710)
@@ -17,7 +17,7 @@ test_that("get_feature_data returns feature data when specifying mz and rt", {
 
 test_that("get_feature_data returns feature data when specifying mz min and max and no rt", {
   # arrange
-  opts <- default_options()
+  opts <- lcmsPlot:::default_options()
   feature <- c(mzmin = 334.906325, mzmax = 334.909675)
   full_rt_range <- c(1, 2000)
 

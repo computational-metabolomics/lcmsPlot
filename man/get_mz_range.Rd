@@ -2,18 +2,21 @@
 % Please edit documentation in R/helpers-data.R
 \name{get_mz_range}
 \alias{get_mz_range}
-\title{Get the m/z range for an input m/z and a ppm error.}
+\title{Compute an m/z range given a ppm tolerance}
 \usage{
 get_mz_range(mz, ppm = 5)
 }
 \arguments{
-\item{mz}{The m/z value to calculate the range for.}
+\item{mz}{A \code{numeric} value indicating the m/z value
+to calculate the range for.}
 
-\item{ppm}{The ppm tolerance for the range.}
+\item{ppm}{A \code{numeric} value indicating the tolerance
+in parts per million (ppm). Default is 5.}
 }
 \value{
-A vector with two values indicating the m/z range.
+A \code{numeric} vector with two values indicating the m/z range.
 }
 \description{
-Get the m/z range for an input m/z and a ppm error.
+Compute an m/z range given a ppm tolerance
 }
+\keyword{internal}

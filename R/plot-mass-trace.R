@@ -1,32 +1,40 @@
-#' Plot a mass trace.
+#' Plot a mass trace
 #'
-#' @param datasets A list of data frames each corresponding to a dataset to plot.
-#' @param supporting_datasets The supporting datasets (e.g., detected peaks).
-#' @param options The plot object's options.
-#' @param single Whether it is a single dataset variant.
-#' @return The plot as a ggplot2 object.
+#' `plot_mass_trace()` generates a ggplot2 from a mass trace
+#'
+#' @param datasets A named `list` of data frames containing the primary datasets
+#' to plot. For a mass trace plot the used key is `mass_traces`.
+#' @param supporting_datasets A `list` of supporting data frames, such as
+#' detected peaks, used for highlighting features.
+#' @param options A list of plot options, controlling units, faceting,
+#' highlighting, and other visual parameters.
+#' @param single A `logical` value that indicates whether it should treat
+#' the plot as a single dataset variant, which can affect faceting
+#' and layout behavior. Default is `FALSE`.
+#' @return A `ggplot` object representing the mass trace plot.
+#' @keywords internal
 plot_mass_trace <- function(
-  datasets,
-  supporting_datasets,
-  options,
-  single = FALSE
+    datasets,
+    supporting_datasets,
+    options,
+    single = FALSE
 ) {
-  dataset <- datasets$mass_traces
+    dataset <- datasets$mass_traces
 
-  extra_layers <- list(
-    legend_title(options),
-    faceting(options, single)
-  )
-  extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
+    extra_layers <- list(
+        legend_title(options),
+        faceting(options, single)
+    )
+    extra_layers <- remove_null_elements(extra_layers)
 
-  p <- ggplot(
-    data = dataset,
-    mapping = build_aes(x = sym("rt"), y = sym("mz"), options)
-  ) +
-    geom_point(show.legend = single) +
-    labs(x = "RT (sec)", y = "m/z") +
-    theme_minimal() +
-    extra_layers
+    p <- ggplot(
+        data = dataset,
+        mapping = build_aes(x = sym("rt"), y = sym("mz"), options)
+    ) +
+        geom_point(show.legend = single) +
+        labs(x = "RT (sec)", y = "m/z") +
+        theme_minimal() +
+        extra_layers
 
-  return(p)
+    return(p)
 }

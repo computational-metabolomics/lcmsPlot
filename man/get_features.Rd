@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers-data.R
 \name{get_features}
 \alias{get_features}
-\title{Get the feature data (m/z and RT ranges) for a set of features.}
+\title{Get the feature data (m/z and RT ranges) for a set of features}
 \usage{
 get_features(
   options,
@@ -24,5 +24,6 @@ get_features(
 A list of feature data (see get_feature_data).
 }
 \description{
-Get the feature data (m/z and RT ranges) for a set of features.
+Get the feature data (m/z and RT ranges) for a set of features
 }
+\keyword{internal}

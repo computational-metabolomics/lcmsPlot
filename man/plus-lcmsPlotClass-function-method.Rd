@@ -2,18 +2,32 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{+,lcmsPlotClass,function-method}
 \alias{+,lcmsPlotClass,function-method}
-\title{Apply a function to the lcmsPlotClass object.}
+\title{Apply a function to an \code{lcmsPlotClass} object using the infix \code{+} operator}
 \usage{
 \S4method{+}{lcmsPlotClass,function}(e1, e2)
 }
 \arguments{
-\item{e1}{A lcmsPlotClass object.}
+\item{e1}{An instance of class \code{lcmsPlotClass}.}
 
-\item{e2}{A function that takes a lcmsPlotClass object and returns another.}
+\item{e2}{A function that takes an \code{lcmsPlotClass} object
+and returns another.}
 }
 \value{
-An lcmsPlotClass object.
+An instance of class \code{lcmsPlotClass}.
 }
 \description{
-Apply a function to the lcmsPlotClass object.
+This provides a convenient infix style for applying transformations to
+\code{lcmsPlotClass} objects.
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files) +
+  lp_chromatogram(aggregation_fun = "max") +
+  lp_arrange(group_by = "sample_id") +
+  lp_legend(position = "bottom") +
+  lp_labels(legend = "Sample")
 }

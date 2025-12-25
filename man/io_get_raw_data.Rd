@@ -2,16 +2,19 @@
 % Please edit documentation in R/io-raw-data.R
 \name{io_get_raw_data}
 \alias{io_get_raw_data}
-\title{Get the mzR objects for a set of sample paths.}
+\title{Get the \code{mzR} objects for a set of sample paths}
 \usage{
 io_get_raw_data(sample_paths)
 }
 \arguments{
-\item{sample_paths}{The sample paths.}
+\item{sample_paths}{A \code{character} vector of file paths to the
+raw MS data files (e.g., \code{.mzML}, \code{.mzXML}, \code{.CDF}).}
 }
 \value{
-A list of mzR objects.
+A named list of \code{mzR} objects, where each element corresponds to a
+file in \code{sample_paths}.
 }
 \description{
-Get the mzR objects for a set of sample paths.
+Get the \code{mzR} objects for a set of sample paths
 }
+\keyword{internal}

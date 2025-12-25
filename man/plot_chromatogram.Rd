@@ -2,22 +2,30 @@
 % Please edit documentation in R/plot-chromatogram.R
 \name{plot_chromatogram}
 \alias{plot_chromatogram}
-\title{Plot a chromatogram.}
+\title{Plot chromatograms from one or more datasets}
 \usage{
 plot_chromatogram(datasets, supporting_datasets, options, single = FALSE)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named \code{list} of data frames containing the primary datasets
+to plot. Typically includes \code{chromatograms} and optionally \code{spectra}.}
 
-\item{supporting_datasets}{The supporting datasets (e.g., detected peaks).}
+\item{supporting_datasets}{A \code{list} of supporting data frames, such as
+detected peaks, used for highlighting features.}
 
-\item{options}{The plot object's options.}
+\item{options}{A list of plot options, controlling units, faceting,
+highlighting, and other visual parameters.}
 
-\item{single}{Whether it is a single dataset variant.}
+\item{single}{A \code{logical} value that indicates whether it should treat
+the plot as a single dataset variant, which can affect faceting
+and layout behavior. Default is \code{FALSE}.}
 }
 \value{
-The plot as a ggplot2 object.
+A \code{ggplot} object representing the chromatogram plot.
 }
 \description{
-Plot a chromatogram.
+\code{plot_chromatogram()} generates a ggplot2 chromatogram plot from processed
+datasets. It can handle multiple datasets, optionally highlight detected
+peaks or apices, and apply faceting or grid layouts based on plot options.
 }
+\keyword{internal}

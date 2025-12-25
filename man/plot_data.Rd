@@ -2,18 +2,20 @@
 % Please edit documentation in R/plot.R
 \name{plot_data}
 \alias{plot_data}
-\title{Plot the processed data (e.g., chromatograms)}
+\title{Plot the specified LC-MS data}
 \usage{
 plot_data(datasets, obj)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A \code{list} of data frames, each representing a dataset to be
+visualised.}
 
 \item{obj}{The lcmsPlot object.}
 }
 \value{
-The patchwork plot object.
+A \code{patchwork} plot object representing the final plot.
 }
 \description{
-Plot the processed data (e.g., chromatograms)
+Plot the specified LC-MS data
 }
+\keyword{internal}

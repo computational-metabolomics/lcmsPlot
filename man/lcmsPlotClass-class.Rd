@@ -3,19 +3,39 @@
 \docType{class}
 \name{lcmsPlotClass-class}
 \alias{lcmsPlotClass-class}
-\title{lcmsPlotClass class.}
+\title{Managing LC-MS data for visualisation}
 \description{
-lcmsPlotClass class.
+The \code{lcmsPlotClass} class allows a unified approach for  the management
+of LC-MS data for the purpose of visualisation. It includes the options
+for customising the plot, the LC-MS data, and the underlying plot object.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{options}}{The object options.}
+\item{\code{options}}{A \code{list} to store the plot options.}
 
-\item{\code{data}}{The lcmsPlotDataContainer object.}
+\item{\code{data}}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{\code{history}}{The list of the applied layers.}
+\item{\code{history}}{A \code{list} to store the applied layers to generate a plot;
+for internal use.}
 
-\item{\code{plot}}{The underlying plot object.}
+\item{\code{plot}}{A \code{patchwork} object representing the underlying plot object.}
 }}
 
+\section{General information}{
+
+The \code{lcmsPlotClass} class has been designed to be the entry point for
+all data and outputs related to the \code{lcmsPlot} package.
+The class abstracts away the data handling, making it easier to use
+\code{lcmsPlot} with existing data wrappers like \code{MsExperiment} or \code{XCMSnExp}.
+}
+
+\section{Preferred usage}{
+
+The \code{lcmsPlotClass} class can be used directly to instantiate an object,
+however the preferred approach is to use the \code{lcmsPlot} function.
+}
+
+\examples{
+lp_obj <- new("lcmsPlotClass", options = NULL, data = NULL, plot = NULL)
+}

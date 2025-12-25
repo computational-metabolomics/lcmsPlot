@@ -7,7 +7,10 @@
 get_plot()
 }
 \value{
-A function that takes and returns a lcmsPlotClass object.
+A function that takes an \code{lcmsPlot} object and returns a modified
+version with the rendered plot stored in the \code{plot} slot.
+It is intended for use with the \code{+} operator, which incrementally layers
+new data or visual components onto the \code{lcmsPlot} object.
 }
 \description{
 Get the underlying plot object.
@@ -19,9 +22,13 @@ raw_files <- dir(
    recursive = TRUE)[1:4]
 
 p <- lcmsPlot(raw_files) +
-  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  facets(facets = 'sample_id', ncol = 4) +
-  rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+  lp_chromatogram(features = rbind(c(
+    mzmin = 334.9,
+    mzmax = 335.1,
+    rtmin = 2700,
+    rtmax = 2900))) +
+  lp_facets(facets = 'sample_id', ncol = 4) +
+  lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
   get_plot() +
   ggplot2::theme_bw()
 }

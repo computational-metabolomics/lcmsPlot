@@ -2,21 +2,28 @@
 % Please edit documentation in R/plot-variants.R
 \name{plot_single_dataset}
 \alias{plot_single_dataset}
-\title{Plot a single dataset type.}
+\title{Plot a single dataset type}
 \usage{
 plot_single_dataset(datasets, obj, plot_config)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named list of data frames, where each element represents
+a dataset to be plotted. The names must match the supported dataset types
+defined in \code{plot_config}.}
 
-\item{obj}{The lcmsPlot object.}
+\item{obj}{An instance of class \code{lcmsPlotClass}.}
 
-\item{plot_config}{The plot configuration.
-A list that specifies the plot function to use for each dataset type.}
+\item{plot_config}{A \code{list} that defines the plot configuration.
+This list should use the supported dataset types as keys
+(e.g., \code{chromatograms}), with each value providing the corresponding
+function used to plot that dataset type.}
 }
 \value{
-The patchwork plot object.
+A \code{patchwork} object combining all generated plots. In this
+case the \code{patchwork} object contains a single \code{ggplot2} object.
 }
 \description{
-Plot a single dataset type.
+\code{plot_single_dataset()} allows the plotting of a single dataset type
+(e.g., only chromatograms).
 }
+\keyword{internal}

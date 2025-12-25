@@ -2,7 +2,7 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{lcmsPlot}
 \alias{lcmsPlot}
-\title{Create an lcmsPlotClass object.}
+\title{Create an \code{lcmsPlotClass} object}
 \usage{
 lcmsPlot(
   dataset,
@@ -13,19 +13,41 @@ lcmsPlot(
 )
 }
 \arguments{
-\item{dataset}{An object of type XCMSnExp, MsExperiment, or character.}
+\item{dataset}{An object of type \code{XCMSnExp}, \code{MsExperiment}, or \code{character}.
+If a \code{character} vector is supplied, it will be interpreted as a list
+of mzML paths.}
 
-\item{sample_id_column}{Which column should be used as the sample ID.}
+\item{sample_id_column}{A \code{character} value indicating which column
+should be used as the sample ID. By default it is \code{"sample_id"}.}
 
-\item{metadata}{The metadata in case it's not provided in the dataset object.}
+\item{metadata}{A \code{data.frame} containing the samples metadata
+in case it is not provided in the dataset object.}
 
-\item{parallel_param}{The BiocParallel object for enabling parallelism.}
+\item{parallel_param}{A \code{BiocParallelParam} object for enabling parallelism.
+See https://bioconductor.org/packages/release/bioc/html/BiocParallel.html
+for more information.}
 
-\item{batch_size}{The number of samples per batch.}
+\item{batch_size}{A \code{numeric} value indicating the number of
+samples per batch. This parameter is necessary when plotting
+multiple batches using the \code{iterate_plot_batches} or \code{next_plot} functions.}
 }
 \value{
-An lcmsPlotClass object.
+An instance of \code{lcmsPlotClass}. It will create the necessary
+internal structures related to the data (\code{data} slot)
+and options (\code{options} slot).
 }
 \description{
-Create an lcmsPlotClass object.
+The \code{lcmsPlotClass} class allows a unified approach for  the management
+of LC-MS data for the purpose of visualisation. It includes the options
+for customising the plot, the LC-MS data, and the underlying plot object.
+The \code{lcmsPlot} function is the main entry point and the preferred approach
+to creating \code{lcmsPlotClass} objects.
+}
+\examples{
+raw_files <- dir(
+   system.file("cdf", package = "faahKO"),
+   full.names = TRUE,
+   recursive = TRUE)[1:5]
+
+p <- lcmsPlot(raw_files)
 }

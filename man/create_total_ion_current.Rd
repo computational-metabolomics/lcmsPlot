@@ -3,26 +3,25 @@
 \name{create_total_ion_current}
 \alias{create_total_ion_current}
 \alias{create_total_ion_current,lcmsPlotDataContainer,list-method}
-\title{Creates an lcmsPlotDataContainer from a TIC}
+\title{Create an instance of class \code{lcmsPlotDataContainer} from total ion current
+(TIC) dataset}
 \usage{
 create_total_ion_current(obj, options)
 
 \S4method{create_total_ion_current}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{options}{The lcmsPlot options}
+\item{options}{A \code{list} representing the plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object
+An instance of class \code{lcmsPlotDataContainer} with the created
+RT adjustment dataset, a \code{data.frame}
+with columns \code{sample_id} and \code{intensity}.
 }
 \description{
-Creates an lcmsPlotDataContainer from a TIC
+This function creates an \code{lcmsPlotDataContainer} object from
+a dataset that contains TIC values for each sample.
 }
-\examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
-data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
-opts <- default_options()
-data_container <- create_total_ion_current(data_container, opts)
-}
+\keyword{internal}

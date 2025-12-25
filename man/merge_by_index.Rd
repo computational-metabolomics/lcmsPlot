@@ -2,20 +2,22 @@
 % Please edit documentation in R/helpers-data.R
 \name{merge_by_index}
 \alias{merge_by_index}
-\title{Merge two data frames by an index column.}
+\title{Merge two data frames using a row-index match}
 \usage{
 merge_by_index(a, b, index_col)
 }
 \arguments{
-\item{a}{The first data frame.}
+\item{a}{The left data frame.}
 
-\item{b}{The second data frame.}
+\item{b}{The right data frame whose row order defines the index.}
 
-\item{index_col}{The indexing column in data frame 'b'.}
+\item{index_col}{The name of the column in \code{a} that contains row indices
+referring to \code{b}.}
 }
 \value{
-The merged data frame.
+A \code{data.frame} resulting from a left join of \code{a} and the indexed \code{b}.
 }
 \description{
-Merge two data frames by an index column.
+Merge two data frames using a row-index match
 }
+\keyword{internal}

@@ -2,16 +2,17 @@
 % Please edit documentation in R/options.R
 \name{default_options}
 \alias{default_options}
-\title{Get the default options.}
+\title{Get the default options}
 \usage{
 default_options()
 }
 \value{
-The default options.
+A named \code{list} containing all default options.
 }
 \description{
-Get the default options.
+\code{default_options()} returns a list of default settings used throughout the
+package. These options control aspects such as sample metadata handling,
+plotting, chromatogram and spectra display, and general visualization
+parameters.
 }
-\examples{
-def_opts <- default_options()
-}
+\keyword{internal}

@@ -2,21 +2,23 @@
 % Please edit documentation in R/constructors-chromatograms.R
 \name{create_bpc_tic}
 \alias{create_bpc_tic}
-\title{Create a base peak or total ion current chromatogram.}
+\title{Create a base peak or total ion current chromatogram}
 \usage{
 create_bpc_tic(raw_data, aggregation_fun, rt_adjusted = NULL)
 }
 \arguments{
-\item{raw_data}{An mzR object.}
+\item{raw_data}{An instance of class \code{mzR}.}
 
-\item{aggregation_fun}{The aggregation function to create the chromatogram.
-One of 'sum' or 'max'.}
+\item{aggregation_fun}{A \code{function} indicating the aggregation method.
+One of \code{"sum"} or \code{"max"}.}
 
-\item{rt_adjusted}{The RT adjusted values to use instead of the raw ones.}
+\item{rt_adjusted}{A \code{numeric} vector representing the adjusted RT values.
+If \code{NULL} it will use the raw RT values.}
 }
 \value{
-A list with one data frame containing the chromatograms.
+A \code{list} with one \code{data.frame} containing the chromatograms with
+columns \code{rt} and \code{intensity}.
 }
 \description{
-Create a base peak or total ion current chromatogram.
+Create a base peak or total ion current chromatogram
 }

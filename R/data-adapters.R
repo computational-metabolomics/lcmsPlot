@@ -1,184 +1,219 @@
 #' Get the metadata associated with the input object
 #'
-#' @param obj The data object
-#' @param sample_id_column The column that should be associated with the sample ID
-#' @param metadata The metadata data frame if not already included in the data object
-#' @return A data frame representing the metadata.
-#' @export
-#' @examples
-#' # Get metadata from sample paths
-#' paths <- c("test01.mzML", "test02.mzML")
-#' metadata <- get_metadata(paths, sample_id_column = NULL, metadata = NULL)
+#' `get_metadata()` is a generic helper used internally to standardise
+#' metadata extraction across different classes of input objects.
+#'
+#' Depending on the class of `obj`, metadata may be:
+#' - **constructed** (e.g., from character vectors of file paths), or
+#' - **extracted and optionally replaced** (e.g., from `XCMSnExp` or
+#'   `MsExperiment` objects).
+#'
+#' Across all methods, the returned metadata is enriched with:
+#' - **`sample_index`** - a sequential index of samples
+#' - **`sample_id`** - an identifier column selected via `sample_id_column`
+#' - **`sample_path`** - a file path associated with each sample (if
+#'   applicable)
+#'
+#' @section Character vector input (`character`):
+#' A character vector is treated as a list of sample file paths (e.g.,
+#' `.mzML`, `.mzXML`, `.cdf`).
+#'
+#' **If `metadata` is NULL:**
+#' Metadata is *constructed automatically*:
+#' * `sample_path`: full paths given in `obj`
+#' * `sample_index`: row number
+#' * `sample_id`: basename of each file without extension
+#'
+#' **If `metadata` is provided:**
+#' The supplied `metadata` is used and the following columns are added:
+#' * `sample_index`: row number
+#' * `sample_id`: extracted from the `sample_id_column`
+#' * `sample_path`: the input paths from `obj`
+#'
+#'
+#' @section `XCMSnExp` input:
+#' Metadata is taken from `xcms::phenoData(obj)`.
+#'
+#' **If `metadata` is provided:**
+#' It replaces the existing `phenoData`.
+#'
+#' The returned metadata always includes:
+#' * `sample_index`: row number
+#' * `sample_id`: extracted using `sample_id_column`
+#' * `sample_path`: values from `xcms::fileNames(obj)`
+#'
+#' @section `MsExperiment` input:
+#' Metadata is taken from `MsExperiment::sampleData(obj)`.
+#'
+#' **If `metadata` is provided:**
+#' It replaces existing `sampleData`.
+#'
+#' The returned metadata includes:
+#' * `sample_index`: row number
+#' * `sample_id`: extracted using `sample_id_column`
+#' * `sample_path`: values from `xcms::fileNames(obj)`
+#'
+#' @param obj A data object containing or representing samples.
+#' @param sample_id_column A `character` value indicating the column that
+#' should be used as the sample ID.
+#' @param metadata Optional metadata `data.frame` used to replace or augment
+#' sample metadata when not already embedded in the object.
+#' @return A `data.frame` containing standardised metadata with at least
+#' `sample_index`, `sample_id`, and `sample_path`.
+#' @keywords internal
 get_metadata <- function(obj, sample_id_column, metadata) {
-  UseMethod("get_metadata")
+    UseMethod("get_metadata")
 }
 
 #' @rdname get_metadata
-#' @export
+#' @keywords internal
 get_metadata.character <- function(obj, sample_id_column, metadata) {
-  if (is.null(metadata)) {
-    data.frame(sample_path = obj) %>%
-      mutate(
-        sample_index = row_number(),
-        sample_id = tools::file_path_sans_ext(basename(obj))
-      )
-  } else {
-    metadata %>%
-      mutate(
-        sample_index = row_number(),
-        sample_id = .data[[sample_id_column]],
-        sample_path = obj
-      )
-  }
+    if (is.null(metadata)) {
+        data.frame(sample_path = obj) |>
+            mutate(
+                sample_index = row_number(),
+                sample_id = tools::file_path_sans_ext(basename(obj))
+            )
+    } else {
+        metadata |>
+            mutate(
+                sample_index = row_number(),
+                sample_id = .data[[sample_id_column]],
+                sample_path = obj
+            )
+    }
 }
 
 #' @rdname get_metadata
-#' @export
+#' @keywords internal
 get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
-  if (!is.null(metadata)) {
-    xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
-  }
+    if (!is.null(metadata)) {
+        xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
+    }
 
-  xcms::phenoData(obj)@data %>%
-    mutate(
-      sample_index = row_number(),
-      sample_id = .data[[sample_id_column]],
-      sample_path = xcms::fileNames(obj)
-    )
+    xcms::phenoData(obj)@data |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = .data[[sample_id_column]],
+            sample_path = xcms::fileNames(obj)
+        )
 }
 
 #' @rdname get_metadata
-#' @export
+#' @keywords internal
 get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
-  if (!is.null(metadata)) {
-    MsExperiment::sampleData(obj) <- metadata
-  }
+    if (!is.null(metadata)) {
+        MsExperiment::sampleData(obj) <- metadata
+    }
 
-  MsExperiment::sampleData(obj) %>%
-    as.data.frame() %>%
-    mutate(
-      sample_index = row_number(),
-      sample_id = .data[[sample_id_column]],
-      sample_path = xcms::fileNames(obj)
-    )
+    MsExperiment::sampleData(obj) |>
+        as.data.frame() |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = .data[[sample_id_column]],
+            sample_path = xcms::fileNames(obj)
+        )
 }
 
-#' Get the detected peaks from the data object (e.g. XCMSnExp).
+#' Get the detected peaks from the data object (e.g. XCMSnExp)
 #'
-#' @param obj The data object.
-#' @return A data frame representing the detected peaks.
-#' @export
-#' @examples
-#' cdfs <- dir(
-#'    system.file("cdf", package = "faahKO"),
-#'    full.names = TRUE,
-#'    recursive = TRUE)[c(1, 7)]
-#' sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+#' `get_detected_peaks()` is an internal helper that standardises extraction of
+#' detected chromatographic peaks across different object types commonly used in
+#' LC-MS workflows.
 #'
-#' pd <- data.frame(sample_name = sample_names,
-#'                  sample_group = c("KO", "WT"),
-#'                  stringsAsFactors = FALSE)
+#' Supported inputs behave as follows:
 #'
-#' faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
+#' - **`character`** – Assumed to represent sample paths; no peak detection
+#' information is available. Always returns `NULL`.
 #'
-#' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
-#' faahko <- xcms::findChromPeaks(faahko, param = cwp)
+#' - **`XCMSnExp`** and **`MsExperiment`** – If the object is processed and
+#' contains chromatographic peaks, extracts `xcms::chromPeaks(obj)` and
+#' returns it as a data frame.
+#' The column `sample` is renamed to `sample_index`.
 #'
-#' detected_peaks <- get_detected_peaks(faahko)
+#' When peaks are not found or the object is not processed, `NULL` is returned.
+#'
+#' @param obj A data object containing or representing samples.
+#' @return A `data.frame` of detected peaks (one row per peak), or `NULL` if no
+#' peaks are available.
+#' @keywords internal
 get_detected_peaks <- function(obj) {
-  UseMethod("get_detected_peaks")
+    UseMethod("get_detected_peaks")
 }
 
 .get_detected_peaks_xcms <- function(obj) {
-  if (is_xcms_processed_data(obj) &&xcms::hasChromPeaks(obj)) {
-    as.data.frame(xcms::chromPeaks(obj)) %>%
-      dplyr::rename(sample_index = sample)
-  } else {
-    NULL
-  }
+    if (is_xcms_processed_data(obj) &&xcms::hasChromPeaks(obj)) {
+        as.data.frame(xcms::chromPeaks(obj)) |>
+            dplyr::rename(sample_index = sample)
+    } else {
+        NULL
+    }
 }
 
 #' @rdname get_detected_peaks
-#' @export
+#' @keywords internal
 get_detected_peaks.character <- function(obj) {
-  return(NULL)
+    return(NULL)
 }
 
 #' @rdname get_detected_peaks
-#' @export
+#' @keywords internal
 get_detected_peaks.XCMSnExp <- function(obj) {
-  .get_detected_peaks_xcms(obj)
+    .get_detected_peaks_xcms(obj)
 }
 
 #' @rdname get_detected_peaks
-#' @export
+#' @keywords internal
 get_detected_peaks.MsExperiment <- function(obj) {
-  .get_detected_peaks_xcms(obj)
+    .get_detected_peaks_xcms(obj)
 }
 
-#' Get the grouped peaks across samples (features) from the data object.
+#' Get the grouped peaks across samples (features) from the data object
 #'
-#' @param obj The data object.
-#' @return A data frame representing the grouped peaks.
-#' @export
-#' @examples
-#' cdfs <- dir(
-#'    system.file("cdf", package = "faahKO"),
-#'    full.names = TRUE,
-#'    recursive = TRUE)[c(1, 7)]
-#' sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+#' `get_grouped_peaks()` is an internal helper that retrieves feature-level
+#' grouped peaks, i.e., chromatographic peaks aligned across samples.
 #'
-#' pd <- data.frame(sample_name = sample_names,
-#'                  sample_group = c("KO", "WT"),
-#'                  stringsAsFactors = FALSE)
-#'
-#' faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
-#'
-#' cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
-#' faahko <- xcms::findChromPeaks(faahko, param = cwp)
-#'
-#' pdp <- xcms::PeakDensityParam(
-#'     sampleGroups = pd$sample_group,
-#'     minFraction = 0.4,
-#'     bw = 30)
-#' faahko <- xcms::groupChromPeaks(faahko, param = pdp)
-#'
-#' grouped_peaks <- get_grouped_peaks(faahko)
+#' @param obj A data object containing or representing samples.
+#' @return A `data.frame` of grouped (feature-level) peaks,
+#' or `NULL` if not available.
+#' @keywords internal
 get_grouped_peaks <- function(obj) {
-  UseMethod("get_grouped_peaks")
+    UseMethod("get_grouped_peaks")
 }
 
 #' @rdname get_grouped_peaks
-#' @export
+#' @keywords internal
 get_grouped_peaks.default <- function(obj) {
-  return(NULL)
+    return(NULL)
 }
 
 .get_grouped_peaks_xcms <- function(obj) {
-  if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
-    as.data.frame(xcms::featureDefinitions(obj)) %>%
-      rename(all_of(c(mz = "mzmed", rt = "rtmed"))) %>%
-      mutate(name = xcms_utils$group_names(obj)) %>%
-      xcms_utils$format_feature_identifiers(num_digits_rt = 0, num_digits_mz = 4)
-  } else {
-    NULL
-  }
+    if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
+        as.data.frame(xcms::featureDefinitions(obj)) |>
+            rename(all_of(c(mz = "mzmed", rt = "rtmed"))) |>
+            mutate(name = xcms_utils$group_names(obj)) |>
+            xcms_utils$format_feature_identifiers(
+                num_digits_rt = 0,
+                num_digits_mz = 4)
+    } else {
+        NULL
+    }
 }
 
 #' @rdname get_grouped_peaks
-#' @export
+#' @keywords internal
 get_grouped_peaks.XCMSnExp <- function(obj) {
-  .get_grouped_peaks_xcms(obj)
+    .get_grouped_peaks_xcms(obj)
 }
 
 #' @rdname get_grouped_peaks
-#' @export
+#' @keywords internal
 get_grouped_peaks.XcmsExperiment <- function(obj) {
-  .get_grouped_peaks_xcms(obj)
+    .get_grouped_peaks_xcms(obj)
 }
 
 #' @rdname get_grouped_peaks
-#' @export
+#' @keywords internal
 get_grouped_peaks.MsExperiment <- function(obj) {
-  .get_grouped_peaks_xcms(obj)
+    .get_grouped_peaks_xcms(obj)
 }

@@ -2,22 +2,29 @@
 % Please edit documentation in R/plot-intensity-map.R
 \name{plot_intensity_map}
 \alias{plot_intensity_map}
-\title{Plot a 2D intensity map.}
+\title{Plot an LC-MS intensity map}
 \usage{
 plot_intensity_map(datasets, supporting_datasets, options, single = FALSE)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named \code{list} of data frames containing the primary datasets
+to plot. For a 2D intensity map the used key is \code{intensity_maps}.}
 
-\item{supporting_datasets}{The supporting datasets (e.g., detected peaks).}
+\item{supporting_datasets}{A \code{list} of supporting data frames, such as
+detected peaks, used for highlighting features.}
 
-\item{options}{The plot object's options.}
+\item{options}{A list of plot options, controlling units, faceting,
+highlighting, and other visual parameters.}
 
-\item{single}{Whether it is a single dataset variant.}
+\item{single}{A \code{logical} value that indicates whether it should treat
+the plot as a single dataset variant, which can affect faceting
+and layout behavior. Default is \code{FALSE}.}
 }
 \value{
-The plot as a ggplot2 object.
+A \code{ggplot} object representing the 2D intensity map plot.
 }
 \description{
-Plot a 2D intensity map.
+\code{plot_intensity_map()} generates a ggplot2 from an intensity map which is a
+point-cloud of m/z and RT points.
 }
+\keyword{internal}

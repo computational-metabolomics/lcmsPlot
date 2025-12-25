@@ -3,36 +3,38 @@
 \docType{class}
 \name{lcmsPlotDataContainer-class}
 \alias{lcmsPlotDataContainer-class}
-\title{lcmsPlotDataContainer class.}
+\title{A unified storing mechanism for LC-MS data}
 \description{
-lcmsPlotDataContainer class.
+The \code{lcmsPlotDataContainer} class allows the storage of different
+types of LC-MS data.
+This class can be used independently from the plotting utilities,
+however the preferred approach is to use it with the \code{lcmsPlotClass} class.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{data_obj}}{The data object. One of:
-\itemize{
-\item XCMSnExp
-\item MsExperiment
-\item character: vector of sample paths
-}}
+\item{\code{data_obj}}{The data object. One of: \code{XCMSnExp}, \code{MsExperiment} or
+\code{character} representing mzML paths.}
 
-\item{\code{metadata}}{The sample metadata.}
+\item{\code{metadata}}{A \code{data.frame} containing the sample metadata.}
 
-\item{\code{chromatograms}}{The chromatograms.}
+\item{\code{chromatograms}}{A \code{data.frame} containing the chromatograms.}
 
-\item{\code{mass_traces}}{The mass traces.}
+\item{\code{mass_traces}}{A \code{data.frame} containing the mass traces.}
 
-\item{\code{spectra}}{The spectra.}
+\item{\code{spectra}}{A \code{data.frame} containing the spectra.}
 
-\item{\code{total_ion_current}}{The Total Ion Current (TIC).}
+\item{\code{total_ion_current}}{A \code{data.frame} containing the total ion current.}
 
-\item{\code{intensity_maps}}{The 2D intensity maps.}
+\item{\code{intensity_maps}}{A \code{data.frame} containing the 2D intensity maps
+representing the distribution of detected peaks across m/z and RT.}
 
-\item{\code{rt_diff}}{The RT difference dataset for RT alignment.}
+\item{\code{rt_diff}}{A \code{data.frame} containing the raw and adjusted RT values.}
 
-\item{\code{additional_metadata}}{Additional information attached to datasets.}
+\item{\code{additional_metadata}}{A \code{data.frame} containing additional information
+attached to datasets through a column called \code{additional_metadata_index}.}
 
-\item{\code{detected_peaks}}{The detected peaks.}
+\item{\code{detected_peaks}}{A \code{data.frame} containing the detected peaks from
+an \code{XCMSnExp} or \code{MsExperiment} object.}
 }}
 

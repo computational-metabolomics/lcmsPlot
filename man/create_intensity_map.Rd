@@ -3,31 +3,23 @@
 \name{create_intensity_map}
 \alias{create_intensity_map}
 \alias{create_intensity_map,lcmsPlotDataContainer,list-method}
-\title{Creates an lcmsPlotDataContainer from an intensity map}
+\title{Create an instance of class \code{lcmsPlotDataContainer} from an intensity map}
 \usage{
 create_intensity_map(obj, options)
 
 \S4method{create_intensity_map}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{options}{The lcmsPlot options}
+\item{options}{A \code{list} representing the plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object
+An instance of class \code{lcmsPlotDataContainer} with the created
+intensity map, a \code{data.frame} with columns \code{mz} and \code{rt}.
 }
 \description{
-Creates an lcmsPlotDataContainer from an intensity map
+This function creates an \code{lcmsPlotDataContainer} object from
+an intensity map which is a point-cloud of m/z and RT points.
 }
-\examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
-data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
-
-opts <- default_options()
-opts$intensity_maps$rt_range <- c(2000, 2100)
-opts$intensity_maps$mz_range <- c(200, 300)
-opts$intensity_maps$sample_ids <- c('ko15', 'wt15')
-
-data_container <- create_intensity_map(data_container, opts)
-}
+\keyword{internal}

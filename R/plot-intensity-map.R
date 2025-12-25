@@ -1,38 +1,52 @@
-#' Plot a 2D intensity map.
+#' Plot an LC-MS intensity map
 #'
-#' @param datasets A list of data frames each corresponding to a dataset to plot.
-#' @param supporting_datasets The supporting datasets (e.g., detected peaks).
-#' @param options The plot object's options.
-#' @param single Whether it is a single dataset variant.
-#' @return The plot as a ggplot2 object.
+#' `plot_intensity_map()` generates a ggplot2 from an intensity map which is a
+#' point-cloud of m/z and RT points.
+#'
+#' @param datasets A named `list` of data frames containing the primary datasets
+#' to plot. For a 2D intensity map the used key is `intensity_maps`.
+#' @param supporting_datasets A `list` of supporting data frames, such as
+#' detected peaks, used for highlighting features.
+#' @param options A list of plot options, controlling units, faceting,
+#' highlighting, and other visual parameters.
+#' @param single A `logical` value that indicates whether it should treat
+#' the plot as a single dataset variant, which can affect faceting
+#' and layout behavior. Default is `FALSE`.
+#' @return A `ggplot` object representing the 2D intensity map plot.
+#' @keywords internal
 plot_intensity_map <- function(
-  datasets,
-  supporting_datasets,
-  options,
-  single = FALSE
+    datasets,
+    supporting_datasets,
+    options,
+    single = FALSE
 ) {
-  dataset <- datasets$intensity_maps
+    dataset <- datasets$intensity_maps
 
-  extra_layers <- list(
-    legend_title(options),
-    faceting(options, single),
-    grid_layout(options, single)
-  )
-  extra_layers <- extra_layers[!sapply(extra_layers, is.null)]
+    extra_layers <- list(
+        legend_title(options),
+        faceting(options, single),
+        grid_layout(options, single)
+    )
+    extra_layers <- remove_null_elements(extra_layers)
 
-  if (options$intensity_map$density) {
-    ggplot(dataset, aes(x = .data$rt, y = .data$mz)) +
-      geom_density_2d_filled(contour_var = "ndensity") +
-      scale_fill_viridis_d() +
-      labs(x = "RT (sec)", y = "m/z", fill = "Density") +
-      theme_minimal() +
-      extra_layers
-  } else {
-    ggplot(dataset, aes(x = .data$rt, y = .data$mz, fill = log1p(.data$intensity))) +
-      geom_tile() +
-      scale_fill_viridis_c() +
-      labs(x = "RT (sec)", y = "m/z", fill = "log(Intensity)") +
-      theme_minimal() +
-      extra_layers
-  }
+    if (options$intensity_map$density) {
+        ggplot(dataset, aes(x = .data$rt, y = .data$mz)) +
+            geom_density_2d_filled(contour_var = "ndensity") +
+            scale_fill_viridis_d() +
+            labs(x = "RT (sec)", y = "m/z", fill = "Density") +
+            theme_minimal() +
+            extra_layers
+    } else {
+        ggplot(
+            dataset,
+            aes(
+                x = .data$rt,
+                y = .data$mz,
+                fill = log1p(.data$intensity))) +
+            geom_tile() +
+            scale_fill_viridis_c() +
+            labs(x = "RT (sec)", y = "m/z", fill = "log(Intensity)") +
+            theme_minimal() +
+            extra_layers
+    }
 }

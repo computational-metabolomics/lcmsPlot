@@ -3,20 +3,25 @@
 \name{next_plot}
 \alias{next_plot}
 \alias{next_plot,lcmsPlotClass-method}
-\title{Move to the next plot object (batch-mode).}
+\title{Move to the next plot object (batch-mode)}
 \usage{
 next_plot(object)
 
 \S4method{next_plot}{lcmsPlotClass}(object)
 }
 \arguments{
-\item{object}{The lcmsPlotClass object.}
+\item{object}{An instance of class \code{lcmsPlotClass}.}
 }
 \value{
-An lcmsPlotClass object.
+An instance of class \code{lcmsPlotClass}.
 }
 \description{
-Move to the next plot object (batch-mode).
+\code{next_plot} progresses an \code{lcmsPlotClass} object to the next plot in a
+batch-processing sequence.
+This is typically used when multiple plots are generated and inspected
+iteratively, such as when navigating large LC–MS datasets
+in a batched workflow. The batch size is defined in the \code{lcmsPlot}
+function's argument \code{batch_size}.
 }
 \examples{
 raw_files <- dir(
@@ -25,10 +30,14 @@ raw_files <- dir(
    recursive = TRUE)[1:5]
 
 p <- lcmsPlot(raw_files, batch_size = 2) +
-  lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  arrange(group_by = "sample_id") +
-  legend(position = "bottom") +
-  labels(legend = "Sample")
+  lp_chromatogram(features = rbind(c(
+    mzmin = 334.9,
+    mzmax = 335.1,
+    rtmin = 2700,
+    rtmax = 2900))) +
+  lp_arrange(group_by = "sample_id") +
+  lp_legend(position = "bottom") +
+  lp_labels(legend = "Sample")
 
 p <- next_plot(p)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers-data.R
 \name{get_feature_data}
 \alias{get_feature_data}
-\title{Get a feature's m/z and RT ranges given different feature specifications.}
+\title{Get a feature's m/z and RT ranges given different feature specifications}
 \usage{
 get_feature_data(feature, options, full_rt_range)
 }
@@ -22,5 +22,6 @@ The accepted columns combinations are:
 A named list defining a feature with names: feature_id, mzr, rtr.
 }
 \description{
-Get a feature's m/z and RT ranges given different feature specifications.
+Get a feature's m/z and RT ranges given different feature specifications
 }
+\keyword{internal}

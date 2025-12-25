@@ -16,20 +16,88 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{MsExperiment}(obj, sample_id_column, metadata)
 }
 \arguments{
-\item{obj}{The data object}
+\item{obj}{A data object containing or representing samples.}
 
-\item{sample_id_column}{The column that should be associated with the sample ID}
+\item{sample_id_column}{A \code{character} value indicating the column that
+should be used as the sample ID.}
 
-\item{metadata}{The metadata data frame if not already included in the data object}
+\item{metadata}{Optional metadata \code{data.frame} used to replace or augment
+sample metadata when not already embedded in the object.}
 }
 \value{
-A data frame representing the metadata.
+A \code{data.frame} containing standardised metadata with at least
+\code{sample_index}, \code{sample_id}, and \code{sample_path}.
 }
 \description{
-Get the metadata associated with the input object
+\code{get_metadata()} is a generic helper used internally to standardise
+metadata extraction across different classes of input objects.
 }
-\examples{
-# Get metadata from sample paths
-paths <- c("test01.mzML", "test02.mzML")
-metadata <- get_metadata(paths, sample_id_column = NULL, metadata = NULL)
+\details{
+Depending on the class of \code{obj}, metadata may be:
+\itemize{
+\item \strong{constructed} (e.g., from character vectors of file paths), or
+\item \strong{extracted and optionally replaced} (e.g., from \code{XCMSnExp} or
+\code{MsExperiment} objects).
 }
+
+Across all methods, the returned metadata is enriched with:
+\itemize{
+\item \strong{\code{sample_index}} - a sequential index of samples
+\item \strong{\code{sample_id}} - an identifier column selected via \code{sample_id_column}
+\item \strong{\code{sample_path}} - a file path associated with each sample (if
+applicable)
+}
+}
+\section{Character vector input (\code{character})}{
+
+A character vector is treated as a list of sample file paths (e.g.,
+\code{.mzML}, \code{.mzXML}, \code{.cdf}).
+
+\strong{If \code{metadata} is NULL:}
+Metadata is \emph{constructed automatically}:
+\itemize{
+\item \code{sample_path}: full paths given in \code{obj}
+\item \code{sample_index}: row number
+\item \code{sample_id}: basename of each file without extension
+}
+
+\strong{If \code{metadata} is provided:}
+The supplied \code{metadata} is used and the following columns are added:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: extracted from the \code{sample_id_column}
+\item \code{sample_path}: the input paths from \code{obj}
+}
+}
+
+\section{\code{XCMSnExp} input}{
+
+Metadata is taken from \code{xcms::phenoData(obj)}.
+
+\strong{If \code{metadata} is provided:}
+It replaces the existing \code{phenoData}.
+
+The returned metadata always includes:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: extracted using \code{sample_id_column}
+\item \code{sample_path}: values from \code{xcms::fileNames(obj)}
+}
+}
+
+\section{\code{MsExperiment} input}{
+
+Metadata is taken from \code{MsExperiment::sampleData(obj)}.
+
+\strong{If \code{metadata} is provided:}
+It replaces existing \code{sampleData}.
+
+The returned metadata includes:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: extracted using \code{sample_id_column}
+\item \code{sample_path}: values from \code{xcms::fileNames(obj)}
+}
+}
+
+\keyword{internal}

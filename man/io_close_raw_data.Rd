@@ -2,16 +2,17 @@
 % Please edit documentation in R/io-raw-data.R
 \name{io_close_raw_data}
 \alias{io_close_raw_data}
-\title{Close a list of mzR object connections.}
+\title{Close open \code{mzR} object connections}
 \usage{
 io_close_raw_data(raw_data)
 }
 \arguments{
-\item{raw_data}{A list of mzR object connections.}
+\item{raw_data}{A list of \code{mzR} objects (as returned by \code{io_get_raw_data()}).}
 }
 \value{
-NULL.
+\code{NULL}
 }
 \description{
-Close a list of mzR object connections.
+Close open \code{mzR} object connections
 }
+\keyword{internal}

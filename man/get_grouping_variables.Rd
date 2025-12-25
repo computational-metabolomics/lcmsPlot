@@ -7,11 +7,16 @@
 get_grouping_variables(opts)
 }
 \arguments{
-\item{opts}{The plot object's options.}
+\item{opts}{A \code{list} of plot options.}
 }
 \value{
-The grouping variables as a character vector.
+A \code{character} vector containing the names of the grouping variables
+used for faceting or grid layout. May contain \code{NULL} values if no grouping
+is specified.
 }
 \description{
-Get the grouping variables for a plot
+\code{get_grouping_variables()} extracts the variables used to group data in a
+plot based on the provided plot options. It first checks for facet
+specifications, and if absent, falls back to grid row/column settings.
 }
+\keyword{internal}

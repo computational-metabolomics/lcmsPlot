@@ -5,7 +5,7 @@
 \alias{get_detected_peaks.character}
 \alias{get_detected_peaks.XCMSnExp}
 \alias{get_detected_peaks.MsExperiment}
-\title{Get the detected peaks from the data object (e.g. XCMSnExp).}
+\title{Get the detected peaks from the data object (e.g. XCMSnExp)}
 \usage{
 get_detected_peaks(obj)
 
@@ -16,29 +16,28 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{MsExperiment}(obj)
 }
 \arguments{
-\item{obj}{The data object.}
+\item{obj}{A data object containing or representing samples.}
 }
 \value{
-A data frame representing the detected peaks.
+A \code{data.frame} of detected peaks (one row per peak), or \code{NULL} if no
+peaks are available.
 }
 \description{
-Get the detected peaks from the data object (e.g. XCMSnExp).
+\code{get_detected_peaks()} is an internal helper that standardises extraction of
+detected chromatographic peaks across different object types commonly used in
+LC-MS workflows.
 }
-\examples{
-cdfs <- dir(
-   system.file("cdf", package = "faahKO"),
-   full.names = TRUE,
-   recursive = TRUE)[c(1, 7)]
-sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
-
-pd <- data.frame(sample_name = sample_names,
-                 sample_group = c("KO", "WT"),
-                 stringsAsFactors = FALSE)
-
-faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
-
-cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
-faahko <- xcms::findChromPeaks(faahko, param = cwp)
-
-detected_peaks <- get_detected_peaks(faahko)
+\details{
+Supported inputs behave as follows:
+\itemize{
+\item \strong{\code{character}} – Assumed to represent sample paths; no peak detection
+information is available. Always returns \code{NULL}.
+\item \strong{\code{XCMSnExp}} and \strong{\code{MsExperiment}} – If the object is processed and
+contains chromatographic peaks, extracts \code{xcms::chromPeaks(obj)} and
+returns it as a data frame.
+The column \code{sample} is renamed to \code{sample_index}.
 }
+
+When peaks are not found or the object is not processed, \code{NULL} is returned.
+}
+\keyword{internal}

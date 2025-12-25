@@ -1,101 +1,111 @@
-#' Get the default options.
+#' Get the default options
 #'
-#' @return The default options.
-#' @export
-#' @examples
-#' def_opts <- default_options()
+#' `default_options()` returns a list of default settings used throughout the
+#' package. These options control aspects such as sample metadata handling,
+#' plotting, chromatogram and spectra display, and general visualization
+#' parameters.
+#'
+#' @return A named `list` containing all default options.
+#' @keywords internal
 default_options <- function() {
-  list(
-    sample_id_column = "sample_id",
-    parallel_param = NULL,
-    bypass_plot_generation = FALSE,
-    batch_size = NULL,
-    batch_index = 1,
-    chromatograms = list(
-      show = FALSE,
-      features = NULL,
-      sample_ids = NULL,
-      ppm = 10,
-      rt_tol = 10,
-      highlight_peaks = FALSE,
-      highlight_peaks_color = NULL,
-      highlight_peaks_factor = "sample_id",
-      aggregation_fun = "max",
-      rt_adjusted = FALSE,
-      rt_unit = "second",
-      intensity_unit = "absolute",
-      fill_gaps = FALSE,
-      highlight_apices = list(
-        column = NULL,
-        top_n = NULL
-      )
-    ),
-    mass_traces = list(
-      show = FALSE
-    ),
-    spectra = list(
-      show = FALSE,
-      sample_ids = NULL,
-      mode = 'closest_apex', # One of: closest, closest_apex, across_peak
-      ms_level = 1,
-      rt = NULL, # For mode=closest
-      scan_index = NULL,
-      interval = 3, # mode=across_peak
-      spectral_match_db = NULL,
-      match_target_index = 1
-    ),
-    total_ion_current = list(
-      show = FALSE,
-      sample_ids = NULL,
-      type = "boxplot"
-    ),
-    intensity_maps = list(
-      show = FALSE,
-      sample_ids = NULL,
-      mz_range = NULL,
-      rt_range = NULL,
-      density = FALSE
-    ),
-    rt_diff = list(
-      show = FALSE
-    ),
-    facets = list(
-      facets = NULL,
-      ncol = NULL,
-      nrow = NULL,
-      free_x = FALSE,
-      free_y = FALSE
-    ),
-    grid = list(
-      rows = NULL,
-      cols = NULL,
-      free_y = FALSE
-    ),
-    arrangement = list(
-      group_by = NULL
-    ),
-    labels = list(
-      title = NULL,
-      legend = NULL
-    ),
-    legend = list(
-      position = "right"
-    ),
-    rt_lines = list(),
-    layout = list(
-      design = NULL
+    list(
+        sample_id_column = "sample_id",
+        parallel_param = NULL,
+        bypass_plot_generation = FALSE,
+        batch_size = NULL,
+        batch_index = 1,
+        chromatograms = list(
+            show = FALSE,
+            features = NULL,
+            sample_ids = NULL,
+            ppm = 10,
+            rt_tol = 10,
+            highlight_peaks = FALSE,
+            highlight_peaks_color = NULL,
+            highlight_peaks_factor = "sample_id",
+            aggregation_fun = "max",
+            rt_adjusted = FALSE,
+            rt_unit = "second",
+            intensity_unit = "absolute",
+            fill_gaps = FALSE,
+            highlight_apices = list(
+                column = NULL,
+                top_n = NULL
+            )
+        ),
+        mass_traces = list(
+            show = FALSE
+        ),
+        spectra = list(
+            show = FALSE,
+            sample_ids = NULL,
+            mode = 'closest_apex', # One of: closest, closest_apex, across_peak
+            ms_level = 1,
+            rt = NULL, # For mode=closest
+            scan_index = NULL,
+            interval = 3, # mode=across_peak
+            spectral_match_db = NULL,
+            match_target_index = 1
+        ),
+        total_ion_current = list(
+            show = FALSE,
+            sample_ids = NULL,
+            type = "boxplot"
+        ),
+        intensity_maps = list(
+            show = FALSE,
+            sample_ids = NULL,
+            mz_range = NULL,
+            rt_range = NULL,
+            density = FALSE
+        ),
+        rt_diff = list(
+            show = FALSE
+        ),
+        facets = list(
+            facets = NULL,
+            ncol = NULL,
+            nrow = NULL,
+            free_x = FALSE,
+            free_y = FALSE
+        ),
+        grid = list(
+            rows = NULL,
+            cols = NULL,
+            free_y = FALSE
+        ),
+        arrangement = list(
+            group_by = NULL
+        ),
+        labels = list(
+            title = NULL,
+            legend = NULL
+        ),
+        legend = list(
+            position = "right"
+        ),
+        rt_lines = list(),
+        layout = list(
+            design = NULL
+        )
     )
-  )
 }
 
 #' Get the grouping variables for a plot
 #'
-#' @param opts The plot object's options.
-#' @return The grouping variables as a character vector.
+#' `get_grouping_variables()` extracts the variables used to group data in a
+#' plot based on the provided plot options. It first checks for facet
+#' specifications, and if absent, falls back to grid row/column settings.
+#'
+#' @param opts A `list` of plot options.
+#' @return A `character` vector containing the names of the grouping variables
+#' used for faceting or grid layout. May contain `NULL` values if no grouping
+#' is specified.
+#' @keywords internal
 get_grouping_variables <- function(opts) {
-  if (!is.null(opts$facets$facets)) {
-    opts$facets$facets
-  } else {
-    c(opts$grid$rows, opts$grid$cols)
-  }
+    if (!is.null(opts$facets$facets)) {
+        opts$facets$facets
+    } else {
+        c(opts$grid$rows, opts$grid$cols)
+    }
 }

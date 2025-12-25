@@ -2,22 +2,28 @@
 % Please edit documentation in R/plot-spectrum.R
 \name{plot_spectrum}
 \alias{plot_spectrum}
-\title{Plot spectra.}
+\title{Plot spectra from one or more datasets}
 \usage{
 plot_spectrum(datasets, supporting_datasets, options, single = FALSE)
 }
 \arguments{
-\item{datasets}{A list of data frames each corresponding to a dataset to plot.}
+\item{datasets}{A named \code{list} of data frames containing the primary datasets
+to plot. For a spectra plot the used key is \code{spectra}.}
 
-\item{supporting_datasets}{The supporting datasets (e.g., detected peaks).}
+\item{supporting_datasets}{A \code{list} of supporting data frames, such as
+detected peaks, used for highlighting features.}
 
-\item{options}{The plot object's options.}
+\item{options}{A list of plot options, controlling units, faceting,
+highlighting, and other visual parameters.}
 
-\item{single}{Whether it is a single dataset variant.}
+\item{single}{A \code{logical} value that indicates whether it should treat
+the plot as a single dataset variant, which can affect faceting
+and layout behavior. Default is \code{FALSE}.}
 }
 \value{
-The plot as a ggplot2 object.
+A \code{ggplot} object representing the RT difference plot.
 }
 \description{
-Plot spectra.
+\code{plot_spectrum()} generates a ggplot2 MS spectra plot.
 }
+\keyword{internal}

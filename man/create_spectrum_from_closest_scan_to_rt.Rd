@@ -2,20 +2,21 @@
 % Please edit documentation in R/constructors-spectra.R
 \name{create_spectrum_from_closest_scan_to_rt}
 \alias{create_spectrum_from_closest_scan_to_rt}
-\title{Create a spectrum of the closest scan to the specified RT.}
+\title{Create a spectrum of the closest scan to the specified RT}
 \usage{
 create_spectrum_from_closest_scan_to_rt(raw_data, rt, ms_level)
 }
 \arguments{
-\item{raw_data}{An mzR object.}
+\item{raw_data}{An instance of class \code{mzR}.}
 
-\item{rt}{The RT to consider.}
+\item{rt}{A \code{numeric} value indicating the RT to consider.}
 
-\item{ms_level}{The MS level of the scans.}
+\item{ms_level}{A \code{numeric} value indicating the MS level of the scans.}
 }
 \value{
-A spectrum data frame.
+A \code{data.frame} representing a spectrum with columns
+\code{mz}, \code{intensity}, and \code{rt}.
 }
 \description{
-Create a spectrum of the closest scan to the specified RT.
+Create a spectrum of the closest scan to the specified RT
 }

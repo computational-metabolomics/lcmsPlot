@@ -2,20 +2,21 @@
 % Please edit documentation in R/constructors-spectra.R
 \name{create_spectrum_from_scan_index}
 \alias{create_spectrum_from_scan_index}
-\title{Create a spectrum of the specified scan.}
+\title{Create a spectrum of the specified scan}
 \usage{
 create_spectrum_from_scan_index(raw_data, sample_metadata, scan_index)
 }
 \arguments{
-\item{raw_data}{An mzR object.}
+\item{raw_data}{An instance of class \code{mzR}.}
 
-\item{sample_metadata}{The sample metadata.}
+\item{sample_metadata}{A \code{data.frame} indicating the sample metadata.}
 
-\item{scan_index}{The scan index.}
+\item{scan_index}{A \code{numeric} value indicating the scan index.}
 }
 \value{
-A spectrum data frame.
+A \code{data.frame} representing a spectrum with columns
+\code{mz}, \code{intensity}, and \code{rt}.
 }
 \description{
-Create a spectrum of the specified scan.
+Create a spectrum of the specified scan
 }

@@ -2,20 +2,23 @@
 % Please edit documentation in R/helpers-data.R
 \name{get_XCMSnExp_object_example}
 \alias{get_XCMSnExp_object_example}
-\title{Get an XCMSnExp example object.}
+\title{Get an \code{XCMSnExp} example object from the \code{faahKO} dataset}
 \usage{
-get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = FALSE)
+get_XCMSnExp_object_example(indices = c(1, 2, 3), should_group_peaks = FALSE)
 }
 \arguments{
-\item{indices}{The faahKO package data samples indices.}
+\item{indices}{A \code{numeric} vector of sample indices to select
+from the \code{faahKO} CDF files. Defaults to the first three samples.}
 
-\item{should_group_peaks}{Whether to group the detected peaks.}
+\item{should_group_peaks}{A \code{logical} value indicating whether
+to group the detected peaks.}
 }
 \value{
-The XCMSnExp object.
+An \code{XCMSnExp} object containing raw data, detected chromatographic
+peaks, and, if requested, grouped features.
 }
 \description{
-Get an XCMSnExp example object.
+Get an \code{XCMSnExp} example object from the \code{faahKO} dataset
 }
 \examples{
 get_XCMSnExp_object_example(indices = 1:5)

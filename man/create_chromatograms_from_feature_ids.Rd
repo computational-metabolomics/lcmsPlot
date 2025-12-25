@@ -3,32 +3,23 @@
 \name{create_chromatograms_from_feature_ids}
 \alias{create_chromatograms_from_feature_ids}
 \alias{create_chromatograms_from_feature_ids,lcmsPlotDataContainer,list-method}
-\title{Create a lcmsPlotDataContainer from feature IDs.}
+\title{Create an instance of class \code{lcmsPlotDataContainer} from feature IDs}
 \usage{
 create_chromatograms_from_feature_ids(obj, options)
 
 \S4method{create_chromatograms_from_feature_ids}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object.}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{options}{The plot object's options.}
+\item{options}{A \code{list} representing the plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object.
+An instance of class \code{lcmsPlotDataContainer} with chromatograms
+of the specified feature IDs.
 }
 \description{
-Create a lcmsPlotDataContainer from feature IDs.
+The input features are specified in the \code{options} list
+under \code{chromatograms$features}.
 }
-\examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7), should_group_peaks = TRUE)
-data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
-
-opts <- default_options()
-opts$chromatograms$features <- c('M205T2785', 'M207T2713')
-opts$chromatograms$sample_ids <- c('ko15', 'wt15')
-opts$chromatograms$ppm <- 5
-opts$chromatograms$rt_tol <- 10
-
-data_container <- create_chromatograms_from_feature_ids(data_container, opts)
-}
+\keyword{internal}

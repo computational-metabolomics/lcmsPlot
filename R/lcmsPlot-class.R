@@ -1,12 +1,35 @@
-#' Create an lcmsPlotClass object.
+#' Create an `lcmsPlotClass` object
 #'
-#' @param dataset An object of type XCMSnExp, MsExperiment, or character.
-#' @param sample_id_column Which column should be used as the sample ID.
-#' @param metadata The metadata in case it's not provided in the dataset object.
-#' @param parallel_param The BiocParallel object for enabling parallelism.
-#' @param batch_size The number of samples per batch.
-#' @return An lcmsPlotClass object.
+#' The `lcmsPlotClass` class allows a unified approach for  the management
+#' of LC-MS data for the purpose of visualisation. It includes the options
+#' for customising the plot, the LC-MS data, and the underlying plot object.
+#' The `lcmsPlot` function is the main entry point and the preferred approach
+#' to creating `lcmsPlotClass` objects.
+#'
+#' @param dataset An object of type `XCMSnExp`, `MsExperiment`, or `character`.
+#' If a `character` vector is supplied, it will be interpreted as a list
+#' of mzML paths.
+#' @param sample_id_column A `character` value indicating which column
+#' should be used as the sample ID. By default it is `"sample_id"`.
+#' @param metadata A `data.frame` containing the samples metadata
+#' in case it is not provided in the dataset object.
+#' @param parallel_param A `BiocParallelParam` object for enabling parallelism.
+#' See https://bioconductor.org/packages/release/bioc/html/BiocParallel.html
+#' for more information.
+#' @param batch_size A `numeric` value indicating the number of
+#' samples per batch. This parameter is necessary when plotting
+#' multiple batches using the `iterate_plot_batches` or `next_plot` functions.
+#' @return An instance of `lcmsPlotClass`. It will create the necessary
+#' internal structures related to the data (`data` slot)
+#' and options (`options` slot).
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files)
 lcmsPlot <- function(
     dataset,
     sample_id_column = "sample_id",
@@ -14,101 +37,94 @@ lcmsPlot <- function(
     parallel_param = NULL,
     batch_size = NULL
 ) {
-  opts <- default_options()
-  opts$sample_id_column <- sample_id_column
-  opts$parallel_param <- parallel_param
-  opts$batch_size <- batch_size
+    opts <- default_options()
+    opts$sample_id_column <- sample_id_column
+    opts$parallel_param <- parallel_param
+    opts$batch_size <- batch_size
 
-  new("lcmsPlotClass",
-      options = opts,
-      data = create_data_container_from_obj(dataset, sample_id_column, metadata),
-      plot = NULL)
+    new("lcmsPlotClass",
+        options = opts,
+        data = create_data_container_from_obj(
+            dataset,
+            sample_id_column,
+            metadata),
+        plot = NULL)
 }
 
 setOldClass(c("gg", "ggplot"))
 
-#' lcmsPlotClass class.
+#' Managing LC-MS data for visualisation
 #'
-#' @slot options The object options.
-#' @slot data The lcmsPlotDataContainer object.
-#' @slot history The list of the applied layers.
-#' @slot plot The underlying plot object.
+#' The `lcmsPlotClass` class allows a unified approach for  the management
+#' of LC-MS data for the purpose of visualisation. It includes the options
+#' for customising the plot, the LC-MS data, and the underlying plot object.
+#'
+#' @section General information:
+#' The `lcmsPlotClass` class has been designed to be the entry point for
+#' all data and outputs related to the `lcmsPlot` package.
+#' The class abstracts away the data handling, making it easier to use
+#' `lcmsPlot` with existing data wrappers like `MsExperiment` or `XCMSnExp`.
+#'
+#' @section Preferred usage:
+#' The `lcmsPlotClass` class can be used directly to instantiate an object,
+#' however the preferred approach is to use the `lcmsPlot` function.
+#'
+#' @slot options A `list` to store the plot options.
+#' @slot data An instance of class `lcmsPlotDataContainer`.
+#' @slot history A `list` to store the applied layers to generate a plot;
+#' for internal use.
+#' @slot plot A `patchwork` object representing the underlying plot object.
 #' @export
+#' @examples
+#' lp_obj <- new("lcmsPlotClass", options = NULL, data = NULL, plot = NULL)
 setClass(
-  "lcmsPlotClass",
-  slots = list(
-    options = "list",
-    data = "lcmsPlotDataContainer",
-    history = "list",
-    plot = "ANY"
-  ),
-  prototype = list(
-    options = default_options(),
-    data = NULL,
-    history = list(),
-    plot = NULL
-  )
+    "lcmsPlotClass",
+    slots = list(
+        options = "list",
+        data = "lcmsPlotDataContainer",
+        history = "list",
+        plot = "ANY"
+    ),
+    prototype = list(
+        options = default_options(),
+        data = NULL,
+        history = list(),
+        plot = NULL
+    )
 )
 
-#' Apply a function to the lcmsPlotClass object.
-#'
-#' @param e1 A lcmsPlotClass object.
-#' @param e2 A function that takes a lcmsPlotClass object and returns another.
-#' @return An lcmsPlotClass object.
-#' @export
-setMethod(
-  f = "+",
-  signature = c("lcmsPlotClass", "function"),
-  definition = function(e1, e2) { e2(e1) }
-)
-
-#' Set the plot for an lcmsPlotClass object.
-#'
-#' @param object The lcmsPlotClass object.
-#' @param additional_datasets Additional datasets to include in the plotting.
-#' @return An lcmsPlotClass object.
-#' @export
-setGeneric(
-  "set_plot",
-  function(object, additional_datasets) standardGeneric("set_plot")
-)
-
-#' @rdname set_plot
-setMethod(
-  f = "set_plot",
-  signature = c("lcmsPlotClass", "list"),
-  function(object, additional_datasets) {
+.render_plot <- function(object, additional_datasets) {
     dataset_types <- c(DATASET_TYPES, names(additional_datasets))
     datasets <- lapply(dataset_types, function(dataset_name) {
-      if (object@options[[dataset_name]]$show) {
-        if (dataset_name %in% slotNames(object@data)) {
-          data_df <- slot(object@data, dataset_name)
+        if (object@options[[dataset_name]]$show) {
+            if (dataset_name %in% slotNames(object@data)) {
+                data_df <- slot(object@data, dataset_name)
+            } else {
+                data_df <- additional_datasets[[dataset_name]]
+            }
+
+            if (nrow(data_df) == 0) {
+                stop("Empty dataset ", dataset_name)
+            }
+
+            data_df <- merge_by_index(
+                data_df,
+                object@data@metadata,
+                index_col = 'metadata_index'
+            )
+
+            if (nrow(object@data@additional_metadata) > 0) {
+                data_df <- merge_by_index(
+                    data_df,
+                    object@data@additional_metadata,
+                    index_col = 'additional_metadata_index'
+                )
+            }
+
+            return(data_df)
         } else {
-          data_df <- additional_datasets[[dataset_name]]
+            return(NULL)
         }
-
-        if (nrow(data_df) == 0) {
-          stop("Empty dataset ", dataset_name)
-        }
-
-        data_df <- merge_by_index(
-          data_df,
-          object@data@metadata,
-          index_col = 'metadata_index'
-        )
-
-        if (nrow(object@data@additional_metadata) > 0) {
-          data_df <- merge_by_index(
-            data_df,
-            object@data@additional_metadata,
-            index_col = 'additional_metadata_index'
-          )
-        }
-
-        return(data_df)
-      } else {
-        return(NULL)
-      }
     })
     names(datasets) <- dataset_types
     datasets <- remove_null_elements(datasets)
@@ -116,14 +132,47 @@ setMethod(
     object@plot <- plot_data(datasets, object)
 
     return(object)
-  }
+}
+
+#' Apply a function to an `lcmsPlotClass` object using the infix `+` operator
+#'
+#' This provides a convenient infix style for applying transformations to
+#' `lcmsPlotClass` objects.
+#'
+#' @param e1 An instance of class `lcmsPlotClass`.
+#' @param e2 A function that takes an `lcmsPlotClass` object
+#' and returns another.
+#' @return An instance of class `lcmsPlotClass`.
+#' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   lp_chromatogram(aggregation_fun = "max") +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+setMethod(
+    f = "+",
+    signature = c("lcmsPlotClass", "function"),
+    definition = function(e1, e2) { e2(e1) }
 )
 
-#' Move to the next plot object (batch-mode).
+#' Move to the next plot object (batch-mode)
 #'
-#' @param object The lcmsPlotClass object.
+#' `next_plot` progresses an `lcmsPlotClass` object to the next plot in a
+#' batch-processing sequence.
+#' This is typically used when multiple plots are generated and inspected
+#' iteratively, such as when navigating large LC–MS datasets
+#' in a batched workflow. The batch size is defined in the `lcmsPlot`
+#' function's argument `batch_size`.
+#'
+#' @param object An instance of class `lcmsPlotClass`.
 #' @export
-#' @return An lcmsPlotClass object.
+#' @return An instance of class `lcmsPlotClass`.
 #' @examples
 #' raw_files <- dir(
 #'    system.file("cdf", package = "faahKO"),
@@ -131,36 +180,43 @@ setMethod(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
 #'
 #' p <- next_plot(p)
 setGeneric(
-  "next_plot",
-  function(object) standardGeneric("next_plot")
+    "next_plot",
+    function(object) standardGeneric("next_plot")
 )
 
 #' @rdname next_plot
 setMethod(
-  f = "next_plot",
-  signature = c("lcmsPlotClass"),
-  function(object) {
-    object@options$batch_index <- object@options$batch_index + 1
-    for (history_item in object@history) {
-      fn <- get(history_item$name, asNamespace("lcmsPlot"))
-      object <- do.call(fn, history_item$args)(object)
+    f = "next_plot",
+    signature = c("lcmsPlotClass"),
+    function(object) {
+        object@options$batch_index <- object@options$batch_index + 1
+        for (history_item in object@history) {
+            fn <- get(history_item$name, asNamespace("lcmsPlot"))
+            object <- do.call(fn, history_item$args)(object)
+        }
+        return(object)
     }
-    return(object)
-  }
 )
 
-#' Iterate on the batches of plots.
+#' Iterate on the batches of plots
 #'
-#' @param object The lcmsPlotClass object.
+#' `iterate_plot_batches` iterates over batches of plots defined by the
+#' `batch_size` parameter passed to the `lcmsPlot` constructor function.
+#'
+#' @param object An instance of class `lcmsPlotClass`.
 #' @param iter_fn The function to apply to each item being iterated on.
-#' @return NULL.
+#' @return \code{NULL} (called for its side effect).
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -169,93 +225,164 @@ setMethod(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
 #'
 #' iterate_plot_batches(p, function(plot_obj) {
 #'   print(plot_obj)
 #' })
 setGeneric(
-  "iterate_plot_batches",
-  function(object, iter_fn) standardGeneric("iterate_plot_batches")
+    "iterate_plot_batches",
+    function(object, iter_fn) standardGeneric("iterate_plot_batches")
 )
 
 #' @rdname iterate_plot_batches
 setMethod(
-  f = "iterate_plot_batches",
-  signature = c("lcmsPlotClass", "function"),
-  function(object, iter_fn) {
-    if (is.null(object@options$batch_size)) {
-      stop("iterate_plot_batches requires batch_size")
-    }
+    f = "iterate_plot_batches",
+    signature = c("lcmsPlotClass", "function"),
+    function(object, iter_fn) {
+        if (is.null(object@options$batch_size)) {
+            stop("iterate_plot_batches requires batch_size")
+        }
 
-    # TODO: needs to be reviewed
-    sample_ids <- object@data@metadata$sample_id # object@options$chromatograms$sample_ids
+        # TODO: needs to be reviewed
+        sample_ids <- object@data@metadata$sample_id
 
-    if (length(sample_ids) > object@options$batch_size) {
-      split_f <- ceiling(seq_along(sample_ids) / object@options$batch_size)
-      batches <- split(sample_ids, split_f)
-    } else {
-      batches <- list(sample_ids)
-    }
+        if (length(sample_ids) > object@options$batch_size) {
+            split_f <- ceiling(
+                seq_along(sample_ids) / object@options$batch_size)
+            batches <- split(sample_ids, split_f)
+        } else {
+            batches <- list(sample_ids)
+        }
 
-    object@options$batch_index <- 1
-    for (batch in batches) {
-      for (history_item in object@history) {
-        fn <- get(history_item$name, asNamespace("lcmsPlot"))
-        object <- do.call(fn, history_item$args)(object, FALSE)
-      }
-      iter_fn(object)
-      object@options$batch_index <- object@options$batch_index + 1
+        object@options$batch_index <- 1
+        for (batch in batches) {
+            for (history_item in object@history) {
+                fn <- get(history_item$name, asNamespace("lcmsPlot"))
+                object <- do.call(fn, history_item$args)(object, FALSE)
+            }
+            iter_fn(object)
+            object@options$batch_index <- object@options$batch_index + 1
+        }
     }
-  }
 )
 
-#' Plot the lcmsPlotClass object.
+#' Plot the `lcmsPlotClass` object
 #'
-#' @param object The lcmsPlotClass object.
-#' @return NULL.
+#' Display an instance of `lcmsPlotClass` class to the selected device.
+#'
+#' @param object An instance of class `lcmsPlotClass`.
+#' @return Invisible \code{NULL}
 #' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   lp_chromatogram(aggregation_fun = "max") +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+#'
+#' print(p)
 setMethod(
-  f = "show",
-  signature = "lcmsPlotClass",
-  function(object) {
-    if (!object@options$bypass_plot_generation) {
-      object <- set_plot(object, additional_datasets = list())
+    f = "show",
+    signature = "lcmsPlotClass",
+    function(object) {
+        if (!object@options$bypass_plot_generation) {
+            object <- .render_plot(object, additional_datasets = list())
+        }
+        object@options$bypass_plot_generation <- FALSE
+        print(object@plot)
     }
-    object@options$bypass_plot_generation <- FALSE
-    print(object@plot)
-  }
 )
 
 make_interface_function <- function(name, args_list, fn) {
-  function(obj, record_history = TRUE) {
-    if (record_history) {
-      obj@history <- c(obj@history, list(list(name = name, args = args_list)))
-    }
+    function(obj, record_history = TRUE) {
+        if (record_history) {
+            obj@history <- c(
+                obj@history,
+                list(list(name = name, args = args_list)))
+        }
 
-    fn(obj)
-  }
+        fn(obj)
+    }
 }
 
-#' Define the chromatograms to plot.
+#' Define the chromatograms to plot
 #'
-#' @param features A character vector or a matrix of mz and rt representing features to plot.
-#' @param sample_ids A character vector of sample IDs to plot.
-#' @param ppm The ppm error for the chromatograms.
-#' @param rt_tol The RT tolerance for the chromatograms.
-#' @param highlight_peaks Whether to highlight the picked peaks.
-#' @param highlight_peaks_color The color of the highlighted peaks. By default it colors by sample.
-#' @param highlight_peaks_factor The factor that determines the color.
-#' @param aggregation_fun In case of plotting the full RT range, which aggregation function to use for the spectra intensities.
-#' @param rt_adjusted Whether to plot the RT adjusted version of the chromatograms.
-#' @param rt_unit The unit to use for the RT (one of "minute" or "second").
-#' @param intensity_unit The unit to use for the intensity (one of "absolute" or "relative").
-#' @param fill_gaps Whether to fill gaps in RT with 0 intensity.
-#' @param highlight_apices Options to highlight apices in a chromatogram.
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_chromatogram` function allows the generation of different types of
+#' chromatograms.
+#'
+#' @section Summary chromatograms:
+#' In this type of chromatogram, the intensities of the spectra from each scan
+#' in an LC–MS dataset are either summed to produce the total ion current (TIC)
+#' chromatogram or the most intense peak is selected to produce the
+#' base peak chromatogram (BPC).
+#' To create such chromatograms do not specify the `features` parameter as
+#' that will create the chromatograms for the selected features.
+#' In this context, the main parameter if `aggregation_fun` which can take
+#' either `sum` (TIC) or `max` (BPC).
+#'
+#' @section Feature chromatograms:
+#' A feature is a combination of retention time (RT) and m/z. Feature
+#' chromatograms can be created by specifiying the `features` parameter.
+#'
+#' @param features Specifies which features to generates the chromatogram for.
+#' This can be either:
+#' a `matrix` with columns `mz` and `rt` (optional);
+#' a `matrix` with columns `mzmin`, `mzmax`,
+#' `rtmin` (optional), `rtmax` (optional);
+#' a `data.frame` with columns `sample_id`, `mz` and `rt` (optional);
+#' a `data.frame` with columns `sample_id`, `mzmin`, `mzmax`,
+#' `rtmin` (optional), `rtmax` (optional);
+#' a `character` vector representing the grouped peaks (feature) names
+#' as returned by `xcms::groupnames` - requires the data to be
+#' an `XCMSnExp` or `MsExperiment` object with grouped peaks.
+#' @param sample_ids A `character` vector specifying the sample IDs
+#' to include in the plot. If `NULL`, the function uses the sample IDs
+#' specified in the `lcmsPlot` object.
+#' @param ppm A `numeric` value specifying the mass accuracy (in ppm) used
+#' when generating chromatograms. Ignored when the `features` parameter
+#' specifies both `mzmin` and `mzmax`.
+#' @param rt_tol A `numeric` value specifying the RT tolerance used
+#' when generating chromatograms. Ignored when the `features` parameter
+#' specifies both `rtmin` and `rtmax`.
+#' @param highlight_peaks A `logical` value indicating whether to highlight
+#' the detected peaks; the input data must be an `XCMSnExp` or `MsExperiment`
+#' object.
+#' @param highlight_peaks_color A `character` value indicating the color of the
+#' highlighted peaks.
+#' @param highlight_peaks_factor A `character` value indicating the factor from
+#' the metadata that determines the color. By default it colors by `sample_id`.
+#' @param aggregation_fun A `character` value indicating which aggregation
+#' function to use for the spectra intensities; one of `max` or `sum`.
+#' Only applicable to summary chromatograms.
+#' @param rt_adjusted A `logical` value indicating whether to plot the RT
+#' adjusted version of the chromatograms;
+#' the input data must be an `XCMSnExp` or `MsExperiment` object.
+#' @param rt_unit A `character` value indicating the unit to use for
+#' the RT axis; one of `"minute"` or `"second"`.
+#' @param intensity_unit A `character` value indicating the unit to use for
+#' the intensity axis; one of `"absolute"` or `"relative"`.
+#' @param fill_gaps A `logical` value indicating whether to fill gaps
+#' in RT with 0 intensity.
+#' @param highlight_apices A `logical` value indicating whether to
+#' highlight apices with the corresponding RT values in a chromatogram.
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated chromatograms
+#' in its `data` slot. It is designed to be used with the `+` operator,
+#' which serves as a layering mechanism. Each use of `+` incrementally enriches
+#' the `lcmsPlot` object by adding new data or visual components.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -264,75 +391,93 @@ make_interface_function <- function(name, args_list, fn) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
-chromatogram <- function(
-  features = NULL,
-  sample_ids = NULL,
-  ppm = 10,
-  rt_tol = 10,
-  highlight_peaks = FALSE,
-  highlight_peaks_color = NULL,
-  highlight_peaks_factor = "sample_id",
-  aggregation_fun = "max",
-  rt_adjusted = FALSE,
-  rt_unit = "second",
-  intensity_unit = "absolute",
-  fill_gaps = FALSE,
-  highlight_apices = list(column = NULL, top_n = NULL)
+#'   lp_chromatogram(aggregation_fun = "max") +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+lp_chromatogram <- function(
+    features = NULL,
+    sample_ids = NULL,
+    ppm = 10,
+    rt_tol = 10,
+    highlight_peaks = FALSE,
+    highlight_peaks_color = NULL,
+    highlight_peaks_factor = "sample_id",
+    aggregation_fun = "max",
+    rt_adjusted = FALSE,
+    rt_unit = "second",
+    intensity_unit = "absolute",
+    fill_gaps = FALSE,
+    highlight_apices = list(column = NULL, top_n = NULL)
 ) {
-  make_interface_function(
-    name = "chromatogram",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      if (is.null(sample_ids)) {
-        sample_ids <- obj@data@metadata$sample_id
-      }
+    make_interface_function(
+        name = "lp_chromatogram",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (is.null(sample_ids)) {
+                sample_ids <- obj@data@metadata$sample_id
+            }
 
-      if (!is.null(obj@options$batch_size) &&
-          length(sample_ids) > obj@options$batch_size) {
-        split_f <- ceiling(seq_along(sample_ids) / obj@options$batch_size)
-        batches <- split(sample_ids, split_f)
-        batch_sample_ids <- batches[[obj@options$batch_index]]
-      } else {
-        batch_sample_ids <- sample_ids
-      }
+            if (!is.null(obj@options$batch_size) &&
+                length(sample_ids) > obj@options$batch_size) {
+                split_f <- ceiling(
+                    seq_along(sample_ids) / obj@options$batch_size)
+                batches <- split(sample_ids, split_f)
+                batch_sample_ids <- batches[[obj@options$batch_index]]
+            } else {
+                batch_sample_ids <- sample_ids
+            }
 
-      obj@options$chromatograms <- list(
-        show = TRUE,
-        features = features,
-        sample_ids = batch_sample_ids,
-        ppm = ppm,
-        rt_tol = rt_tol,
-        highlight_peaks = highlight_peaks,
-        highlight_peaks_color = highlight_peaks_color,
-        highlight_peaks_factor = highlight_peaks_factor,
-        aggregation_fun = aggregation_fun,
-        rt_adjusted = rt_adjusted,
-        rt_unit = rt_unit,
-        intensity_unit = intensity_unit,
-        fill_gaps = fill_gaps,
-        highlight_apices = highlight_apices
-      )
+            obj@options$chromatograms <- list(
+                show = TRUE,
+                features = features,
+                sample_ids = batch_sample_ids,
+                ppm = ppm,
+                rt_tol = rt_tol,
+                highlight_peaks = highlight_peaks,
+                highlight_peaks_color = highlight_peaks_color,
+                highlight_peaks_factor = highlight_peaks_factor,
+                aggregation_fun = aggregation_fun,
+                rt_adjusted = rt_adjusted,
+                rt_unit = rt_unit,
+                intensity_unit = intensity_unit,
+                fill_gaps = fill_gaps,
+                highlight_apices = highlight_apices
+            )
 
-      if (is.null(features)) {
-        obj@data <- create_full_rt_chromatograms(obj@data, obj@options)
-      } else if (is.character(features)) {
-        obj@data <- create_chromatograms_from_feature_ids(obj@data, obj@options)
-      } else {
-        obj@data <- create_chromatograms_from_features(obj@data, obj@options)
-      }
+            if (is.null(features)) {
+                obj@data <- create_full_rt_chromatograms(
+                    obj@data,
+                    obj@options)
+            } else if (is.character(features)) {
+                obj@data <- create_chromatograms_from_feature_ids(
+                    obj@data,
+                    obj@options)
+            } else {
+                obj@data <- create_chromatograms_from_features(
+                    obj@data,
+                    obj@options)
+            }
 
-      return(obj)
-    }
-  )
+            return(obj)
+        }
+    )
 }
 
-#' Define the mass trace to plot.
+#' Define the mass trace to plot
 #'
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_mass_trace` function enables the generation of mass traces,
+#' which are graphical representations commonly used in mass spectrometry
+#' data analysis. A mass trace plots individual data points defined by their
+#' retention time and corresponding mass-to-charge ratio (m/z), making it easier
+#' to visualise how specific ions behave over the course of a
+#' chromatographic run.
+#'
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated mass traces
+#' in its `data` slot. It is designed to be used with the `+` operator,
+#' which serves as a layering mechanism. Each use of `+` incrementally enriches
+#' the `lcmsPlot` object by adding new data or visual components.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -341,33 +486,66 @@ chromatogram <- function(
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   mass_trace() +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
-mass_trace <- function() {
-  make_interface_function(
-    name = "mass_trace",
-    args_list = list(),
-    fn = function(obj) {
-      obj@options$mass_traces$show <- TRUE
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_mass_trace() +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+lp_mass_trace <- function() {
+    make_interface_function(
+        name = "lp_mass_trace",
+        args_list = list(),
+        fn = function(obj) {
+            obj@options$mass_traces$show <- TRUE
+            return(obj)
+        }
+    )
 }
 
-#' Define the spectra to plot.
+#' Define the spectra to plot
 #'
-#' @param sample_ids The sample IDs to consider. If NULL it will use the chromatogram ones.
-#' @param mode The method to choose the scan. One of: closest, closest_apex, across_peak.
+#' The `lp_spectra` function enables the generation of spectra, which are
+#' graphical representations of ions detected at each mass-to-charge ratio (m/z)
+#' with their corresponding absolute or relative intensities.
+#'
+#' @section Spectra associated with chromatograms:
+#' A spectrum is obtained from a scan at a specific retention time (RT).
+#' Therefore, when plotting a chromatogram together with its associated spectra,
+#' it is common to mark the RT with a vertical line on the chromatogram
+#' to indicate where the spectra were acquired. See the example below on
+#' how to generate these types of spectra.
+#'
+#' @section Standalone spectra:
+#' Standalone spectra can also be generated, provided no chromatograms
+#' are present (i.e., lp_chromatogram has not been used).
+#'
+#' @param sample_ids A `character` vector specifying the sample IDs
+#' to include in the plot. If `NULL`, the function uses the sample IDs
+#' specified in the `lcmsPlot` object or the `lp_chromatogram` function.
+#' @param mode The method to choose the scan from which to extract the spectra.
+#' One of: `closest`, the closest scan to the specified RT - `rt` parameter);
+#' `closest_apex`, the closest scan to a detected peak;
+#' `across_peak`, selects scans across a detected peak at a certain interval
+#' specified in the `interval` parameter.
+#' `mode` is not applicable to standalone spectra.
 #' @param ms_level The MS level to consider for the scan.
-#' @param rt The RT to consider - mode=closest.
-#' @param scan_index The scan index to consider.
-#' @param interval The RT interval to consider - mode=across_peak.
-#' @param spectral_match_db The spectral database to match against.
-#' @param match_target_index The target index for the mirror plot (index from the highest scoring).
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' @param rt When `mode = "closest"`, the RT to consider.
+#' @param scan_index The exact scan index to consider for extracting a spectrum.
+#' `scan_index` and `mode` are mutually exclusive.
+#' @param interval When `mode = "across_peak."` The RT interval to consider.
+#' @param spectral_match_db The database containing reference spectra used
+#' for matching and comparison with the input spectra.
+#' @param match_target_index The index, ranked by descending match score,
+#' identifying which reference spectrum to display in the mirror plot.
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated spectra
+#' in its `data` slot. It is designed to be used with the `+` operator,
+#' which serves as a layering mechanism. Each use of `+` incrementally enriches
+#' the `lcmsPlot` object by adding new data or visual components.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -376,92 +554,118 @@ mass_trace <- function() {
 #'    recursive = TRUE)[1]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   lcmsPlot::spectra(mode = "closest", rt = 2785)
-spectra <- function(
-  sample_ids = NULL,
-  mode = 'closest_apex',
-  ms_level = 1,
-  rt = NULL,
-  scan_index = NULL,
-  interval = 3,
-  spectral_match_db = NULL,
-  match_target_index = NULL
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_spectra(mode = "closest", rt = 2785)
+lp_spectra <- function(
+    sample_ids = NULL,
+    mode = 'closest_apex',
+    ms_level = 1,
+    rt = NULL,
+    scan_index = NULL,
+    interval = 3,
+    spectral_match_db = NULL,
+    match_target_index = NULL
 ) {
-  make_interface_function(
-    name = "spectra",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      is_standalone <- !obj@options$chromatograms$show
+    make_interface_function(
+        name = "lp_spectra",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            is_standalone <- !obj@options$chromatograms$show
 
-      if  (is_standalone) {
-        if (is.null(sample_ids)) {
-          sample_ids <- obj@data@metadata$sample_id
+            if  (is_standalone) {
+                if (is.null(sample_ids)) {
+                    sample_ids <- obj@data@metadata$sample_id
+                }
+            } else {
+                sample_ids <- obj@options$chromatograms$sample_ids
+            }
+
+            obj@options$spectra <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                mode = mode,
+                ms_level = ms_level,
+                rt = rt,
+                scan_index = scan_index,
+                interval = interval,
+                spectral_match_db = spectral_match_db,
+                match_target_index = match_target_index
+            )
+
+            obj@data <- create_spectra(obj@data, obj@options)
+            return(obj)
         }
-      } else {
-        sample_ids <- obj@options$chromatograms$sample_ids
-      }
-
-      obj@options$spectra <- list(
-        show = TRUE,
-        sample_ids = sample_ids,
-        mode = mode,
-        ms_level = ms_level,
-        rt = rt,
-        scan_index = scan_index,
-        interval = interval,
-        spectral_match_db = spectral_match_db,
-        match_target_index = match_target_index
-      )
-
-      obj@data <- create_spectra(obj@data, obj@options)
-      return(obj)
-    }
-  )
+    )
 }
 
-#' Define the total ion currents.
+#' Define the total ion current (TIC)
 #'
-#' @param sample_ids The sample IDs to select.
-#' @param type The type of plot; one of "boxplot", "violin", "jitter".
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_total_ion_current` generates summary data for the
+#' total ion current (TIC) of the selected samples.
+#'
+#' @param sample_ids A `character` vector specifying the sample IDs
+#' to include in the plot. If `NULL`, the function uses the sample IDs
+#' specified in the `lcmsPlot` object.
+#' @param type A `character` value indicating the type of plot;
+#' one of `"boxplot"`, `"violin"`, `"jitter"`.
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated
+#' total ion current (TIC) in its `data` slot. It is designed to be used
+#' with the `+` operator, which serves as a layering mechanism.
+#' Each use of `+` incrementally enriches the `lcmsPlot` object by
+#' adding new data or visual components.
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example()
 #'
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
-#'   total_ion_current(type = "violin") +
-#'   arrange(group_by = "sample_id") +
-#'   labels(title = "Total ion current", legend = "Sample ID")
-total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
-  function(obj) {
-    if (!is_xcms_object(obj@data)) {
-      stop("total_ion_current: to plot the total ion current the data object should be either of class XCMSnExp or MsExperiment.")
+#'   lp_total_ion_current(type = "violin") +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_labels(title = "Total ion current", legend = "Sample ID")
+lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
+    function(obj) {
+        if (!is_xcms_data(obj@data@data_obj)) {
+            stop("total_ion_current: to plot the total ion current the data object should be either of class XCMSnExp or MsExperiment.")
+        }
+
+        if (is.null(sample_ids)) {
+            sample_ids <- obj@data@metadata$sample_id
+        }
+
+        obj@options$total_ion_current <- list(
+            show = TRUE,
+            sample_ids = sample_ids,
+            type = type
+        )
+
+        obj@data <- create_total_ion_current(obj@data, obj@options)
+
+        return(obj)
     }
-
-    if (is.null(sample_ids)) {
-      sample_ids <- obj@data@metadata$sample_id
-    }
-
-    obj@options$total_ion_current <- list(
-      show = TRUE,
-      sample_ids = sample_ids,
-      type = type
-    )
-
-    obj@data <- create_total_ion_current(obj@data, obj@options)
-
-    return(obj)
-  }
 }
 
-#' Define a 2D intensity map.
+#' Define a 2D intensity map
 #'
-#' @param mz_range The m/z range of the map.
-#' @param rt_range The RT range of the map.
-#' @param sample_ids The sample IDs to select.
-#' @param density Whether to show a density or a point-cloud plot.
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_intensity_map` function produces an intensity map
+#' in which retention time is shown on the x-axis, m/z on the y-axis,
+#' and signal intensity is represented at each corresponding coordinate.
+#'
+#' @param mz_range A `numeric` value indicating the m/z range of the map.
+#' @param rt_range A `numeric` value indicating the RT range of the map.
+#' @param sample_ids A `character` vector specifying the sample IDs
+#' to include in the plot. If `NULL`, the function uses the sample IDs
+#' specified in the `lcmsPlot` object.
+#' @param density A `logical` value indicating whether to show a density plot.
+#' @return This function returns another function that takes an
+#' `lcmsPlot` object and produces a modified version containing the generated
+#' 2D intensity map in its `data` slot. It is designed to be used with the
+#' `+` operator, which serves as a layering mechanism.
+#' Each use of `+` incrementally enriches the `lcmsPlot` object by
+#' adding new data or visual components.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -470,61 +674,84 @@ total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #'   recursive = TRUE)[1]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   intensity_map(mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE)
-intensity_map <- function(
-  mz_range,
-  rt_range,
-  sample_ids = NULL,
-  density = FALSE
+#'   lp_intensity_map(
+#'     mz_range = c(200, 600),
+#'     rt_range = c(4200, 4500),
+#'     density = TRUE)
+lp_intensity_map <- function(
+    mz_range,
+    rt_range,
+    sample_ids = NULL,
+    density = FALSE
 ) {
-  function(obj) {
-    if (is.null(sample_ids)) {
-      sample_ids <- obj@data@metadata$sample_id
+    function(obj) {
+        if (is.null(sample_ids)) {
+            sample_ids <- obj@data@metadata$sample_id
+        }
+
+        obj@options$intensity_maps <- list(
+            show = TRUE,
+            sample_ids = sample_ids,
+            mz_range = mz_range,
+            rt_range = rt_range,
+            density = density
+        )
+
+        obj@data <- create_intensity_map(obj@data, obj@options)
+
+        return(obj)
     }
-
-    obj@options$intensity_maps <- list(
-      show = TRUE,
-      sample_ids = sample_ids,
-      mz_range = mz_range,
-      rt_range = rt_range,
-      density = density
-    )
-
-    obj@data <- create_intensity_map(obj@data, obj@options)
-
-    return(obj)
-  }
 }
 
-#' Define the RT difference plot between raw and adjusted datasets.
+#' Generate the retention time difference plot between raw and adjusted datasets
 #'
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_rt_diff_plot` function generates the data necessary to plot
+#' the difference between the raw and retention time adjusted datasets.
+#' Only applicable to `XCMSnExp` and `MsExperiment` objects.
+#'
+#' @return This function returns another function that takes an
+#' `lcmsPlot` object and produces a modified version containing the generated
+#' retention time differences, between raw and adjusted,  in its `data` slot.
+#' It is designed to be used with the `+` operator, which serves as a layering
+#' mechanism. Each use of `+` incrementally enriches the `lcmsPlot` object by
+#' adding new data or visual components.
 #' @export
 #' @examples
-#' data_obj <- get_XCMSnExp_object_example(indices = 1:3, should_group_peaks = TRUE)
+#' data_obj <- get_XCMSnExp_object_example(
+#'   indices = 1:3,
+#'   should_group_peaks = TRUE)
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
-#'   rt_diff_plot()
-rt_diff_plot <- function() {
-  function(obj) {
-    if (!is_xcms_object(obj@data)) {
-      stop("rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
+#'   lp_rt_diff_plot()
+lp_rt_diff_plot <- function() {
+    function(obj) {
+        if (!is_xcms_data(obj@data@data_obj)) {
+            stop("rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
+        }
+
+        if (!xcms_utils$has_rt_alignment_been_performed(obj@data@data_obj)) {
+            stop("rt_diff_plot: RT alignment was not performed.")
+        }
+
+        obj@options$rt_diff <- list(show = TRUE)
+        obj@data <- create_rt_diff(obj@data, obj@options)
+
+        return(obj)
     }
-
-    if (!xcms_utils$has_rt_alignment_been_performed(obj@data@data_obj)) {
-      stop("rt_diff_plot: RT alignment was not performed.")
-    }
-
-    obj@options$rt_diff <- list(show = TRUE)
-    obj@data <- create_rt_diff(obj@data, obj@options)
-
-    return(obj)
-  }
 }
 
-#' Define the arrangement of chromatograms.
+#' Define the arrangement of chromatograms
 #'
-#' @param group_by The column to group by (in the samples metadata).
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_arrange` function specifies how chromatograms should be arranged
+#' when visualised. It determines the grouping metadata factor through
+#' the `group_by` parameter.
+#'
+#' @param group_by A `character` value determining the
+#' column to group by in the samples metadata.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified arrangement options
+#' stored in `options$arrangement`. It is intended for use with the `+`
+#' operator, which incrementally layers new data or visual components
+#' onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -533,31 +760,40 @@ rt_diff_plot <- function() {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
-arrange <- function(group_by) {
-  make_interface_function(
-    name = "arrange",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$arrangement <- list(
-        group_by = group_by
-      )
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(aggregation_fun = "max") +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+lp_arrange <- function(group_by) {
+    make_interface_function(
+        name = "lp_arrange",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$arrangement <- list(
+                group_by = group_by
+            )
+            return(obj)
+        }
+    )
 }
 
-#' Define plot's faceting.
+#' Define the plot's faceting
 #'
-#' @param facets The facet factors from the sample metadata.
-#' @param ncol The number of columns.
-#' @param nrow The number of rows.
-#' @param free_x Allow scales to vary across x.
-#' @param free_y Allow scales to vary across y.
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_facets` function arranges plots into a grid based
+#' on a metadata factor, creating a series of smaller plots (facets).
+#'
+#' @param facets A `character` vector of factors from the sample metadata to use
+#' for faceting.
+#' @param ncol A `numeric` value indicating the number of columns in the layout.
+#' @param nrow A `numeric` value indicating the number of rows in the layout.
+#' @param free_x A `logical` value indicating whether the x-axis scales
+#' are allowed to vary across panels.
+#' @param free_y A `logical` value indicating whether the y-axis scales
+#' are allowed to vary across panels.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified faceting options stored in `options$facets`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -566,37 +802,46 @@ arrange <- function(group_by) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(aggregation_fun = "max") +
-#'   facets(facets = "sample_id")
-facets <- function(
-  facets,
-  ncol = NULL,
-  nrow = NULL,
-  free_x = FALSE,
-  free_y = FALSE
+#'   lp_chromatogram(aggregation_fun = "max") +
+#'   lp_facets(facets = "sample_id")
+lp_facets <- function(
+    facets,
+    ncol = NULL,
+    nrow = NULL,
+    free_x = FALSE,
+    free_y = FALSE
 ) {
-  make_interface_function(
-    name = "facets",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$facets <- list(
-        facets = facets,
-        ncol = ncol,
-        nrow = nrow,
-        free_x = free_x,
-        free_y = free_y
-      )
-      return(obj)
-    }
-  )
+    make_interface_function(
+        name = "lp_facets",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$facets <- list(
+                facets = facets,
+                ncol = ncol,
+                nrow = nrow,
+                free_x = free_x,
+                free_y = free_y
+            )
+            return(obj)
+        }
+    )
 }
 
-#' Define a gridded plot.
+#' Define a gridded plot
 #'
-#' @param rows The factors that represent rows.
-#' @param cols The factors that represent columns.
-#' @param free_y Whether the y-axis is free for each row.
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_grid` function arranges plots into a matrix of panels defined
+#' by row and column faceting metadata factors.
+#'
+#' @param rows A `character` value indicating the factors that
+#' represent rows.
+#' @param cols A `character` value indicating the factors that
+#' represent columns.
+#' @param free_y A `logical` value indicating whether the y-axis scales
+#' are allowed to vary across panels.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified grid options stored in `options$grid`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -612,28 +857,38 @@ facets <- function(
 #' )
 #'
 #' p <- lcmsPlot(raw_files, metadata = metadata) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   grid(rows = "factor1", cols = "factor2")
-grid <- function(rows, cols, free_y = FALSE) {
-  make_interface_function(
-    name = "grid",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$grid <- list(
-        rows = rows,
-        cols = cols,
-        free_y = free_y
-      )
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_grid(rows = "factor1", cols = "factor2")
+lp_grid <- function(rows, cols, free_y = FALSE) {
+    make_interface_function(
+        name = "lp_grid",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$grid <- list(
+                rows = rows,
+                cols = cols,
+                free_y = free_y
+            )
+            return(obj)
+        }
+    )
 }
 
-#' Define the labels of the plot, such as title and legend.
+#' Define the labels of the plot
 #'
-#' @param title The plot title.
-#' @param legend The legend's title.
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' The `lp_labels` function allows the specification
+#' of the plot title and the legend title.
+#'
+#' @param title A `character` value indicating the plot title.
+#' @param legend A `character` value indicating the legend's title.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified label options stored in `options$labels`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -642,28 +897,36 @@ grid <- function(rows, cols, free_y = FALSE) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
-labels <- function(title = NULL, legend = NULL) {
-  make_interface_function(
-    name = "labels",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$labels <- list(
-        title = title,
-        legend = legend
-      )
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+lp_labels <- function(title = NULL, legend = NULL) {
+    make_interface_function(
+        name = "lp_labels",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$labels <- list(
+                title = title,
+                legend = legend
+            )
+            return(obj)
+        }
+    )
 }
 
-#' Define the legend layout.
+#' Define the legend layout
 #'
-#' @param position The legend's position.
-#' @return A function that takes and returns a lcmsPlotClass object
+#' @param position A `character` value indicating the legend's position.
+#' One of `"top"`, `"right"`, `"bottom"`, `"left"`, or `"inside"`.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified legend options stored in `options$legend`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -672,29 +935,39 @@ labels <- function(title = NULL, legend = NULL) {
 #'    recursive = TRUE)[1:5]
 #'
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   arrange(group_by = "sample_id") +
-#'   legend(position = "bottom") +
-#'   labels(legend = "Sample")
-legend <- function(position = NULL)  {
-  make_interface_function(
-    name = "legend",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$legend <- list(
-        position = position
-      )
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_arrange(group_by = "sample_id") +
+#'   lp_legend(position = "bottom") +
+#'   lp_labels(legend = "Sample")
+lp_legend <- function(position = NULL)  {
+    make_interface_function(
+        name = "lp_legend",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$legend <- list(
+                position = position
+            )
+            return(obj)
+        }
+    )
 }
 
-#' Define a vertical line across a retention time value
+#' Define a vertical line on a retention time value
 #'
-#' @param intercept The x-axis intercept
-#' @param line_type The line type
-#' @param color The line color
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' @param intercept A `numeric` value indicating the retention time
+#' axis (x-axis) intercept.
+#' @param line_type A `character` value indicating the line type.
+#' One of `"solid"`, `"dashed"`, `"dotted"`,
+#' `"dotdash"`, `"longdash"`, `"twodash"`.
+#' @param color A `character` value indicating the line color.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified RT line options stored in `options$rt_lines`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -703,35 +976,45 @@ legend <- function(position = NULL)  {
 #'    recursive = TRUE)[1:4]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   facets(facets = 'sample_id', ncol = 4) +
-#'   rt_line(intercept = 2800, line_type = 'solid', color = 'red')
-rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
-  make_interface_function(
-    name = "rt_line",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      rt_line_obj <- list(
-        intercept = intercept,
-        line_type = line_type,
-        color = color
-      )
-      obj@options$rt_lines <- append(obj@options$rt_lines, list(rt_line_obj))
-      return(obj)
-    }
-  )
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_facets(facets = 'sample_id', ncol = 4) +
+#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
+    make_interface_function(
+        name = "lp_rt_line",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            rt_line_obj <- list(
+                intercept = intercept,
+                line_type = line_type,
+                color = color
+            )
+            obj@options$rt_lines <- append(
+                obj@options$rt_lines,
+                list(rt_line_obj))
+            return(obj)
+        }
+    )
 }
 
-#' Define the plot layout.
+#' Define the plot layout
 #'
-#' @param design Specification of the location of areas in the layout (see https://patchwork.data-imaginist.com/reference/wrap_plots.html#arg-design).
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' @param design Specification of the location of areas in the layout
+#' See https://patchwork.data-imaginist.com/reference/wrap_plots.html
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified layout options stored in `options$layout`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example(indices = 1)
 #'
 #' p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
-#'   lcmsPlot::chromatogram(
+#'   lp_chromatogram(
 #'     features = rbind(
 #'       c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
 #'       c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
@@ -739,27 +1022,30 @@ rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #'     sample_ids = 'ko15',
 #'     highlight_peaks = TRUE
 #'   ) +
-#'   lcmsPlot::spectra(mode = "closest_apex", ms_level = 1) +
-#'   facets(facets = "feature_id", ncol = 2) +
-#'   labels(legend = "Sample") +
-#'   legend(position = "bottom") +
-#'   layout(design = "C\nS\nS")
-layout <- function(design = NULL) {
-  make_interface_function(
-    name = "layout",
-    args_list = as.list(environment()),
-    fn = function(obj) {
-      obj@options$layout <- list(
-        design = design
-      )
-      return(obj)
-    }
-  )
+#'   lp_spectra(mode = "closest_apex", ms_level = 1) +
+#'   lp_facets(facets = "feature_id", ncol = 2) +
+#'   lp_labels(legend = "Sample") +
+#'   lp_legend(position = "bottom") +
+#'   lp_layout(design = "C\nS\nS")
+lp_layout <- function(design = NULL) {
+    make_interface_function(
+        name = "lp_layout",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            obj@options$layout <- list(
+                design = design
+            )
+            return(obj)
+        }
+    )
 }
 
 #' Get the underlying plot object.
 #'
-#' @return A function that takes and returns a lcmsPlotClass object.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the rendered plot stored in the `plot` slot.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
 #' @export
 #' @examples
 #' raw_files <- dir(
@@ -768,14 +1054,18 @@ layout <- function(design = NULL) {
 #'    recursive = TRUE)[1:4]
 #'
 #' p <- lcmsPlot(raw_files) +
-#'   lcmsPlot::chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-#'   facets(facets = 'sample_id', ncol = 4) +
-#'   rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_facets(facets = 'sample_id', ncol = 4) +
+#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
 #'   get_plot() +
 #'   ggplot2::theme_bw()
 get_plot <- function() {
-  function(obj) {
-    obj <- set_plot(obj, additional_datasets = list())
-    return(obj@plot)
-  }
+    function(obj) {
+        obj <- .render_plot(obj, additional_datasets = list())
+        return(obj@plot)
+    }
 }

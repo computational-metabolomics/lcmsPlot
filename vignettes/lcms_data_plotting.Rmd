@@ -1,5 +1,7 @@
 ---
 title: "Easy-to-use, intuitive, and efficient LC-MS data plotting with lcmsPlot"
+author: "Ossama Edbali"
+date: "14 December 2025"
 output:
   BiocStyle::html_document:
     toc: true
@@ -7,7 +9,7 @@ output:
     number_sections: true  
     toc_float: true
 vignette: >
-  %\VignetteIndexEntry{basic_plotting}
+  %\VignetteIndexEntry{Easy-to-use, intuitive, and efficient LC-MS data plotting with lcmsPlot}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib
@@ -16,15 +18,15 @@ csl: biomed-central.csl
 
 ```{r setup, include = FALSE}
 knitr::opts_knit$set(
-  root.dir = dirname(getwd())
+    root.dir = dirname(getwd())
 )
 
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  dpi = 96,
-  fig.retina = 1,
-  fig.small = TRUE
+    collapse = TRUE,
+    comment = "#>",
+    dpi = 96,
+    fig.retina = 1,
+    fig.small = TRUE
 )
 ```
 
@@ -33,36 +35,51 @@ library(BiocStyle)
 library(faahKO)
 library(MsExperiment)
 library(lcmsPlot)
-
-BiocParallel::register(BiocParallel::SerialParam())
 ```
 
 # Introduction
 
-Visualisation of LC-MS (and more generally X-MS) data is essential for both quality control and communication of results. Plots help reveal acquisition issues such as retention time shifts, internal standard inconsistencies, or signal drifts, and they provide clear figures for publications.
+Visualisation of LC–MS data, and, more broadly, X-MS data, is essential for both
+quality control and effective communication of results.
+Diagnostic plots can reveal acquisition issues such as retention-time shifts,
+inconsistencies in internal standards, and signal drift,
+while also providing publication-ready figures.
 
-Most LC-MS visualisation currently relies on:
+Current LC–MS visualization approaches primarily include:
 
-- xcms: base R plotting routines that cover common needs but offer limited flexibility and aesthetics.
-- Other tools (LCMSQA, MetaboAnalystR, CAMERA): provide plotting but are tightly coupled to specific workflows, reducing general usability.
-- Custom plotting using ggplot2: requires knowledge of ggplot2 and for advanced usage it is less intuitive.
+- xcms: Base R plotting functions that address common use cases but offer
+limited flexibility and visual refinement.
+- Workflow-specific tools (e.g. LCMSQA, MetaboAnalystR, CAMERA): Provide
+visualisation capabilities that are tightly coupled to their respective
+workflows, limiting reuse and general applicability.
+- Custom ggplot2-based solutions: Highly flexible, but require substantial
+familiarity with ggplot2 and can become cumbersome for advanced or routine
+MS-specific visualisations.
 
-Overall, existing options are either too specialised or too rigid for flexible, cross-platform use.
+Overall, existing solutions tend to be either overly specialised or
+insufficiently flexible, making them poorly suited for reusable,
+cross-platform LC–MS visualization workflows.
 
 ## Objectives
 
-`lcmsPlot` aims to provide a modern, generic solution for LC-MS visualisation, focused on:
+`lcmsPlot` aims to provide a modern, generic solution for LC-MS visualisation,
+focused on:
 
-- Flexible plotting: chromatograms, mass traces, spectra, and more.
-- Building-blocks design: [ggplot](https://ggplot2.tidyverse.org/)-like interface for customisable, reproducible plots.
-- Interoperability: works seamlessly with xcms outputs or raw formats (e.g., mzML).
-- Efficiency: scales better to large datasets than current solutions.
+- **Flexible plotting**: chromatograms, mass traces, spectra, and more.
+- **Building-blocks design**: [ggplot](https://ggplot2.tidyverse.org/)-like
+interface for customisable, reproducible plots.
+- **Interoperability**: works seamlessly with xcms outputs or
+raw formats (e.g., mzML).
+- **Efficiency**: scales better to large datasets than current solutions.
 
-The goal is for `lcmsPlot` to become the community standard for LC-MS data visualisation: versatile for exploration, efficient for large studies, and capable of producing publication-ready figures with minimal effort.
+The goal is for `lcmsPlot` to become the community standard for LC-MS data
+visualisation: versatile for exploration, efficient for large studies, and
+capable of producing publication-ready figures with minimal effort.
 
 # Installation
 
-`lcmsPlot` is a Bioconductor package and to install it we have to use [BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
+`lcmsPlot` is a Bioconductor package and to install it we have to use
+[BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
 
 ```{r, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -72,9 +89,10 @@ BiocManager::install("lcmsPlot")
 
 # Load data
 
-For demonstration purpose we will analyse a small subset of the
+For demonstration purposes we will analyse a small subset of the
 data from [@Saghatelian04] in which the metabolic consequences of the knock-out
-of the fatty acid amide hydrolase (FAAH) gene in mice was investigated (same data as in the [xcms vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/xcms/inst/doc/xcms.html)).
+of the fatty acid amide hydrolase (FAAH) gene in mice was investigated
+(same data as in the [xcms vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/xcms/inst/doc/xcms.html)).
 
 
 ```{r load-data, message=FALSE}
@@ -83,18 +101,24 @@ library(MsExperiment)
 library(patchwork)
 library(lcmsPlot)
 
-# Making sure that these functions are from the lcmsPlot library
-chromatogram <- lcmsPlot::chromatogram
-spectra <- lcmsPlot::spectra
+BiocParallel::register(BiocParallel::SerialParam())
 
-cdfs <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE,
-            recursive = TRUE)[c(1, 2, 5, 6, 7, 8, 11, 12)]
+sample_indices <- c(1, 2, 5, 6, 7, 8, 11, 12)
+cdfs <- dir(
+    system.file("cdf", package = "faahKO"),
+    full.names = TRUE,
+    recursive = TRUE)[sample_indices]
 
-sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
+sample_names <- sub(
+    basename(cdfs),
+    pattern = ".CDF",
+    replacement = "",
+    fixed = TRUE)
 
-pd <- data.frame(sample_name = sample_names,
-                 sample_group = c(rep("KO", 4), rep("WT", 4)),
-                 stringsAsFactors = FALSE)
+pd <- data.frame(
+    sample_name = sample_names,
+    sample_group = c(rep("KO", 4), rep("WT", 4)),
+    stringsAsFactors = FALSE)
 
 faahko <- readMsExperiment(spectraFiles = cdfs, sampleData = pd)
 faahko
@@ -102,352 +126,518 @@ faahko
 
 # Samples summary
 
-Before examining the detected peaks and their chromatograms, we will first gain an overview of the study samples using a series of plots that highlight different aspects of the data.
+Before examining the detected peaks and their chromatograms, we will first gain
+an overview of the study samples using a series of plots that highlight
+different aspects of the data.
 
 ## Plot base peak chromatogram (BPC)
 
-Base peak chromatograms (BPCs) are useful in LC-MS because they simplify complex data and help quickly identify the most intense signals.
+Base Peak Chromatograms (BPCs) are useful in LC-MS because they simplify complex
+data and help quickly identify the most intense signals.
 
 In the example below we plot the BPC for the eight samples:
 
-```{r}
+```{r, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  facets(facets = "sample_name", ncol = 4)
+    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+    lp_facets(facets = "sample_name", ncol = 4)
 ```
 
-We can also plot multiple chromatograms in the same plot:
+We can also plot multiple chromatograms in the same plot, overlapped.
+In the example below, base peak chromatograms are computed for each sample,
+grouped by sample group, and displayed together in one panel.
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  arrange(group_by = "sample_group") +
-  labels(title = "Base peak chromatograms", legend = "Sample group") +
-  legend(position = "bottom")
+    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(title = "Base peak chromatograms", legend = "Sample group") +
+    lp_legend(position = "bottom")
 ```
 
 ## Plot total ion chromatogram (TIC)
 
-Total ion chromatogram (TIC) plots the sum of all ion intensities detected at each time point, giving a complete picture of everything entering the detector; not just the most abundant ion.
+The Total Ion Chromatogram (TIC) represents the sum of all ion intensities
+detected at each time point, providing a comprehensive view of all ions entering
+the detector, not just the most abundant ones.
 
-```{r}
+```{r, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
-  facets(facets = "sample_name", ncol = 4)
+    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
+    lp_facets(facets = "sample_name", ncol = 4)
 ```
 
 ## Total ion current
 
+The Total Ion Current (TIC) reflects the overall amount of ion signal entering
+the detector at any moment, independent of individual compounds. 
+TIC is widely used for quality control and method assessment.
+Comparable TIC profiles or distributions across samples indicate consistent
+injection amounts, stable chromatography, and reliable instrument performance.
+Conversely, large deviations in TIC can signal issues such as sample loss,
+ion suppression, contamination, or changes in instrument sensitivity.
+
+Below, we generate a TIC plot for the eight samples under consideration:
+
 ```{r}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  total_ion_current(type = "violin") +
-  arrange(group_by = "sample_group") +
-  labels(title = "Total ion current", legend = "Sample group")
+    lp_total_ion_current(type = "violin") +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(title = "Total ion current", legend = "Sample group")
 ```
 
 ## Intensity maps
 
-2D intensity maps are a quick way to see patterns in the acquired data.
+Intensity maps provide a compact, two-dimensional overview of LC-MS data by
+displaying signal intensity as a function of m/z and retention time.
+They are a fast and intuitive way to explore global structure in the
+data and to detect systematic patterns that may not be obvious from
+chromatograms or summary statistics alone.
 
-Below, we build intensity density maps from two samples:
+In the example below, intensity density maps are generated for two samples
+(`ko15` and `wt15`) to enable a direct visual comparison.
+The plot is restricted to an m/z range of 200-600 and a retention time window
+of 4200-4500 seconds. Density-based visualisation is used to smooth the signal
+and highlight recurring patterns rather than individual noise peaks.
 
 ```{r}
-lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = BiocParallel::MulticoreParam(workers = 2)) +
-  intensity_map(sample_ids = c("ko15", "wt15"), mz_range = c(200, 600), rt_range = c(4200, 4500), density = TRUE) +
-  facets(facets = "sample_id", ncol = 2)
+pparam <- BiocParallel::MulticoreParam(workers = 2)
+lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = pparam) +
+    lp_intensity_map(
+        sample_ids = c("ko15", "wt15"),
+        mz_range = c(200, 600),
+        rt_range = c(4200, 4500),
+        density = TRUE) +
+    lp_facets(facets = "sample_id", ncol = 2)
 ```
 
 # Plot chromatograms
 
-To begin, we'll perform peak detection to enable highlighting of detected peaks in the chromatogram plots, while retaining the option to plot chromatograms directly from the raw data.
+Before plotting chromatograms, we first perform peak detection. This step allows
+detected chromatographic peaks to be highlighted in subsequent visualisations,
+while still preserving the ability to plot chromatograms directly from the raw
+MS data when desired.
+
+Peak detection is carried out using the _centWave_ algorithm,
+which is well suited for high-resolution LC-MS data.
 
 ```{r}
-cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
+cwp <- xcms::CentWaveParam(
+    peakwidth = c(20, 80),
+    noise = 5000,
+    prefilter = c(6, 5000))
 faahko <- xcms::findChromPeaks(faahko, param = cwp)
 ```
 
-Next, we will plot chromatograms for a feature detected by `xcms` in all considered samples.
+Next, we plot extracted ion chromatograms (XICs) for a feature
+detected by xcms across all samples.
+The feature is defined by its m/z and retention time limits, and the
+corresponding chromatographic signal is extracted from each sample.
+
+In this example, we specify the feature manually using its m/z and RT ranges,
+which correspond to a peak previously detected by xcms.
+The resulting chromatograms are arranged by sample group to facilitate
+comparison across experimental conditions.
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  arrange(group_by = "sample_group") +
-  labels(legend = "Sample group")
+    lp_chromatogram(features = rbind(c(
+        mzmin = 334.9,
+        mzmax = 335.1,
+        rtmin = 2700,
+        rtmax = 2900))) +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(legend = "Sample group")
 ```
 
-The above plot can be faceted on metadata factors; in this case we facet on `feature_id` and `sample_id`:
+The above plot can be faceted on metadata factors;
+in this case we facet on `feature_id` and `sample_id`:
 
-```{r}
+```{r, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(
-    features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900)),
-    highlight_peaks = TRUE,
-    highlight_peaks_color = "#121212",
-    highlight_apices = list(top_n = 1)
-  ) +
-  facets(facets = c('feature_id', 'sample_id'), ncol = 4) +
-  labels(legend = "Sample") +
-  legend(position = "bottom")
+    lp_chromatogram(
+        features = rbind(c(
+            mzmin = 334.9,
+            mzmax = 335.1,
+            rtmin = 2700,
+            rtmax = 2900)),
+        highlight_peaks = TRUE,
+        highlight_peaks_color = "#121212",
+        highlight_apices = list(top_n = 1)
+    ) +
+    lp_facets(facets = c('feature_id', 'sample_id'), ncol = 4) +
+    lp_labels(legend = "Sample") +
+    lp_legend(position = "bottom")
 ```
 
-Moreover, with the `highlight_apices` option, we highlighted the apex with its RT value.
+Moreover, with the `highlight_apices` option, the apex of each detected
+chromatographic peak is highlighted in the plot and annotated with its
+corresponding retention time value. This makes it easier to identify peak maxima
+and to compare peak positions across samples.
 
-On the other hand, gridded plots (`grid` function), arrange panels in a matrix defined by two variables, allowing structured comparisons across both dimensions.
+On the other hand, gridded plots (using the `lp_grid` function) arrange panels
+in a matrix defined by two variables. This layout enables structured,
+two-dimensional comparisons, making it easier to examine how chromatographic
+patterns vary simultaneously across both factors.
 
-```{r}
+```{r, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = rbind(
-      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
-    ),
-    highlight_peaks = TRUE,
-    highlight_peaks_color = '#f00') +
-  grid(rows = 'feature_id', cols = 'sample_id', free_y = TRUE)
+    lp_chromatogram(
+        features = rbind(
+            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+        ),
+        highlight_peaks = TRUE,
+        highlight_peaks_color = '#f00') +
+    lp_grid(rows = 'feature_id', cols = 'sample_id', free_y = TRUE)
 ```
 
-In some cases, you may want to highlight specific regions of the extracted ion chromatogram, for example, to draw attention to a peak that hasn't been detected yet. This can be done using the `rt_line` functionality:
+In some cases, you may want to highlight specific regions of an extracted ion
+chromatogram, for example, to emphasize a peak that has not been automatically
+detected. This can be achieved using the `lp_rt_line` function, which allows you
+to add vertical lines at specified retention times, visually marking areas of
+interest in the chromatogram.
 
-```{r}
+```{r, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  facets(facets = 'sample_id', ncol = 4) +
-  rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
-  rt_line(intercept = 2750, line_type = 'dashed', color = 'blue') +
-  rt_line(intercept = 2850, line_type = 'dashed', color = 'blue')
+    lp_chromatogram(features = rbind(c(
+        mzmin = 334.9,
+        mzmax = 335.1,
+        rtmin = 2700,
+        rtmax = 2900))) +
+    lp_facets(facets = 'sample_id', ncol = 4) +
+    lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+    lp_rt_line(intercept = 2750, line_type = 'dashed', color = 'blue') +
+    lp_rt_line(intercept = 2850, line_type = 'dashed', color = 'blue')
 ```
 
 # Plot retention time alignment effect
 
-Next, let’s explore some plots that illustrate the effect of retention time alignment.
+Retention times can vary slightly across LC-MS runs due to instrumental drift
+or other experimental factors. To accurately compare chromatographic features
+across samples, it is important to align retention times so that the same
+feature appears at the same RT in all samples.
 
-First, we’ll perform the retention time alignment/adjustment:
+Here, we perform retention time alignment using the Obiwarp algorithm:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 faahko <- xcms::adjustRtime(faahko, param = xcms::ObiwarpParam(binSize = 0.6))
 ```
 
-Now, we can visualise the BPC for the raw and corrected datasets:
+Now, we can visualise the BPC for the raw and RT-corrected datasets:
 
 ```{r}
 bpc <- lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-  arrange(group_by = "sample_group") +
-  labels(legend = "Sample group") +
-  legend(position = "bottom") +
-  get_plot()
+    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(legend = "Sample group") +
+    lp_legend(position = "bottom") +
+    get_plot()
 
 bpc_rt_adjusted <- lcmsPlot(faahko, sample_id_column = "sample_name") +
-  chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max", rt_adjusted = TRUE) +
-  arrange(group_by = "sample_group") +
-  labels(legend = "Sample group") +
-  legend(position = "bottom") +
-  get_plot()
+    lp_chromatogram(
+        ppm = 5,
+        rt_tol = 10,
+        aggregation_fun = "max",
+        rt_adjusted = TRUE) +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(legend = "Sample group") +
+    lp_legend(position = "bottom") +
+    get_plot()
 
 (bpc[[1]] / bpc_rt_adjusted[[1]]) +
-  patchwork::plot_layout(guides = "collect", axes = "collect") &
-  ggplot2::theme(legend.position = "bottom")
+    patchwork::plot_layout(guides = "collect", axes = "collect") &
+    ggplot2::theme(legend.position = "bottom")
 ```
 
-The following plot visualises the retention time correction applied during alignment: the x-axis shows the adjusted retention time (`rt_adj`), while the y-axis displays the difference between the raw and adjusted retention times (`rt_raw - rt_adj`). This highlights how much each feature's retention time was shifted to achieve alignment across samples.
-Smooth, gradual trends in the plot indicate consistent chromatographic drift correction, while abrupt changes may suggest anomalies.
-This diagnostic view helps you assess the quality and extent of retention time alignment in LC-MS data processing.
+The following plot visualises the retention time correction applied
+during alignment: the x-axis shows the adjusted retention time (`rt_adj`),
+while the y-axis displays the difference between the raw and adjusted retention
+times (`rt_raw - rt_adj`). This highlights how much each feature's
+retention time was shifted to achieve alignment across samples.
+Smooth, gradual trends in the plot indicate consistent chromatographic
+drift correction, while abrupt changes may suggest anomalies.
+This diagnostic view helps you assess the quality and extent of
+retention time alignment in LC-MS data processing.
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-  rt_diff_plot() +
-  arrange(group_by = "sample_group") +
-  labels(legend = "Sample group")
+    lp_rt_diff_plot() +
+    lp_arrange(group_by = "sample_group") +
+    lp_labels(legend = "Sample group")
 ```
 
 # Plot grouped peaks across samples (features)
 
-The next step in LC-MS preprocessing is grouping signals/peaks across samples.
+The next step in LC–MS preprocessing is grouping chromatographic
+peaks across samples.
+This step groups peaks that likely originate from the same compound but were
+detected in different samples.
+
+Here, peak grouping is performed using the peak density approach.
+Peaks are grouped based on their proximity in m/z and retention time, while also
+considering their presence across samples.
+The `sampleGroups` argument specifies the experimental grouping, `minFraction`
+defines the minimum fraction of samples within a group in which a peak must be
+present, and `bw` controls the retention time bandwidth used for grouping.
 
 ```{r}
 pdp <- xcms::PeakDensityParam(
-  sampleGroups = sampleData(faahko)$sample_group,
-  minFraction = 0.4,
-  bw = 30)
+    sampleGroups = sampleData(faahko)$sample_group,
+    minFraction = 0.4,
+    bw = 30)
 faahko <- xcms::groupChromPeaks(faahko, param = pdp)
 ```
 
-Grouped peaks are assigned unique IDs based on their m/z values and retention times.
-These IDs can then be used to automatically plot the chromatograms of individual peaks across samples.
+Each resulting group of peaks is assigned a unique feature ID, defined by a
+consensus m/z value and retention time.
+These feature IDs can then be used to automatically extract and plot
+chromatograms for individual features across all samples, enabling direct visual
+comparison of aligned and grouped peaks:
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = c('M205T2792', 'M207T2719', 'M279T2791', 'M284T2719'),
-    ppm = 10,
-    rt_tol = 80,
-    highlight_peaks = TRUE,
-    highlight_peaks_factor = "sample_group") +
-  arrange(group_by = 'sample_group') +
-  facets(facets = 'feature_id', ncol = 2, free_x = TRUE, free_y = TRUE) +
-  labels(title = "Feature M205T2792", legend = "Sample") +
-  legend(position = "bottom")
+    lp_chromatogram(
+        features = c('M205T2792', 'M207T2719', 'M279T2791', 'M284T2719'),
+        ppm = 10,
+        rt_tol = 80,
+        highlight_peaks = TRUE,
+        highlight_peaks_factor = "sample_group") +
+    lp_arrange(group_by = 'sample_group') +
+    lp_facets(facets = 'feature_id', ncol = 2, free_x = TRUE, free_y = TRUE) +
+    lp_labels(title = "Four selected features", legend = "Sample") +
+    lp_legend(position = "bottom")
 ```
 
 # Plot chromatograms with mass traces
 
-Until now, we've primarily focused on chromatograms to understand the abundance and retention behaviour of features across samples.
-These chromatograms show when and how strongly a compound elutes, but they don't reveal whether the mass accuracy or consistency is stable across the peak or between samples; this is where the mass trace (bottom panel) becomes valuable.
+Until now, we have primarily focused on chromatograms to understand the
+abundance and retention behavior of features across samples.
+Chromatograms indicate when a compound elutes and how strongly it is detected,
+but they do not reveal whether the measured mass values are stable and
+consistent across the chromatographic peak or between samples.
+
+This is where the mass trace (shown in the bottom panel) becomes valuable.
+Mass traces display how the measured m/z values evolve over the retention-time
+profile of a peak. They allow assessment of mass accuracy, mass drift,
+and signal coherence within a peak, helping to determine whether a feature
+represents a single, well-defined ion or a mixture of overlapping signals.
+Consistent and narrow mass traces across samples are indicative of high-quality,
+reproducible features, whereas variability may point to co-eluting compounds,
+interference, or measurement instability.
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = 'M205T2792',
-    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
-    ppm = 10,
-    rt_tol = 50,
-    highlight_peaks = TRUE) +
-  mass_trace() +
-  arrange(group_by = 'sample_id') +
-  labels(title = "Feature M205T2792", legend = "Sample") +
-  legend(position = "bottom")
+    lp_chromatogram(
+        features = 'M205T2792',
+        sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+        ppm = 10,
+        rt_tol = 50,
+        highlight_peaks = TRUE) +
+    lp_mass_trace() +
+    lp_arrange(group_by = 'sample_id') +
+    lp_labels(title = "Feature M205T2792", legend = "Sample") +
+    lp_legend(position = "bottom")
 ```
 
-As for plain chromatograms, we can facet a combination of chromatograms + mass traces on a factor, such as `feature_id`:
+As for plain chromatograms, we can facet a combination of
+chromatograms + mass traces on a factor, such as `feature_id`:
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = c('M283T3890', 'M205T2792'),
-    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
-    ppm = 10,
-    rt_tol = 50,
-    highlight_peaks = TRUE) +
-  mass_trace() +
-  arrange(group_by = "sample_id") +
-  facets(facets = 'feature_id', ncol = 2) +
-  labels(legend = "Sample") +
-  legend(position = "bottom")
+    lp_chromatogram(
+        features = c('M283T3890', 'M205T2792'),
+        sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+        ppm = 10,
+        rt_tol = 50,
+        highlight_peaks = TRUE) +
+    lp_mass_trace() +
+    lp_arrange(group_by = "sample_id") +
+    lp_facets(facets = 'feature_id', ncol = 2) +
+    lp_labels(legend = "Sample") +
+    lp_legend(position = "bottom")
 ```
 
 Or multiple factors (`feature_id` and `sample_id`):
 
 ```{r, fig.height=12, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = c('M283T3890', 'M205T2792'),
-    sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
-    ppm = 10,
-    rt_tol = 50,
-    highlight_peaks = TRUE,
-    highlight_peaks_color = '#343434') +
-  mass_trace() +
-  facets(facets = c('feature_id', 'sample_id'))
+    lp_chromatogram(
+        features = c('M283T3890', 'M205T2792'),
+        sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
+        ppm = 10,
+        rt_tol = 50,
+        highlight_peaks = TRUE,
+        highlight_peaks_color = '#343434') +
+    lp_mass_trace() +
+    lp_facets(facets = c('feature_id', 'sample_id'))
 ```
 
 # Plot chromatograms from raw files
 
-Until now, we’ve been using an `MsExperiment` object as our data source. However, `lcmsPlot` also supports extracting chromatograms directly from raw files, such as those in the `mzML` format.
+Until now, we have been using an `MsExperiment` object as the data source
+for plotting.
+However, lcmsPlot also supports direct extraction of chromatograms from raw MS
+files, such as those in the `mzML` format.
+This can be useful when you want to quickly inspect raw data without first
+creating a full experiment object or running preprocessing steps.
+
+In the example below, chromatograms are extracted directly from a subset of
+raw files. Each file is treated as an individual sample and plotted accordingly.
 
 ```{r}
-raw_files <- faahko@sampleData$spectraOrigin[1:4]
+raw_files <- sampleData(faahko)$spectraOrigin[1:4]
 
 lcmsPlot(raw_files) +
-  chromatogram(features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900))) +
-  arrange(group_by = "sample_id") +
-  legend(position = "bottom") +
-  labels(legend = "Sample")
+    lp_chromatogram(features = rbind(c(
+        mzmin = 334.9,
+        mzmax = 335.1,
+        rtmin = 2700,
+        rtmax = 2900))) +
+    lp_arrange(group_by = "sample_id") +
+    lp_legend(position = "bottom") +
+    lp_labels(legend = "Sample")
 ```
 
-Metadata can be attached to the raw files and used for plotting as follows:
+By default, file names are used to identify samples.
+To enable more informative grouping, labeling, and faceting, custom metadata
+can be attached to the raw files and referenced during plotting:
 
 ```{r}
-raw_files <- faahko@sampleData$spectraOrigin[c(1, 2, 5, 6)]
+raw_files <- sampleData(faahko)$spectraOrigin[c(1, 2, 5, 6)]
 
 metadata <- data.frame(
-  sample_type = c("KO", "KO", "WT", "WT"),
-  sample_id = c("S1", "S2", "S3", "S4")
+    sample_type = c("KO", "KO", "WT", "WT"),
+    sample_id = c("S1", "S2", "S3", "S4")
 )
 
 lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
-  chromatogram(
-    features = rbind(
-      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
-    )
-  ) +
-  grid(rows = 'feature_id', cols = 'sample_type', free_y = TRUE)
+    lp_chromatogram(
+        features = rbind(
+            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+        )
+    ) +
+    lp_grid(rows = 'feature_id', cols = 'sample_type', free_y = TRUE)
 ```
 
 # Plot spectra
 
-Now, we want to include spectra because they provide critical compositional insight into what ions make up the feature at a given point in time.
+While chromatograms describe how signal intensity changes over retention time,
+mass spectra provide critical compositional insight by revealing which ions
+contribute to a feature at a specific point in time.
+Spectra allow inspection of isotopic patterns, adducts, and
+potential interferences, and are therefore essential for
+feature validation and annotation.
 
-To do so, we can use the `spectra` function and define what mode of scan selection to use.
+To include spectra in the visualisation, we use the `lp_spectra` function.
+This function extracts and displays mass spectra based on a
+specified scan selection mode, which determines which scans are used to
+generate the spectrum.
 
-## Select closest scan to specified RT
+## Select closest scan to a specified RT
 
-To select the closest scan to a specified RT value you can use `mode = "closest"`:
+To extract and plot the mass spectrum from the scan closest to a specified
+retention time, you can use `mode = "closest"`.
+This is particularly useful when you want to inspect the spectral composition
+at or near the apex of a chromatographic peak.
 
-```{r}
+In the example below, a chromatogram is first extracted for a
+single feature and sample.
+The detected peaks are highlighted, and the mass spectrum corresponding to the
+scan closest to the specified RT (3860 seconds) is displayed
+below the chromatogram.
+
+```{r, fig.height=4, fig.width=9}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = 'M283T3890',
-    sample_ids = 'ko15',
-    ppm = 5,
-    rt_tol = 50,
-    highlight_peaks = TRUE) +
-  spectra(rt = 3860, mode = "closest", ms_level = 1) +
-  labels(title = "Feature M283T3890", legend = "Sample") +
-  legend(position = "bottom")
+    lp_chromatogram(
+        features = 'M283T3890',
+        sample_ids = 'ko15',
+        ppm = 5,
+        rt_tol = 50,
+        highlight_peaks = TRUE) +
+    lp_spectra(rt = 3860, mode = "closest", ms_level = 1) +
+    lp_labels(title = "Feature M283T3890", legend = "Sample") +
+    lp_legend(position = "bottom")
 ```
 
 ## Select scan closest to a detected peak apex
 
-To select the closest scan to a detected peak apex you can use `mode = "closest_apex"`:
+To extract and plot the mass spectrum from the scan closest to the apex of a
+detected chromatographic peak, you can use `mode = "closest_apex"`. 
+This mode automatically identifies the retention time of the peak maximum and
+selects the nearest corresponding scan, removing the need to manually
+specify an RT value.
 
-```{r, fig.height=10}
+In the example below, chromatograms are extracted for two features in a
+single sample, with detected peaks highlighted. For each feature, the MS1
+spectrum corresponding to the closest scan at the peak apex is displayed,
+allowing direct inspection of the ions contributing to each peak.
+
+```{r, fig.height=5, fig.width=10, fig.small=FALSE}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = rbind(
-      c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-      c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
-    ),
-    sample_ids = 'ko15',
-    highlight_peaks = TRUE) +
-  spectra(mode = "closest_apex", ms_level = 1) +
-  facets(facets = "feature_id", ncol = 2) +
-  labels(legend = "Sample") +
-  legend(position = "bottom") +
-  layout(design = "C\nS\nS")
+    lp_chromatogram(
+        features = rbind(
+            c(mzmin = 362.0982, mzmax = 362.1018, rtmin = 3130, rtmax = 3200),
+            c(mzmin = 357.1946, mzmax = 357.2054, rtmin = 3800, rtmax = 3900)
+        ),
+        sample_ids = 'ko15',
+        highlight_peaks = TRUE) +
+    lp_spectra(mode = "closest_apex", ms_level = 1) +
+    lp_facets(facets = "feature_id", ncol = 2) +
+    lp_labels(legend = "Sample") +
+    lp_legend(position = "bottom") +
+    lp_layout(design = "C\nS\nS")
 ```
 
 ## Select multiple scans across a detected peak
 
-To select multiple scans across a detected peak, given an RT interval, you can use `mode = "across_peak"`:
+To inspect how the spectral composition changes across the duration of a
+detected chromatographic peak, multiple scans can be selected within a
+retention time interval using `mode = "across_peak"`.
+This mode extracts spectra at regular intervals spanning the peak,
+enabling assessment of signal stability, co-eluting ions, or changes in
+ion dominance from peak start to end.
 
-```{r, fig.height=10, fig.width=5}
+In the example below, a chromatogram is extracted for a single feature in
+one sample, with the detected peak highlighted.
+MS1 spectra are then extracted at regular RT intervals (every 10 seconds)
+across the peak and displayed sequentially beneath the chromatogram.
+
+```{r, fig.height=10, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  chromatogram(
-    features = "M205T2792",
-    sample_ids = 'ko15',
-    ppm = 5,
-    rt_tol = 50,
-    highlight_peaks = TRUE) +
-  spectra(mode = "across_peak", interval = 10, ms_level = 1) +
-  labels(legend = "Sample") +
-  legend(position = "bottom") +
-  layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
+    lp_chromatogram(
+        features = "M205T2792",
+        sample_ids = 'ko15',
+        ppm = 5,
+        rt_tol = 50,
+        highlight_peaks = TRUE) +
+    lp_spectra(mode = "across_peak", interval = 10, ms_level = 1) +
+    lp_labels(legend = "Sample") +
+    lp_legend(position = "bottom") +
+    lp_layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
 ```
 
 ## Plot standalone spectra
 
-So far we have been plotting spectra alongside chromatograms.
-Often, it is preferable to plot spectra on their own to allow for clearer analysis of spectral features:
+So far, spectra have been displayed alongside chromatograms to
+provide chromatographic context.
+However, for detailed inspection of spectral features, such as isotope patterns,
+adducts, or relative ion intensities, it is often preferable to plot spectra on
+their own, without the accompanying chromatogram.
+
+In the example below, MS1 spectra are extracted from two samples at the scan
+closest to a specified retention time and displayed together
+for direct comparison.
 
 ```{r}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
-  spectra(
-    sample_ids = c('ko15', 'wt15'),
-    rt = 2740,
-    mode = "closest",
-    ms_level = 1) +
-  legend(position = "bottom")
+    lp_spectra(
+        sample_ids = c('ko15', 'wt15'),
+        rt = 2740,
+        mode = "closest",
+        ms_level = 1) +
+    lp_legend(position = "bottom")
 ```
 
 # Session Info

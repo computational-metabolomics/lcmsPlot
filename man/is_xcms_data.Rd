@@ -2,16 +2,18 @@
 % Please edit documentation in R/helpers-data.R
 \name{is_xcms_data}
 \alias{is_xcms_data}
-\title{Check whether an object is from XCMS.}
+\title{Check whether an object is from XCMS}
 \usage{
 is_xcms_data(obj)
 }
 \arguments{
-\item{obj}{The input object.}
+\item{obj}{The input object to check.}
 }
 \value{
-Whether the object is an XCMS one.
+A \code{logical} value indicating whether the object is
+an XCMS one, i.e. \code{XCMSnExp} or \code{MsExperiment}.
 }
 \description{
-Check whether an object is from XCMS.
+Check whether an object is from XCMS
 }
+\keyword{internal}

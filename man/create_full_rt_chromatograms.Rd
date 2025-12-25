@@ -3,30 +3,23 @@
 \name{create_full_rt_chromatograms}
 \alias{create_full_rt_chromatograms}
 \alias{create_full_rt_chromatograms,lcmsPlotDataContainer,list-method}
-\title{Creates a lcmsPlotDataContainer from BPC or TIC data}
+\title{Creates an instance of class \code{lcmsPlotDataContainer} from
+base peak chromatograms (BPC) or total ion chromatograms (TIC)}
 \usage{
 create_full_rt_chromatograms(obj, options)
 
 \S4method{create_full_rt_chromatograms}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{options}{The options}
+\item{options}{A \code{list} representing the plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object
+An instance of class \code{lcmsPlotDataContainer} with BPC or TIC.
 }
 \description{
-Creates a lcmsPlotDataContainer from BPC or TIC data
+The type of chromatograms is defined in
+\code{options$chromatograms$aggregation_fun}.
 }
-\examples{
-data_obj <- get_XCMSnExp_object_example(indices = c(1, 7))
-data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
-
-opts <- default_options()
-opts$chromatograms$aggregation_fun <- 'max'
-opts$chromatograms$sample_ids <- c('ko15', 'wt15')
-
-data_container <- create_full_rt_chromatograms(data_container, opts)
-}
+\keyword{internal}

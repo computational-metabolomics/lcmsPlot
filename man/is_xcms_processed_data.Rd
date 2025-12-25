@@ -2,16 +2,18 @@
 % Please edit documentation in R/helpers-data.R
 \name{is_xcms_processed_data}
 \alias{is_xcms_processed_data}
-\title{Check whether an object is from XCMS and processed (e.g., peak detection).}
+\title{Check whether an object is an XCMS data container}
 \usage{
 is_xcms_processed_data(obj)
 }
 \arguments{
-\item{obj}{The input object.}
+\item{obj}{The input object to check.}
 }
 \value{
-Whether the object is an XCMS one.
+A \code{logical} value indicating whether \code{obj} is an
+XCMS experiment object.
 }
 \description{
-Check whether an object is from XCMS and processed (e.g., peak detection).
+Check whether an object is an XCMS data container
 }
+\keyword{internal}

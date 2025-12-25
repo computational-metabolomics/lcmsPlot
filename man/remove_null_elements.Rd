@@ -2,16 +2,17 @@
 % Please edit documentation in R/helpers-data.R
 \name{remove_null_elements}
 \alias{remove_null_elements}
-\title{Remove NULL values from a list.}
+\title{Remove \code{NULL} elements from a list}
 \usage{
 remove_null_elements(lst)
 }
 \arguments{
-\item{lst}{The input list.}
+\item{lst}{A \code{list} from which \code{NULL} entries should be removed.}
 }
 \value{
-The list without NULL values.
+A \code{list} containing only the non-\code{NULL} elements of \code{lst}.
 }
 \description{
-Remove NULL values from a list.
+Remove \code{NULL} elements from a list
 }
+\keyword{internal}

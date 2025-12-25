@@ -3,31 +3,21 @@
 \name{create_spectra}
 \alias{create_spectra}
 \alias{create_spectra,lcmsPlotDataContainer,list-method}
-\title{Creates/updates an lcmsPlotDataContainer from spectra}
+\title{Create an instance of class \code{lcmsPlotDataContainer} from spectra}
 \usage{
 create_spectra(obj, options)
 
 \S4method{create_spectra}{lcmsPlotDataContainer,list}(obj, options)
 }
 \arguments{
-\item{obj}{A lcmsPlotDataContainer object}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer}.}
 
-\item{options}{The lcmsPlot options}
+\item{options}{A \code{list} representing the plot object's options.}
 }
 \value{
-A lcmsPlotDataContainer object
+An \code{lcmsPlotDataContainer} object with the created spectra.
 }
 \description{
-Creates/updates an lcmsPlotDataContainer from spectra
+Create an instance of class \code{lcmsPlotDataContainer} from spectra
 }
-\examples{
-data_obj <- get_XCMSnExp_object_example(indices = 1)
-data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
-
-opts <- default_options()
-opts$spectra$show <- TRUE
-opts$spectra$sample_ids <- 'ko15'
-opts$spectra$scan_index <- 456
-
-data_container <- create_spectra(data_container, opts)
-}
+\keyword{internal}

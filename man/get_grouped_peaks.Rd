@@ -6,7 +6,7 @@
 \alias{get_grouped_peaks.XCMSnExp}
 \alias{get_grouped_peaks.XcmsExperiment}
 \alias{get_grouped_peaks.MsExperiment}
-\title{Get the grouped peaks across samples (features) from the data object.}
+\title{Get the grouped peaks across samples (features) from the data object}
 \usage{
 get_grouped_peaks(obj)
 
@@ -19,35 +19,14 @@ get_grouped_peaks(obj)
 \method{get_grouped_peaks}{MsExperiment}(obj)
 }
 \arguments{
-\item{obj}{The data object.}
+\item{obj}{A data object containing or representing samples.}
 }
 \value{
-A data frame representing the grouped peaks.
+A \code{data.frame} of grouped (feature-level) peaks,
+or \code{NULL} if not available.
 }
 \description{
-Get the grouped peaks across samples (features) from the data object.
+\code{get_grouped_peaks()} is an internal helper that retrieves feature-level
+grouped peaks, i.e., chromatographic peaks aligned across samples.
 }
-\examples{
-cdfs <- dir(
-   system.file("cdf", package = "faahKO"),
-   full.names = TRUE,
-   recursive = TRUE)[c(1, 7)]
-sample_names <- sub(basename(cdfs), pattern = ".CDF", replacement = "", fixed = TRUE)
-
-pd <- data.frame(sample_name = sample_names,
-                 sample_group = c("KO", "WT"),
-                 stringsAsFactors = FALSE)
-
-faahko <- MsExperiment::readMsExperiment(spectraFiles = cdfs, sampleData = pd)
-
-cwp <- xcms::CentWaveParam(peakwidth = c(20, 80), noise = 5000, prefilter = c(6, 5000))
-faahko <- xcms::findChromPeaks(faahko, param = cwp)
-
-pdp <- xcms::PeakDensityParam(
-    sampleGroups = pd$sample_group,
-    minFraction = 0.4,
-    bw = 30)
-faahko <- xcms::groupChromPeaks(faahko, param = pdp)
-
-grouped_peaks <- get_grouped_peaks(faahko)
-}
+\keyword{internal}
