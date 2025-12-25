@@ -75,8 +75,6 @@ setOldClass(c("gg", "ggplot"))
 #' for internal use.
 #' @slot plot A `patchwork` object representing the underlying plot object.
 #' @export
-#' @examples
-#' lp_obj <- new("lcmsPlotClass", options = NULL, data = NULL, plot = NULL)
 setClass(
     "lcmsPlotClass",
     slots = list(
