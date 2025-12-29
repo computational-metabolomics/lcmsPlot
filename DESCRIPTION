@@ -27,6 +27,7 @@ Depends:
   R (>= 4.4.0)
 Imports:
     methods,
+    rlang,
     dplyr,
     tidyr,
     BiocParallel,
@@ -39,7 +40,9 @@ Imports:
     S4Vectors,
     ggplot2,
     scales,
-    patchwork
+    patchwork,
+    DBI,
+    RSQLite
 Suggests: 
     knitr,
     rmarkdown,
@@ -48,12 +51,14 @@ Suggests:
     faahKO,
     testthat (>= 3.0.0)
 Collate:
+    'lcmsPlot-package.R'
     'zzz.R'
     'helpers-data.R'
     'helpers-s4.R'
     'io-raw-data.R'
     'options.R'
     'processing-xcms.R'
+    'compound-discoverer.R'
     'constructors-chromatograms.R'
     'constructors-spectra.R'
     'data-adapters.R'

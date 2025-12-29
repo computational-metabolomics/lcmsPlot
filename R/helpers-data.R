@@ -18,6 +18,29 @@ is_xcms_processed_data <- function(obj) {
     inherits(obj, c("XCMSnExp", "XcmsExperiment"))
 }
 
+#' Check whether a path corresponds to a Compound Discoverer results file
+#'
+#' @param path A `character` value giving a file system path.
+#' @return A `logical` value indicating whether the path corresponds to a
+#' Compound Discoverer results directory.
+#' @keywords internal
+is_cd_results_path <- function(path) {
+    length(path) == 1 && endsWith(path, ".cdResult")
+}
+
+#' Check whether an object is a Compound Discoverer database connection
+#'
+#' The object must inherit from `DBIConnection`, and its `dbname`
+#' slot must reference a path ending in `.cdResult`.
+#'
+#' @param obj An object to test.
+#' @return A `logical` value indicating whether the object is a Compound
+#' Discoverer database connection.
+#' @keywords internal
+is_cd_result <- function(obj) {
+    inherits(obj, "DBIConnection") && is_cd_results_path(obj@dbname)
+}
+
 #' Get an `XCMSnExp` example object from the `faahKO` dataset
 #'
 #' @param indices A `numeric` vector of sample indices to select
@@ -218,6 +241,23 @@ get_features <- function(
     return(features)
 }
 
+#' Retrieve raw and adjusted retention times from an xcms object
+#'
+#' Extracts raw and adjusted retention times from an xcms-processed object
+#' when retention time correction has been performed.
+#'
+#' If the object is not an xcms processed data object, or if retention time
+#' adjustment has not been applied, the function returns \code{NULL}.
+#'
+#' @param obj An object potentially containing xcms-processed LC-MS data.
+#' @return A `data.frame` with one row per detected feature, containing:
+#' \describe{
+#'   \item{file_index}{Index of the originating raw data file.}
+#'   \item{raw_rt}{Original (unadjusted) retention time.}
+#'   \item{adj_rt}{Adjusted retention time after RT correction.}
+#' }
+#' If no adjusted retention times are available, \code{NULL} is returned.
+#' @keywords internal
 get_adjusted_rts <- function(obj) {
     if (is_xcms_processed_data(obj) && xcms::hasAdjustedRtime(obj)) {
         adjusted_rt <- xcms::adjustedRtime(obj)

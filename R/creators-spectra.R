@@ -89,8 +89,10 @@ setMethod(
 
                     spectra <- spectra |>
                         mutate(
-                            metadata_index = sample_metadata$sample_index,
-                            additional_metadata_index = additional_metadata_index
+                            metadata_index =
+                                sample_metadata$sample_index,
+                            additional_metadata_index =
+                                additional_metadata_index
                         )
                     all_spectra <- rbind(all_spectra, spectra)
 
@@ -144,8 +146,10 @@ setMethod(
 
             i <- 1
             for (target_index in target_indices) {
-                hit_mzs <- Spectra::mz(spectral_library)[[target_index]]
-                hit_intensities <- Spectra::intensity(spectral_library)[[target_index]]
+                hit_mzs <- Spectra::mz(spectral_library)
+                hit_mzs <- hit_mzs[[target_index]]
+                hit_intensities <- Spectra::intensity(spectral_library)
+                hit_intensities <- hit_intensities[[target_index]]
 
                 all_spectra <- rbind(all_spectra, data.frame(
                     mz = hit_mzs,

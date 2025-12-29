@@ -444,9 +444,15 @@ lp_chromatogram <- function(
             )
 
             if (is.null(features)) {
-                obj@data <- create_full_rt_chromatograms(
-                    obj@data,
-                    obj@options)
+                if (is_cd_result(obj@data@data_obj)) {
+                    obj@data <- create_chromatograms_from_compound_discoverer(
+                        obj@data,
+                        obj@options)
+                } else {
+                    obj@data <- create_full_rt_chromatograms(
+                        obj@data,
+                        obj@options)
+                }
             } else if (is.character(features)) {
                 obj@data <- create_chromatograms_from_feature_ids(
                     obj@data,
@@ -723,11 +729,11 @@ lp_intensity_map <- function(
 lp_rt_diff_plot <- function() {
     function(obj) {
         if (!is_xcms_data(obj@data@data_obj)) {
-            stop("rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
+            stop("lp_rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
         }
 
         if (!xcms_utils$has_rt_alignment_been_performed(obj@data@data_obj)) {
-            stop("rt_diff_plot: RT alignment was not performed.")
+            stop("lp_rt_diff_plot: RT alignment was not performed.")
         }
 
         obj@options$rt_diff <- list(show = TRUE)
@@ -834,6 +840,8 @@ lp_facets <- function(
 #' represent rows.
 #' @param cols A `character` value indicating the factors that
 #' represent columns.
+#' @param free_x A `logical` value indicating whether the x-axis scales
+#' are allowed to vary across panels.
 #' @param free_y A `logical` value indicating whether the y-axis scales
 #' are allowed to vary across panels.
 #' @return A function that takes an `lcmsPlot` object and returns a modified
@@ -861,7 +869,7 @@ lp_facets <- function(
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
 #'   lp_grid(rows = "factor1", cols = "factor2")
-lp_grid <- function(rows, cols, free_y = FALSE) {
+lp_grid <- function(rows, cols, free_x = FALSE, free_y = FALSE) {
     make_interface_function(
         name = "lp_grid",
         args_list = as.list(environment()),
@@ -869,6 +877,7 @@ lp_grid <- function(rows, cols, free_y = FALSE) {
             obj@options$grid <- list(
                 rows = rows,
                 cols = cols,
+                free_x = free_x,
                 free_y = free_y
             )
             return(obj)
@@ -1033,6 +1042,64 @@ lp_layout <- function(design = NULL) {
             obj@options$layout <- list(
                 design = design
             )
+            return(obj)
+        }
+    )
+}
+
+#' Define the options to use when plotting LC-MS data coming from
+#' Compound Discoverer results.
+#'
+#' @param compounds_query A `character` value indicating the expression
+#' used to filter compounds from the Compound Discoverer results.
+#' The expression is evaluated on the compound table and can reference
+#' the following columns:
+#' \describe{
+#'   \item{name}{Compound name.}
+#'   \item{formula}{Chemical formula of the compound.}
+#'   \item{adduct}{Ion adduct (e.g. `[M+H]+`, `[M-H]-`).}
+#'   \item{rt}{Retention time of the compound (in seconds).}
+#'   \item{rtmin}{Minimum retention time of the compound peak.}
+#'   \item{rtmax}{Maximum retention time of the compound peak.}
+#'   \item{mz}{Mass-to-charge ratio (m/z) of the detected ion.}
+#'   \item{maxo}{Maximum observed peak intensity.}
+#'   \item{into}{Integrated peak area reported by Compound Discoverer.}
+#' }
+#' @param rt_extend A `numeric` value indicating how much (in seconds)
+#' the retention time window should be extended on each side of the
+#' compound peak when extracting and plotting chromatograms.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified Compound Discoverer options stored in
+#' `options$compound_discoverer`. It is intended for use with the `+` operator,
+#' which incrementally layers new data or visual components onto
+#' the `lcmsPlot` object.
+#' @export
+#' @examples
+#' \donttest{
+#' lcmsPlot("cd_example.cdResult") +
+#'   lp_compound_discoverer(
+#'     compounds_query = 'name %in% c("Proline", "Betaine")',
+#'     rt_extend = 5
+#'   ) +
+#'   lp_chromatogram(highlight_peaks = TRUE) +
+#'   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
+#'   lp_labels(title = "Compound Discoverer example", legend = "Sample") +
+#'   lp_legend(position = "bottom")
+#' }
+lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
+    make_interface_function(
+        name = "lp_compound_discoverer",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_cd_result(obj@data@data_obj)) {
+                stop("lp_compound_discoverer: The data object is not a Compound Discoverer DB connection")
+            }
+
+            obj@options$compound_discoverer <- list(
+                compounds_query = compounds_query,
+                rt_extend = rt_extend
+            )
+
             return(obj)
         }
     )

@@ -188,7 +188,11 @@ grid_layout <- function(options, single) {
             NULL  # No faceting
         }
 
-        if (options$grid$free_y == TRUE) {
+        if (options$grid$free_x && options$grid$free_y) {
+            scales <- "free"
+        } else if (options$grid$free_x) {
+            scales <- "free_x"
+        } else if (options$grid$free_y) {
             scales <- "free_y"
         } else {
             scales <- "fixed"

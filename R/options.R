@@ -87,6 +87,10 @@ default_options <- function() {
         rt_lines = list(),
         layout = list(
             design = NULL
+        ),
+        compound_discoverer = list(
+            compounds_query = NULL,
+            rt_extend = 10
         )
     )
 }

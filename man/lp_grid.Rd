@@ -4,7 +4,7 @@
 \alias{lp_grid}
 \title{Define a gridded plot}
 \usage{
-lp_grid(rows, cols, free_y = FALSE)
+lp_grid(rows, cols, free_x = FALSE, free_y = FALSE)
 }
 \arguments{
 \item{rows}{A \code{character} value indicating the factors that
@@ -12,6 +12,9 @@ represent rows.}
 
 \item{cols}{A \code{character} value indicating the factors that
 represent columns.}
+
+\item{free_x}{A \code{logical} value indicating whether the x-axis scales
+are allowed to vary across panels.}
 
 \item{free_y}{A \code{logical} value indicating whether the y-axis scales
 are allowed to vary across panels.}

@@ -92,3 +92,9 @@ if (!require("remotes", quietly = TRUE))
 
 remotes::install_github("computational-metabolomics/lcmsPlot")
 ```
+
+## Resources
+
+- Package-level help page: `?\`lcmsPlot-package\``
+- Functions/classes help pages: `?<function>`
+- Vignettes: `browseVignettes("lcmsPlot")`

@@ -331,3 +331,134 @@ setMethod(
         return(obj)
     }
 )
+
+#' Creates an instance of class `lcmsPlotDataContainer` from a
+#' Compound Discoverer results object.
+#'
+#' @param obj An instance of class `lcmsPlotDataContainer`.
+#' @param options A `list` representing the plot object's options.
+#' @return An instance of class `lcmsPlotDataContainer` with chromatograms
+#' of the specified Compound Discoverer compounds.
+#' @keywords internal
+setGeneric(
+    "create_chromatograms_from_compound_discoverer",
+    function(obj, options)
+        standardGeneric("create_chromatograms_from_compound_discoverer")
+)
+
+#' @rdname create_chromatograms_from_compound_discoverer
+setMethod(
+    f = "create_chromatograms_from_compound_discoverer",
+    signature = c("lcmsPlotDataContainer", "list"),
+    definition = function(obj, options) {
+        cd_opts <- options$compound_discoverer
+
+        metadata <- obj@metadata |>
+            filter(.data$sample_id %in% options$chromatograms$sample_ids)
+
+        xic_traces_results <- get_xic_traces_from_compounds(
+            obj@data_obj,
+            cd_opts$compounds_query)
+
+        compounds <- xic_traces_results |>
+            group_by(.data$name) |>
+            distinct(
+                .data$name,
+                .data$formula,
+                .data$mz,
+                .data$adduct
+            ) |>
+            ungroup() |>
+            as.data.frame() |>
+            mutate(index = row_number())
+
+        process_sample <- function(i) {
+            sample_metadata <- metadata[i, ]
+
+            chromatograms_list <- list()
+            additional_metadata_list <- list()
+            detected_peaks_list <- list()
+
+            for (j in seq_len(nrow(compounds))) {
+                compound_data <- compounds[j,]
+                cols <- names(compound_data)
+                cols <- cols[cols != "index"]
+
+                xic_entry <- xic_traces_results |>
+                    filter(.data$sample_id == sample_metadata$sample_id) |>
+                    filter(
+                        across(
+                            all_of(cols),
+                            ~ . == compound_data[[cur_column()]]
+                        )
+                    ) |>
+                    as.data.frame()
+
+                if (nrow(xic_entry) > 0) {
+                    chroms <- parse_trace(xic_entry$trace[[1]]) |>
+                        filter(
+                            .data$rt >= xic_entry$rtmin - cd_opts$rt_extend,
+                            .data$rt <= xic_entry$rtmax + cd_opts$rt_extend)
+
+                    chromatograms_list[[j]] <- data.frame(
+                        rt = chroms$rt,
+                        intensity = chroms$intensity,
+                        metadata_index = sample_metadata$sample_index,
+                        additional_metadata_index = compound_data$index
+                    )
+
+                    additional_metadata_list[[j]] <- data.frame(
+                        metadata_index = sample_metadata$sample_index,
+                        name = compound_data$name,
+                        formula = compound_data$formula,
+                        mz = compound_data$mz,
+                        adduct = compound_data$adduct
+                    )
+
+                    detected_peaks_list[[j]] <- xic_entry |>
+                        select(
+                            .data$name,
+                            .data$sample_id,
+                            .data$mz,
+                            .data$rt,
+                            .data$rtmin,
+                            .data$rtmax,
+                            .data$into,
+                            .data$maxo
+                        ) |>
+                        left_join(metadata, by = "sample_id")
+                }
+            }
+
+            list(
+                chromatograms = do.call(rbind, chromatograms_list),
+                additional_metadata = do.call(rbind, additional_metadata_list),
+                detected_peaks = do.call(rbind, detected_peaks_list)
+            )
+        }
+
+        if (!is.null(options$parallel_param)) {
+            results <- BiocParallel::bplapply(
+                seq_len(nrow(metadata)),
+                process_sample,
+                BPPARAM = options$parallel_param
+            )
+        } else {
+            results <- lapply(seq_len(nrow(metadata)), process_sample)
+        }
+
+        obj@chromatograms <- do.call(
+            rbind,
+            lapply(results, `[[`, "chromatograms"))
+        obj@additional_metadata <- do.call(
+            rbind,
+            lapply(results, `[[`, "additional_metadata"))
+        obj@detected_peaks <- do.call(
+            rbind,
+            lapply(results, `[[`, "detected_peaks"))
+
+        validObject(obj)
+
+        return(obj)
+    }
+)

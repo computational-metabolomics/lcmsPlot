@@ -78,6 +78,10 @@ create_data_container_from_obj <- function(
     sample_id_column,
     metadata
 ) {
+    if (is_cd_results_path(data_obj)) {
+        data_obj <- open_cd_result_connection(data_obj)
+    }
+
     new("lcmsPlotDataContainer",
         data_obj = data_obj,
         metadata = get_metadata(data_obj, sample_id_column, metadata),
@@ -144,9 +148,17 @@ setClass(
 setValidity("lcmsPlotDataContainer", function(object) {
     ret <- TRUE
 
-    obj_types <- c("XCMSnExp", "MsExperiment", "character")
+    obj_types <- c(
+        "XCMSnExp",
+        "MsExperiment",
+        "DBIConnection",
+        "character")
+
     if (!inherits(object@data_obj, obj_types)) {
-        ret <- "@data_obj must be either XCMSnExp, MsExperiment, or character."
+        ret <- sprintf(
+            "@data_obj must inherit from one of: %s",
+            paste(obj_types, collapse = ", ")
+        )
     } else {
         for (validator_name in names(.validators)) {
             df <- slot(object, validator_name)

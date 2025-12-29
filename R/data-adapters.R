@@ -115,6 +115,33 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
         )
 }
 
+#' @rdname get_metadata
+#' @keywords internal
+get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
+    cd_metadata <- get_workflow_input_files(obj) |>
+        dplyr::mutate(
+            sample_index = dplyr::row_number(),
+            sample_id = .data$StudyFileID
+        )
+
+    if (is.null(metadata)) {
+        return(cd_metadata)
+    }
+
+    if (!sample_id_column %in% colnames(metadata)) {
+        stop(sprintf(
+            "Column '%s' not found in metadata",
+            sample_id_column
+        ))
+    }
+
+    dplyr::left_join(
+        metadata,
+        cd_metadata,
+        by = setNames("sample_id", sample_id_column)
+    )
+}
+
 #' Get the detected peaks from the data object (e.g. XCMSnExp)
 #'
 #' `get_detected_peaks()` is an internal helper that standardises extraction of
@@ -142,7 +169,7 @@ get_detected_peaks <- function(obj) {
 }
 
 .get_detected_peaks_xcms <- function(obj) {
-    if (is_xcms_processed_data(obj) &&xcms::hasChromPeaks(obj)) {
+    if (is_xcms_processed_data(obj) && xcms::hasChromPeaks(obj)) {
         as.data.frame(xcms::chromPeaks(obj)) |>
             dplyr::rename(sample_index = sample)
     } else {
