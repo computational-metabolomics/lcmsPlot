@@ -13,7 +13,8 @@ lcmsPlot(
 )
 }
 \arguments{
-\item{dataset}{An object of type \code{XCMSnExp}, \code{MsExperiment}, or \code{character}.
+\item{dataset}{An object of type \code{XCMSnExp}, \code{MsExperiment},
+\code{MZmineSource}, or \code{character}.
 If a \code{character} vector is supplied, it will be interpreted as a list
 of mzML paths.}
 

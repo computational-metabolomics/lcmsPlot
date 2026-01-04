@@ -29,7 +29,7 @@ spectra).
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://computational-metabolomics.github.io/lcmsPlot/}
+  \item \url{https://github.com/computational-metabolomics/lcmsPlot}
   \item Report bugs at \url{https://github.com/computational-metabolomics/lcmsPlot/issues}
 }
 

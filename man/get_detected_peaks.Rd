@@ -5,6 +5,7 @@
 \alias{get_detected_peaks.character}
 \alias{get_detected_peaks.XCMSnExp}
 \alias{get_detected_peaks.MsExperiment}
+\alias{get_detected_peaks.ExternalDataSource}
 \title{Get the detected peaks from the data object (e.g. XCMSnExp)}
 \usage{
 get_detected_peaks(obj)
@@ -14,6 +15,8 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{XCMSnExp}(obj)
 
 \method{get_detected_peaks}{MsExperiment}(obj)
+
+\method{get_detected_peaks}{ExternalDataSource}(obj)
 }
 \arguments{
 \item{obj}{A data object containing or representing samples.}

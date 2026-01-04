@@ -22,3 +22,4 @@ columns \code{rt} and \code{intensity}.
 \description{
 Create a base peak or total ion current chromatogram
 }
+\keyword{internal}

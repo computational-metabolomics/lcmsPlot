@@ -5,6 +5,7 @@
 #' @param ms_level A `numeric` value indicating the MS level of the scans.
 #' @return A `data.frame` representing a spectrum with columns
 #' `mz`, `intensity`, and `rt`.
+#' @keywords internal
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
     hdr <- mzR::header(raw_data)
 
@@ -37,6 +38,7 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
 #' @param scan_index A `numeric` value indicating the scan index.
 #' @return A `data.frame` representing a spectrum with columns
 #' `mz`, `intensity`, and `rt`.
+#' @keywords internal
 create_spectrum_from_scan_index <- function(
     raw_data,
     sample_metadata,
@@ -68,6 +70,7 @@ create_spectrum_from_scan_index <- function(
 #' detected peaks.
 #' @return A `data.frame` representing spectra with columns `mz`, `intensity`,
 #' and `rt`.
+#' @keywords internal
 create_spectra_for_sample <- function(
     raw_obj,
     detected_peaks,

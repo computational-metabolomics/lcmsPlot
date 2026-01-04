@@ -117,6 +117,17 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+get_metadata.ExternalDataSource <- function(obj, sample_id_column, metadata) {
+    obj@metadata |>
+        as.data.frame() |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = .data[[sample_id_column]]
+        )
+}
+
+#' @rdname get_metadata
+#' @keywords internal
 get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
     cd_metadata <- get_workflow_input_files(obj) |>
         dplyr::mutate(
@@ -193,6 +204,12 @@ get_detected_peaks.XCMSnExp <- function(obj) {
 #' @keywords internal
 get_detected_peaks.MsExperiment <- function(obj) {
     .get_detected_peaks_xcms(obj)
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+get_detected_peaks.ExternalDataSource <- function(obj) {
+    obj@peaks
 }
 
 #' Get the grouped peaks across samples (features) from the data object

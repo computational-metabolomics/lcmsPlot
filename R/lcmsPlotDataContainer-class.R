@@ -73,6 +73,7 @@ DATASET_TYPES <- c(
 #'   sample_id_column = NULL,
 #'   metadata = NULL
 #' )
+#' @keywords internal
 create_data_container_from_obj <- function(
     data_obj,
     sample_id_column,
@@ -151,6 +152,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
     obj_types <- c(
         "XCMSnExp",
         "MsExperiment",
+        "ExternalDataSource",
         "DBIConnection",
         "character")
 

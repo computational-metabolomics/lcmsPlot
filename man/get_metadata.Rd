@@ -5,6 +5,7 @@
 \alias{get_metadata.character}
 \alias{get_metadata.XCMSnExp}
 \alias{get_metadata.MsExperiment}
+\alias{get_metadata.ExternalDataSource}
 \alias{get_metadata.DBIConnection}
 \title{Get the metadata associated with the input object}
 \usage{
@@ -15,6 +16,8 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{XCMSnExp}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{MsExperiment}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{ExternalDataSource}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{DBIConnection}(obj, sample_id_column, metadata)
 }

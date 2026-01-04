@@ -36,3 +36,4 @@ and mass traces with columns \code{rt} and \code{mz}.
 \description{
 Create an extracted ion chromatogram
 }
+\keyword{internal}

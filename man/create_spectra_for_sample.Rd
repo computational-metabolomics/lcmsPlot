@@ -32,3 +32,4 @@ and \code{rt}.
 \description{
 Create spectra for a single sample
 }
+\keyword{internal}

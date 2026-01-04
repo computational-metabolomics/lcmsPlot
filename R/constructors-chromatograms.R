@@ -7,6 +7,7 @@
 #' If `NULL` it will use the raw RT values.
 #' @return A `list` with one `data.frame` containing the chromatograms with
 #' columns `rt` and `intensity`.
+#' @keywords internal
 create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
     hdr <- mzR::header(raw_data)
     ms1_header <- hdr[hdr$msLevel == 1, ]
@@ -66,6 +67,7 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
 #' @return A `list` with two data frames (`chromatograms` and `mass_traces`)
 #' containing the chromatograms with columns `rt` and `intensity`
 #' and mass traces with columns `rt` and `mz`.
+#' @keywords internal
 create_chromatogram <- function(
     raw_data,
     mz_range,

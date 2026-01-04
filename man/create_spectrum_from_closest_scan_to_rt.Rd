@@ -20,3 +20,4 @@ A \code{data.frame} representing a spectrum with columns
 \description{
 Create a spectrum of the closest scan to the specified RT
 }
+\keyword{internal}

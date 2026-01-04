@@ -143,7 +143,7 @@ lcmsPlot(ms2_raw_files, metadata = ms2_samples_metadata) +
 
 You can fully customise the appearance of your plots by modifying the
 underlying `ggplot2` object. To do this, simply extract the plot using the
-`get_plot()` function, which returns the raw `ggplot2` object, and then apply
+`lp_get_plot()` function, which returns the raw `ggplot2` object, and then apply
 any desired theme settings. This gives you complete flexibility to tailor the
 visualisation to your needs; for example, adjusting fonts, colors, backgrounds,
 grid lines, or margins.
@@ -197,7 +197,7 @@ my_custom_theme <- function() {
 ```
 
 Generate the plot with `lcmsPlot`, retrieve the underlying plot object using
-`get_plot()`, and then apply the custom theme:
+`lp_get_plot()`, and then apply the custom theme:
 
 ```{r}
 lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
@@ -211,7 +211,7 @@ lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
         rt_tol = 5
     ) +
     lp_facets(facets = "sample_name", free_x = TRUE, ncol = 2) +
-    get_plot() +
+    lp_get_plot() +
     my_custom_theme()
 ```
 

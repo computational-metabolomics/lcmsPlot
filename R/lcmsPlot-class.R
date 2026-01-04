@@ -6,7 +6,8 @@
 #' The `lcmsPlot` function is the main entry point and the preferred approach
 #' to creating `lcmsPlotClass` objects.
 #'
-#' @param dataset An object of type `XCMSnExp`, `MsExperiment`, or `character`.
+#' @param dataset An object of type `XCMSnExp`, `MsExperiment`,
+#' `MZmineSource`, or `character`.
 #' If a `character` vector is supplied, it will be interpreted as a list
 #' of mzML paths.
 #' @param sample_id_column A `character` value indicating which column
@@ -1126,9 +1127,9 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #'     rtmax = 2900))) +
 #'   lp_facets(facets = 'sample_id', ncol = 4) +
 #'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
-#'   get_plot() +
+#'   lp_get_plot() +
 #'   ggplot2::theme_bw()
-get_plot <- function() {
+lp_get_plot <- function() {
     function(obj) {
         obj <- .render_plot(obj, additional_datasets = list())
         return(obj@plot)

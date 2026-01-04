@@ -25,7 +25,7 @@ is_xcms_processed_data <- function(obj) {
 #' Compound Discoverer results directory.
 #' @keywords internal
 is_cd_results_path <- function(path) {
-    length(path) == 1 && endsWith(path, ".cdResult")
+    is.character(path) && length(path) == 1 && endsWith(path, ".cdResult")
 }
 
 #' Check whether an object is a Compound Discoverer database connection
@@ -270,4 +270,19 @@ get_adjusted_rts <- function(obj) {
     } else {
         return(NULL)
     }
+}
+
+#' Detect field separator from file extension
+#'
+#' Determines the column separator to use when reading a delimited text file
+#' based on its file extension. Files ending in `.tsv` (case-insensitive) are
+#' assumed to be tab-delimited; all others default to comma-delimited.
+#'
+#' @param path A `character` value indicating the path to the file whose
+#' separator should be detected.
+#' @return A `character` value indicating the field separator: `"\t"` for TSV
+#' files, otherwise `","`.
+#' @keywords internal
+detect_separator <- function(path) {
+    if (grepl("\\.tsv$", path, ignore.case = TRUE)) "\t" else ","
 }

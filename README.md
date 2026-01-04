@@ -18,7 +18,8 @@ The lcmsPlot package addresses this gap by providing:
 - A consistent, intuitive interface for LC–MS visualizations.
 - Streamlined generation of high-quality, customisable plots.
 - Improved reproducibility and reduced need for bespoke scripts.
-- Interoperability with the existing ecosystem (e.g., `MsExperiment`, `MSnbase`)
+- Interoperability with the existing Bioconductor ecosystem (e.g., `MsExperiment`, `MSnbase`)
+and LC-MS ecosystem (e.g., `MZmine`, `Compound Discoverer`)
 - Better performance at scale.
 
 ### Example

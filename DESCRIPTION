@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 0.99.11
+Version: 0.99.12
 Authors@R: c(
     person(
         "Ossama",
@@ -16,10 +16,11 @@ Authors@R: c(
         email="r.j.weber@bham.ac.uk",
         comment = c(ORCID = "0000-0002-8796-4771")))
 Description: lcmsPlot is an R package designed for visualising
-    Liquid Chromatography-Mass Spectrometry (LC-MS) data with high-quality plots
-    suitable for publication. The package enables users to generate and
-    customise chromatograms, mass traces, and spectra with fine-tuned
-    aesthetics and annotation options.
+    Liquid Chromatography-Mass Spectrometry (LC-MS) data with
+    publication-ready high-quality plots.
+    The package enables users to generate and customise chromatograms,
+    mass traces, spectra, and more with fine-tuned aesthetics
+    and annotation options.
 License: GPL-3
 Encoding: UTF-8
 LazyData: false
@@ -58,7 +59,10 @@ Collate:
     'io-raw-data.R'
     'options.R'
     'processing-xcms.R'
-    'compound-discoverer.R'
+    'data-source.R'
+    'data-source-compound-discoverer.R'
+    'data-source-mzmine.R'
+    'data-source-ms-dial.R'
     'constructors-chromatograms.R'
     'constructors-spectra.R'
     'data-adapters.R'
@@ -79,7 +83,7 @@ Collate:
     'creators-total-ion-current.R'
     'lcmsPlot-class.R'
 VignetteBuilder: knitr
-URL: https://computational-metabolomics.github.io/lcmsPlot/
+URL: https://github.com/computational-metabolomics/lcmsPlot
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 biocViews: Metabolomics, MassSpectrometry
