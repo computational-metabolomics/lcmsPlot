@@ -81,7 +81,7 @@ capable of producing publication-ready figures with minimal effort.
 `lcmsPlot` is a Bioconductor package and to install it we have to use
 [BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
 
-```{r, eval=FALSE}
+```{r install, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("lcmsPlot")
@@ -137,7 +137,7 @@ data and help quickly identify the most intense signals.
 
 In the example below we plot the BPC for the eight samples:
 
-```{r, fig.height=6, fig.width=10}
+```{r bpc, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
     lp_facets(facets = "sample_name", ncol = 4)
@@ -147,7 +147,7 @@ We can also plot multiple chromatograms in the same plot, overlapped.
 In the example below, base peak chromatograms are computed for each sample,
 grouped by sample group, and displayed together in one panel.
 
-```{r}
+```{r bpc-overlapped}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
     lp_arrange(group_by = "sample_group") +
@@ -161,7 +161,7 @@ The Total Ion Chromatogram (TIC) represents the sum of all ion intensities
 detected at each time point, providing a comprehensive view of all ions entering
 the detector, not just the most abundant ones.
 
-```{r, fig.height=6, fig.width=10}
+```{r tic, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
     lp_facets(facets = "sample_name", ncol = 4)
@@ -179,7 +179,7 @@ ion suppression, contamination, or changes in instrument sensitivity.
 
 Below, we generate a TIC plot for the eight samples under consideration:
 
-```{r}
+```{r total-ion-current}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_total_ion_current(type = "violin") +
     lp_arrange(group_by = "sample_group") +
@@ -200,7 +200,7 @@ The plot is restricted to an m/z range of 200-600 and a retention time window
 of 4200-4500 seconds. Density-based visualisation is used to smooth the signal
 and highlight recurring patterns rather than individual noise peaks.
 
-```{r}
+```{r intensity-maps}
 pparam <- BiocParallel::MulticoreParam(workers = 2)
 lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = pparam) +
     lp_intensity_map(
@@ -221,7 +221,7 @@ MS data when desired.
 Peak detection is carried out using the _centWave_ algorithm,
 which is well suited for high-resolution LC-MS data.
 
-```{r}
+```{r peak-detection}
 cwp <- xcms::CentWaveParam(
     peakwidth = c(20, 80),
     noise = 5000,
@@ -239,7 +239,7 @@ which correspond to a peak previously detected by xcms.
 The resulting chromatograms are arranged by sample group to facilitate
 comparison across experimental conditions.
 
-```{r}
+```{r plot-xics}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(features = rbind(c(
         mzmin = 334.9,
@@ -253,7 +253,7 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
 The above plot can be faceted on metadata factors;
 in this case we facet on `feature_id` and `sample_id`:
 
-```{r, fig.height=4, fig.width=8}
+```{r plot-xic-faceted, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(
         features = rbind(c(
@@ -280,7 +280,7 @@ in a matrix defined by two variables. This layout enables structured,
 two-dimensional comparisons, making it easier to examine how chromatographic
 patterns vary simultaneously across both factors.
 
-```{r, fig.height=4, fig.width=8}
+```{r plot-xic-highlight-peaks, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = rbind(
@@ -298,7 +298,7 @@ detected. This can be achieved using the `lp_rt_line` function, which allows you
 to add vertical lines at specified retention times, visually marking areas of
 interest in the chromatogram.
 
-```{r, fig.height=4, fig.width=8}
+```{r plot-xic-rt-line, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(features = rbind(c(
         mzmin = 334.9,
@@ -320,13 +320,13 @@ feature appears at the same RT in all samples.
 
 Here, we perform retention time alignment using the Obiwarp algorithm:
 
-```{r, message=FALSE, warning=FALSE}
+```{r rt-alignment, message=FALSE, warning=FALSE}
 faahko <- xcms::adjustRtime(faahko, param = xcms::ObiwarpParam(binSize = 0.6))
 ```
 
 Now, we can visualise the BPC for the raw and RT-corrected datasets:
 
-```{r}
+```{r plot-bpc-comparison}
 bpc <- lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
     lp_arrange(group_by = "sample_group") +
@@ -360,7 +360,7 @@ drift correction, while abrupt changes may suggest anomalies.
 This diagnostic view helps you assess the quality and extent of
 retention time alignment in LC-MS data processing.
 
-```{r}
+```{r plot-rt-alignment-effect}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_rt_diff_plot() +
     lp_arrange(group_by = "sample_group") +
@@ -381,7 +381,7 @@ The `sampleGroups` argument specifies the experimental grouping, `minFraction`
 defines the minimum fraction of samples within a group in which a peak must be
 present, and `bw` controls the retention time bandwidth used for grouping.
 
-```{r}
+```{r peak-grouping}
 pdp <- xcms::PeakDensityParam(
     sampleGroups = sampleData(faahko)$sample_group,
     minFraction = 0.4,
@@ -395,7 +395,7 @@ These feature IDs can then be used to automatically extract and plot
 chromatograms for individual features across all samples, enabling direct visual
 comparison of aligned and grouped peaks:
 
-```{r}
+```{r plot-features}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = c('M205T2792', 'M207T2719', 'M279T2791', 'M284T2719'),
@@ -426,7 +426,7 @@ Consistent and narrow mass traces across samples are indicative of high-quality,
 reproducible features, whereas variability may point to co-eluting compounds,
 interference, or measurement instability.
 
-```{r}
+```{r plot-chroms-with-mass-traces}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = 'M205T2792',
@@ -443,7 +443,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
 As for plain chromatograms, we can facet a combination of
 chromatograms + mass traces on a factor, such as `feature_id`:
 
-```{r}
+```{r plot-chroms-with-mass-traces-faceted}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = c('M283T3890', 'M205T2792'),
@@ -460,7 +460,7 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
 
 Or multiple factors (`feature_id` and `sample_id`):
 
-```{r, fig.height=12, fig.width=6}
+```{r plot-chroms-with-mass-traces-faceted-factors, fig.height=12, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = c('M283T3890', 'M205T2792'),
@@ -485,7 +485,7 @@ creating a full experiment object or running preprocessing steps.
 In the example below, chromatograms are extracted directly from a subset of
 raw files. Each file is treated as an individual sample and plotted accordingly.
 
-```{r}
+```{r plot-chroms-raw-files}
 raw_files <- sampleData(faahko)$spectraOrigin[1:4]
 
 lcmsPlot(raw_files) +
@@ -503,7 +503,7 @@ By default, file names are used to identify samples.
 To enable more informative grouping, labeling, and faceting, custom metadata
 can be attached to the raw files and referenced during plotting:
 
-```{r}
+```{r plot-chroms-raw-files-with-metadata}
 raw_files <- sampleData(faahko)$spectraOrigin[c(1, 2, 5, 6)]
 
 metadata <- data.frame(
@@ -548,7 +548,7 @@ The detected peaks are highlighted, and the mass spectrum corresponding to the
 scan closest to the specified RT (3860 seconds) is displayed
 below the chromatogram.
 
-```{r, fig.height=4, fig.width=9}
+```{r plot-spectra-scan-closest-rt, fig.height=4, fig.width=9}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = 'M283T3890',
@@ -574,7 +574,7 @@ single sample, with detected peaks highlighted. For each feature, the MS1
 spectrum corresponding to the closest scan at the peak apex is displayed,
 allowing direct inspection of the ions contributing to each peak.
 
-```{r, fig.height=5, fig.width=10, fig.small=FALSE}
+```{r plot-spectra-scan-closest-apex, fig.height=5, fig.width=10, fig.small=FALSE}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = rbind(
@@ -604,7 +604,7 @@ one sample, with the detected peak highlighted.
 MS1 spectra are then extracted at regular RT intervals (every 10 seconds)
 across the peak and displayed sequentially beneath the chromatogram.
 
-```{r, fig.height=10, fig.width=6}
+```{r plot-spectra-across-peak, fig.height=10, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = "M205T2792",
@@ -630,7 +630,7 @@ In the example below, MS1 spectra are extracted from two samples at the scan
 closest to a specified retention time and displayed together
 for direct comparison.
 
-```{r}
+```{r plot-standalone-spectra}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_spectra(
         sample_ids = c('ko15', 'wt15'),
@@ -658,7 +658,7 @@ to compare signal profiles across the dataset. Highlighting detected peaks helps
 relate the visualised chromatograms back to the original feature detection
 performed by Compound Discoverer.
 
-```{r, eval=FALSE}
+```{r plot-compound-discoverer-results, eval=FALSE}
 lcmsPlot("example_cd.cdResult") +
     lp_compound_discoverer(
         compounds_query = 'name %in% c("Proline", "Betaine")',
@@ -677,7 +677,7 @@ MZmine (version 2 and above). Feature tables, raw data files, and optional
 sample metadata can be combined into a single dataset object that serves
 as the basis for visualisation.
 
-```{r, eval=FALSE}
+```{r plot-mzmine-results, eval=FALSE}
 mzmine_dataset_example <- MZmineFeatureListsSource(
     feature_lists_paths = c(
         "path/to/feature_list_1.csv",
@@ -709,7 +709,7 @@ Results generated by MS-DIAL can also be directly integrated into lcmsPlot.
 Peak tables (corresponding to each sample) exported from MS-DIAL are combined with
 the corresponding raw data files and optional sample metadata to create a unified dataset for visualisation.
 
-```{r, eval=FALSE}
+```{r plot-ms-dial-results, eval=FALSE}
 msdial_dataset_example <- MsDialPeaksSource(
     peaks_paths = c(
         "path/to/peaks_1.csv",
@@ -737,6 +737,6 @@ lcmsPlot(msdial_dataset_example, sample_id_column = 'filename') +
 
 # Session Info
 
-```{r}
+```{r session-info}
 sessionInfo()
 ```

@@ -37,7 +37,7 @@ library(lcmsPlot)
 `lcmsPlot` is a Bioconductor package and to install it we have to use
 [BiocManager](https://cran.r-project.org/web/packages/BiocManager/index.html).
 
-```{r, eval=FALSE}
+```{r install, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("lcmsPlot")
@@ -92,7 +92,7 @@ For each compound, an extracted ion chromatogram is generated using its expected
 m/z value and retention time, with narrow tolerances to precisely
 capture the corresponding signal.
 
-```{r}
+```{r data-overview}
 ms1_samples_metadata <- samples_metadata |> dplyr::filter(ms_level == 1)
 ms1_raw_files <- file.path(
     mzml_dir,
@@ -116,7 +116,7 @@ extracted from the scan closest to the specified retention time
 for each compound. This allows direct inspection of both chromatographic
 behavior and fragmentation patterns in a single visualization.
 
-```{r}
+```{r plot-chromatograms-with-spectra}
 ms2_samples_metadata <- samples_metadata |> dplyr::filter(ms_level == 2)
 ms2_raw_files <- file.path(
     mzml_dir,
@@ -153,7 +153,7 @@ specific aspects of your data.
 
 Firstly, define the custom theme using the `ggplot2` `theme` function:
 
-```{r}
+```{r custom-theme}
 my_custom_theme <- function() {
     ggplot2::theme(
         # Title
@@ -199,7 +199,7 @@ my_custom_theme <- function() {
 Generate the plot with `lcmsPlot`, retrieve the underlying plot object using
 `lp_get_plot()`, and then apply the custom theme:
 
-```{r}
+```{r plot-with-custom-theme}
 lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
     lp_chromatogram(
         features = data.frame(
@@ -215,12 +215,12 @@ lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
     my_custom_theme()
 ```
 
-```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+```{r cleanup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 unlink(mzml_dir, recursive = TRUE, force = TRUE)
 ```
 
 # Session Info
 
-```{r}
+```{r session-info}
 sessionInfo()
 ```

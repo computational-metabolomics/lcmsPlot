@@ -69,9 +69,15 @@ MZmineFeatureListsSource <- function(
         is_mzmine2 <- "row m/z" %in% colnames(df)
 
         if (is_mzmine2) {
-            state_col <- grep(" Feature status$", colnames(df), value = TRUE)
+            state_col <- grep(
+                " Feature status$",
+                colnames(df),
+                value = TRUE)
         } else {
-            state_col <- grep("^datafile:.*?:feature_state$", colnames(df), value = TRUE)
+            state_col <- grep(
+                "^datafile:.*?:feature_state$",
+                colnames(df),
+                value = TRUE)
         }
 
         if (length(state_col) != 1) {
