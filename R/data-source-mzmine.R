@@ -13,6 +13,40 @@
 #' If `NULL`, a metadata `data.frame` is created from `sample_paths`.
 #' @return An object of class `ExternalDataSource`.
 #' @export
+#' @examples
+#' ## Create temporary example files
+#' tmp_dir <- tempdir()
+#'
+#' ## Fake sample paths
+#' sample_paths <- file.path(
+#'   tmp_dir,
+#'   c("sample1.mzML", "sample2.mzML")
+#' )
+#'
+#' ## Create a minimal MZmine 2 feature list CSV
+#' feature_list_path <- file.path(tmp_dir, "mzmine_features.csv")
+#'
+#' mzmine_features <- data.frame(
+#'   "row m/z" = c(100.1, 200.2),
+#'   "sample1.mzML Feature status" = c("DETECTED", "DETECTED"),
+#'   "sample1.mzML Feature m/z" = c(100.1, 200.2),
+#'   "sample1.mzML Feature RT" = c(300, 600),
+#'   "sample1.mzML Peak area" = c(10000, 20000),
+#'   "sample1.mzML Peak height" = c(500, 800),
+#'   "sample1.mzML Feature m/z min" = c(99.9, 199.9),
+#'   "sample1.mzML Feature m/z max" = c(100.3, 200.4),
+#'   "sample1.mzML Feature RT start" = c(290, 590),
+#'   "sample1.mzML Feature RT end" = c(310, 610),
+#'   check.names = FALSE
+#' )
+#'
+#' utils::write.csv(mzmine_features, feature_list_path, row.names = FALSE)
+#'
+#' ## Create the data source
+#' ds <- MZmineFeatureListsSource(
+#'   feature_lists_paths = feature_list_path,
+#'   sample_paths = sample_paths
+#' )
 MZmineFeatureListsSource <- function(
     feature_lists_paths,
     sample_paths,

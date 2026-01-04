@@ -25,3 +25,48 @@ An object of class \code{ExternalDataSource}.
 This function reads MS-DIAL peak list files and sample metadata
 and converts them into a format compatible with xcms-style peak tables.
 }
+\examples{
+## Create temporary example files
+tmp_dir <- tempdir()
+
+## Fake raw sample paths
+sample_paths <- file.path(
+  tmp_dir,
+  c("sample1.mzML", "sample2.mzML")
+)
+
+## Create minimal MS-DIAL peak list files (one per sample)
+peak_list_paths <- file.path(
+  tmp_dir,
+  c("sample1_peaks.csv", "sample2_peaks.csv")
+)
+
+msdial_peaks_1 <- data.frame(
+  "Precursor m/z" = c(100.1, 200.2),
+  "RT (min)" = c(5.0, 10.0),
+  "Area" = c(10000, 20000),
+  "Height" = c(500, 800),
+  "RT left(min)" = c(4.8, 9.8),
+  "RT right (min)" = c(5.2, 10.2),
+  check.names = FALSE
+)
+
+msdial_peaks_2 <- data.frame(
+  "Precursor m/z" = c(150.3, 250.4),
+  "RT (min)" = c(6.0, 12.0),
+  "Area" = c(15000, 25000),
+  "Height" = c(600, 900),
+  "RT left(min)" = c(5.8, 11.8),
+  "RT right (min)" = c(6.2, 12.2),
+  check.names = FALSE
+)
+
+utils::write.csv(msdial_peaks_1, peak_list_paths[1], row.names = FALSE)
+utils::write.csv(msdial_peaks_2, peak_list_paths[2], row.names = FALSE)
+
+## Create the data source
+ds <- MsDialPeaksSource(
+  peaks_paths = peak_list_paths,
+  sample_paths = sample_paths
+)
+}
