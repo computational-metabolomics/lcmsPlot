@@ -36,17 +36,24 @@ raw_files <- dir(
   recursive = TRUE
 )[1:4]
 
+## Create metadata for the samples
 metadata <- data.frame(
   sample_id = sub("\\\\.CDF", "", basename(raw_files)),
   factor1 = c("S", "S", "C", "C"),
   factor2 = c("T", "U", "T", "U")
 )
 
+## Create feature chromatograms for the specified samples
 p <- lcmsPlot(raw_files, metadata = metadata) +
   lp_chromatogram(features = rbind(c(
     mzmin = 334.9,
     mzmax = 335.1,
     rtmin = 2700,
-    rtmax = 2900))) +
-  lp_grid(rows = "factor1", cols = "factor2")
+    rtmax = 2900)))
+p
+
+## Arrange chromatograms in a grid split by experimental factors
+## Rows correspond to `factor1` and columns correspond to `factor2`
+p <- p + lp_grid(rows = "factor1", cols = "factor2")
+p
 }

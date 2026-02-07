@@ -40,4 +40,5 @@ p <- lcmsPlot(raw_files, batch_size = 2) +
   lp_labels(legend = "Sample")
 
 p <- next_plot(p)
+p
 }

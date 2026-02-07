@@ -31,12 +31,17 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:4]
 
+## Create chromatogram plots faceted by sample
 p <- lcmsPlot(raw_files) +
   lp_chromatogram(features = rbind(c(
     mzmin = 334.9,
     mzmax = 335.1,
     rtmin = 2700,
     rtmax = 2900))) +
-  lp_facets(facets = 'sample_id', ncol = 4) +
-  lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+  lp_facets(facets = 'sample_id', ncol = 4)
+p
+
+## Add a vertical retention time reference line
+p <- p + lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+p
 }

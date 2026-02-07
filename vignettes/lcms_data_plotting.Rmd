@@ -23,11 +23,7 @@ knitr::opts_knit$set(
 
 knitr::opts_chunk$set(
     collapse = TRUE,
-    comment = "#>",
-    dpi = 96,
-    fig.retina = 1,
-    fig.small = TRUE
-)
+    comment = "#>")
 ```
 
 ```{r init, message = FALSE, echo = FALSE, results = "hide"}
@@ -130,6 +126,18 @@ Before examining the detected peaks and their chromatograms, we will first gain
 an overview of the study samples using a series of plots that highlight
 different aspects of the data.
 
+## The entry point to plot
+
+The `lcmsPlot` function is the main starting point for generating visualisations of LC-MS data.
+It acts as a high-level wrapper that prepares the dataset, configures plotting parameters, and returns a plot object that can be further customised.
+
+```{r lcmsPlot-object}
+p = lcmsPlot(faahko, sample_id_column = "sample_name")
+print(p)
+```
+
+Through the use of the plotting functions described below, the plot object will display the requested visualisations once it is printed.
+
 ## Plot base peak chromatogram (BPC)
 
 Base Peak Chromatograms (BPCs) are useful in LC-MS because they simplify complex
@@ -202,7 +210,7 @@ and highlight recurring patterns rather than individual noise peaks.
 
 ```{r intensity-maps}
 pparam <- BiocParallel::MulticoreParam(workers = 2)
-lcmsPlot(faahko, sample_id_column = "sample_name", parallel_param = pparam) +
+lcmsPlot(faahko, sample_id_column = "sample_name", BPPARAM = pparam) +
     lp_intensity_map(
         sample_ids = c("ko15", "wt15"),
         mz_range = c(200, 600),
@@ -327,27 +335,16 @@ faahko <- xcms::adjustRtime(faahko, param = xcms::ObiwarpParam(binSize = 0.6))
 Now, we can visualise the BPC for the raw and RT-corrected datasets:
 
 ```{r plot-bpc-comparison}
-bpc <- lcmsPlot(faahko, sample_id_column = "sample_name") +
-    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
-    lp_arrange(group_by = "sample_group") +
-    lp_labels(legend = "Sample group") +
-    lp_legend(position = "bottom") +
-    lp_get_plot()
-
-bpc_rt_adjusted <- lcmsPlot(faahko, sample_id_column = "sample_name") +
+lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(
         ppm = 5,
         rt_tol = 10,
         aggregation_fun = "max",
-        rt_adjusted = TRUE) +
+        rt_type = "both") +
     lp_arrange(group_by = "sample_group") +
+    lp_facets("rt_adjusted", ncol = 1) +
     lp_labels(legend = "Sample group") +
-    lp_legend(position = "bottom") +
-    lp_get_plot()
-
-(bpc[[1]] / bpc_rt_adjusted[[1]]) +
-    patchwork::plot_layout(guides = "collect", axes = "collect") &
-    ggplot2::theme(legend.position = "bottom")
+    lp_legend(position = "bottom")
 ```
 
 The following plot visualises the retention time correction applied
@@ -648,6 +645,9 @@ results directly in R, without the need to manually reformat outputs or
 reprocess raw data.
 Below we illustrate interoperability with three widely used tools:
 **Compound Discoverer**, **MZmine**, and **MS-DIAL**.
+
+Note: These examples are for illustration only and require real data
+to function properly.
 
 ## Compound Discoverer
 

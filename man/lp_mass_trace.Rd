@@ -27,14 +27,17 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:5]
 
+## Create chromatograms of a specific feature
 p <- lcmsPlot(raw_files) +
   lp_chromatogram(features = rbind(c(
     mzmin = 334.9,
     mzmax = 335.1,
     rtmin = 2700,
     rtmax = 2900))) +
-  lp_mass_trace() +
-  lp_arrange(group_by = "sample_id") +
-  lp_legend(position = "bottom") +
-  lp_labels(legend = "Sample")
+  lp_arrange(group_by = "sample_id")
+
+## Add mass traces
+p <- p + lp_mass_trace()
+
+p
 }

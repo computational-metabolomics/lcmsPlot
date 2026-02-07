@@ -21,6 +21,7 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:4]
 
+## Create faceted chromatogram plots with a reference RT line
 p <- lcmsPlot(raw_files) +
   lp_chromatogram(features = rbind(c(
     mzmin = 334.9,
@@ -28,7 +29,12 @@ p <- lcmsPlot(raw_files) +
     rtmin = 2700,
     rtmax = 2900))) +
   lp_facets(facets = 'sample_id', ncol = 4) +
-  lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+  lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+p
+
+## Extract the ggplot object and apply a theme
+p <- p +
   lp_get_plot() +
   ggplot2::theme_bw()
+p
 }

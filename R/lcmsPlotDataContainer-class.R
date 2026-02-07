@@ -1,6 +1,6 @@
 .validators <- list(
     additional_metadata = function(df) {
-        nrow(df) == 0 || "metadata_index" %in% colnames(df)
+        TRUE
     },
     chromatograms = function(df) {
         cols <- c(
@@ -174,3 +174,56 @@ setValidity("lcmsPlotDataContainer", function(object) {
 
     ret
 })
+
+#' Show a summary of an instance of class `lcmsPlotDataContainer`
+#'
+#' @param object An instance of class `lcmsPlotDataContainer`.
+#' @return Invisible \code{NULL}
+#' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:5]
+#'
+#' data_obj <- new("lcmsPlotDataContainer",
+#'     data_obj = raw_files,
+#'     metadata = data.frame(),
+#'     chromatograms = data.frame(),
+#'     mass_traces = data.frame(),
+#'     spectra = data.frame(),
+#'     total_ion_current = data.frame(),
+#'     intensity_maps = data.frame(),
+#'     rt_diff = data.frame(),
+#'     additional_metadata = data.frame(),
+#'     detected_peaks = data.frame())
+#' data_obj
+setMethod(
+    f = "show",
+    signature = "lcmsPlotDataContainer",
+    function(object) {
+        cat("Object of class", class(object), "\n")
+        cat(" Data object type:", class(object@data_obj), "\n")
+
+        print_df_dim <- function(x, name) {
+            if (is.null(x)) {
+                cat(" ", name, ": NULL\n")
+            } else if (is.data.frame(x)) {
+                d <- dim(x)
+                cat(" ", name, ":", d[1], "rows x", d[2], "columns\n")
+            } else {
+                cat(" ", name, ": not a data.frame\n")
+            }
+        }
+
+        print_df_dim(object@metadata, "metadata")
+        print_df_dim(object@chromatograms, "chromatograms")
+        print_df_dim(object@mass_traces, "mass_traces")
+        print_df_dim(object@spectra, "spectra")
+        print_df_dim(object@total_ion_current, "total_ion_current")
+        print_df_dim(object@intensity_maps, "intensity_maps")
+        print_df_dim(object@rt_diff, "rt_diff")
+        print_df_dim(object@additional_metadata, "additional_metadata")
+        print_df_dim(object@detected_peaks, "detected_peaks")
+    }
+)

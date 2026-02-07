@@ -31,6 +31,6 @@ data_obj <- get_XCMSnExp_object_example()
 
 p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
   lp_total_ion_current(type = "violin") +
-  lp_arrange(group_by = "sample_id") +
-  lp_labels(title = "Total ion current", legend = "Sample ID")
+  lp_arrange(group_by = "sample_id")
+p
 }

@@ -82,4 +82,5 @@ p <- lcmsPlot(raw_files) +
     rtmin = 2700,
     rtmax = 2900))) +
   lp_spectra(mode = "closest", rt = 2785)
+p
 }

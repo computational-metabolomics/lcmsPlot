@@ -24,7 +24,7 @@ default_options <- function() {
             highlight_peaks_color = NULL,
             highlight_peaks_factor = "sample_id",
             aggregation_fun = "max",
-            rt_adjusted = FALSE,
+            rt_type = "uncorrected",
             rt_unit = "second",
             intensity_unit = "absolute",
             fill_gaps = FALSE,

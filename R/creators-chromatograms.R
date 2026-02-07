@@ -282,7 +282,7 @@ setMethod(
             sample_metadata <- metadata[i, ]
             raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-            if (options$chromatograms$rt_adjusted) {
+            if (options$chromatograms$rt_type %in% c("corrected", "both")) {
                 if (!is_xcms_data(obj@data_obj)) {
                     stop("The data object should be XCMSnExp or MsExperiment to plot the RT adjusted chromatograms")
                 }
@@ -297,15 +297,30 @@ setMethod(
 
             data <- create_bpc_tic(
                 raw_obj,
-                options$chromatograms$aggregation_fun,
-                rt_adjusted
+                options$chromatograms$aggregation_fun
             )
+            chroms <- data$chromatograms
 
-            data.frame(
-                rt = data$chromatograms$rt,
-                intensity = data$chromatograms$intensity,
+            if (options$chromatograms$rt_type == "both") {
+                additional_metadata_index <- c(
+                    rep(1, nrow(chroms)),
+                    rep(2, nrow(chroms))
+                )
+                chroms_rt_adjusted <- chroms
+                chroms_rt_adjusted$rt <- rt_adjusted
+                chroms <- rbind(chroms, chroms_rt_adjusted)
+            } else if (options$chromatograms$rt_type == "corrected") {
+                chroms$rt <- rt_adjusted
+                additional_metadata_index <- rep(2, nrow(chroms))
+            } else {
+                additional_metadata_index <- rep(1, nrow(chroms))
+            }
+
+            chromatograms = data.frame(
+                rt = chroms$rt,
+                intensity = chroms$intensity,
                 metadata_index = sample_metadata$sample_index,
-                additional_metadata_index = sample_metadata$sample_index
+                additional_metadata_index = additional_metadata_index
             )
         }
 
@@ -325,6 +340,9 @@ setMethod(
         io_close_raw_data(raw_data)
 
         obj@chromatograms <- chromatograms
+        obj@additional_metadata <- data.frame(
+            rt_adjusted = c("RT uncorrected", "RT corrected")
+        )
 
         validObject(obj)
 

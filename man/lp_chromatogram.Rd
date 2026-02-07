@@ -13,7 +13,7 @@ lp_chromatogram(
   highlight_peaks_color = NULL,
   highlight_peaks_factor = "sample_id",
   aggregation_fun = "max",
-  rt_adjusted = FALSE,
+  rt_type = "uncorrected",
   rt_unit = "second",
   intensity_unit = "absolute",
   fill_gaps = FALSE,
@@ -59,9 +59,12 @@ the metadata that determines the color. By default it colors by \code{sample_id}
 function to use for the spectra intensities; one of \code{max} or \code{sum}.
 Only applicable to summary chromatograms.}
 
-\item{rt_adjusted}{A \code{logical} value indicating whether to plot the RT
-adjusted version of the chromatograms;
-the input data must be an \code{XCMSnExp} or \code{MsExperiment} object.}
+\item{rt_type}{A \code{chracter} value indicating what type of RT to use for the
+chromatograms. One of \code{uncorrected} (default), \code{corrected}, or \code{both};
+the input data must be an \code{XCMSnExp} or \code{MsExperiment} object.
+If \code{both} is chosen, this will give access to a metadata column called
+\code{rt_adjusted} that can be used to differentiate the two RT types (e.g.,
+through faceting).}
 
 \item{rt_unit}{A \code{character} value indicating the unit to use for
 the RT axis; one of \code{"minute"} or \code{"second"}.}
@@ -112,7 +115,7 @@ raw_files <- dir(
 
 p <- lcmsPlot(raw_files) +
   lp_chromatogram(aggregation_fun = "max") +
-  lp_arrange(group_by = "sample_id") +
-  lp_legend(position = "bottom") +
-  lp_labels(legend = "Sample")
+  lp_arrange(group_by = "sample_id")
+
+p
 }

@@ -25,6 +25,7 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:5]
 
+## Create a chromatogram plot grouped by sample with a custom legend label
 p <- lcmsPlot(raw_files, batch_size = 2) +
   lp_chromatogram(features = rbind(c(
     mzmin = 334.9,
@@ -32,6 +33,10 @@ p <- lcmsPlot(raw_files, batch_size = 2) +
     rtmin = 2700,
     rtmax = 2900))) +
   lp_arrange(group_by = "sample_id") +
-  lp_legend(position = "bottom") +
   lp_labels(legend = "Sample")
+p
+
+## Move the legend below the plot
+p <- p + lp_legend(position = "bottom")
+p
 }

@@ -40,7 +40,7 @@ Define the options to use when plotting LC-MS data coming from
 Compound Discoverer results.
 }
 \examples{
-\donttest{
+\dontrun{
 lcmsPlot("cd_example.cdResult") +
   lp_compound_discoverer(
     compounds_query = 'name \%in\% c("Proline", "Betaine")',

@@ -41,4 +41,5 @@ p <- lcmsPlot(raw_files) +
     mz_range = c(200, 600),
     rt_range = c(4200, 4500),
     density = TRUE)
+p
 }

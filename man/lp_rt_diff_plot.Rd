@@ -25,4 +25,5 @@ data_obj <- get_XCMSnExp_object_example(
   should_group_peaks = TRUE)
 p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
   lp_rt_diff_plot()
+p
 }

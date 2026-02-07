@@ -14,8 +14,8 @@
 #' should be used as the sample ID. By default it is `"sample_id"`.
 #' @param metadata A `data.frame` containing the samples metadata
 #' in case it is not provided in the dataset object.
-#' @param parallel_param A `BiocParallelParam` object for enabling parallelism.
-#' See https://bioconductor.org/packages/release/bioc/html/BiocParallel.html
+#' @param BPPARAM A `BiocParallelParam` object for enabling parallelism.
+#' See \link[BiocParallel:BiocParallelParam-class]{BiocParallelParam}
 #' for more information.
 #' @param batch_size A `numeric` value indicating the number of
 #' samples per batch. This parameter is necessary when plotting
@@ -35,13 +35,13 @@ lcmsPlot <- function(
     dataset,
     sample_id_column = "sample_id",
     metadata = NULL,
-    parallel_param = NULL,
-    batch_size = NULL
+    batch_size = NULL,
+    BPPARAM = BiocParallel::SerialParam()
 ) {
     opts <- default_options()
     opts$sample_id_column <- sample_id_column
-    opts$parallel_param <- parallel_param
     opts$batch_size <- batch_size
+    opts$parallel_param <- BPPARAM
 
     new("lcmsPlotClass",
         options = opts,
@@ -133,6 +133,26 @@ setClass(
     return(object)
 }
 
+.has_data <- function(object) {
+    data_slots <- c(
+        "chromatograms",
+        "mass_traces",
+        "spectra",
+        "total_ion_current",
+        "intensity_maps",
+        "rt_diff",
+        "additional_metadata",
+        "detected_peaks"
+    )
+
+    any(vapply(
+        data_slots,
+        function(s) nrow(slot(object@data, s)),
+        integer(1)
+    ) > 0)
+}
+
+
 #' Apply a function to an `lcmsPlotClass` object using the infix `+` operator
 #'
 #' This provides a convenient infix style for applying transformations to
@@ -189,6 +209,7 @@ setMethod(
 #'   lp_labels(legend = "Sample")
 #'
 #' p <- next_plot(p)
+#' p
 setGeneric(
     "next_plot",
     function(object) standardGeneric("next_plot")
@@ -233,9 +254,11 @@ setMethod(
 #'   lp_legend(position = "bottom") +
 #'   lp_labels(legend = "Sample")
 #'
+#' pdf(tempfile(fileext = ".pdf"))
 #' iterate_plot_batches(p, function(plot_obj) {
 #'   print(plot_obj)
 #' })
+#' dev.off()
 setGeneric(
     "iterate_plot_batches",
     function(object, iter_fn) standardGeneric("iterate_plot_batches")
@@ -286,22 +309,44 @@ setMethod(
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Shows summary information as the plot has not been built yet
+#' p <- lcmsPlot(raw_files)
+#' p
+#'
+#' ## Shows the actual plot
 #' p <- lcmsPlot(raw_files) +
 #'   lp_chromatogram(aggregation_fun = "max") +
 #'   lp_arrange(group_by = "sample_id") +
 #'   lp_legend(position = "bottom") +
 #'   lp_labels(legend = "Sample")
 #'
-#' print(p)
+#' p
 setMethod(
     f = "show",
     signature = "lcmsPlotClass",
     function(object) {
-        if (!object@options$bypass_plot_generation) {
-            object <- .render_plot(object, additional_datasets = list())
+        if (.has_data(object)) {
+            if (!object@options$bypass_plot_generation) {
+                object <- .render_plot(object, additional_datasets = list())
+            }
+            object@options$bypass_plot_generation <- FALSE
+            print(object@plot)
+        } else {
+            cat("Object of class", class(object), "\n")
+            cat(" Data object type:", class(object@data@data_obj), "\n")
+            cat(
+                " Metadata:",
+                paste0(
+                    nrow(object@data@metadata),
+                    " rows, ",
+                    ncol(object@data@metadata),
+                    " columns"
+                ),
+                "\n"
+            )
+            cat(" Sample ID column:", object@options$sample_id_column, "\n")
+            cat(" NOTE: No data has been requested to plot.\n")
         }
-        object@options$bypass_plot_generation <- FALSE
-        print(object@plot)
     }
 )
 
@@ -366,9 +411,12 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param aggregation_fun A `character` value indicating which aggregation
 #' function to use for the spectra intensities; one of `max` or `sum`.
 #' Only applicable to summary chromatograms.
-#' @param rt_adjusted A `logical` value indicating whether to plot the RT
-#' adjusted version of the chromatograms;
+#' @param rt_type A `chracter` value indicating what type of RT to use for the
+#' chromatograms. One of `uncorrected` (default), `corrected`, or `both`;
 #' the input data must be an `XCMSnExp` or `MsExperiment` object.
+#' If `both` is chosen, this will give access to a metadata column called
+#' `rt_adjusted` that can be used to differentiate the two RT types (e.g.,
+#' through faceting).
 #' @param rt_unit A `character` value indicating the unit to use for
 #' the RT axis; one of `"minute"` or `"second"`.
 #' @param intensity_unit A `character` value indicating the unit to use for
@@ -391,9 +439,9 @@ make_interface_function <- function(name, args_list, fn) {
 #'
 #' p <- lcmsPlot(raw_files) +
 #'   lp_chromatogram(aggregation_fun = "max") +
-#'   lp_arrange(group_by = "sample_id") +
-#'   lp_legend(position = "bottom") +
-#'   lp_labels(legend = "Sample")
+#'   lp_arrange(group_by = "sample_id")
+#'
+#' p
 lp_chromatogram <- function(
     features = NULL,
     sample_ids = NULL,
@@ -403,7 +451,7 @@ lp_chromatogram <- function(
     highlight_peaks_color = NULL,
     highlight_peaks_factor = "sample_id",
     aggregation_fun = "max",
-    rt_adjusted = FALSE,
+    rt_type = "uncorrected",
     rt_unit = "second",
     intensity_unit = "absolute",
     fill_gaps = FALSE,
@@ -437,7 +485,7 @@ lp_chromatogram <- function(
                 highlight_peaks_color = highlight_peaks_color,
                 highlight_peaks_factor = highlight_peaks_factor,
                 aggregation_fun = aggregation_fun,
-                rt_adjusted = rt_adjusted,
+                rt_type = rt_type,
                 rt_unit = rt_unit,
                 intensity_unit = intensity_unit,
                 fill_gaps = fill_gaps,
@@ -490,16 +538,19 @@ lp_chromatogram <- function(
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Create chromatograms of a specific feature
 #' p <- lcmsPlot(raw_files) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
 #'     mzmax = 335.1,
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
-#'   lp_mass_trace() +
-#'   lp_arrange(group_by = "sample_id") +
-#'   lp_legend(position = "bottom") +
-#'   lp_labels(legend = "Sample")
+#'   lp_arrange(group_by = "sample_id")
+#'
+#' ## Add mass traces
+#' p <- p + lp_mass_trace()
+#'
+#' p
 lp_mass_trace <- function() {
     make_interface_function(
         name = "lp_mass_trace",
@@ -565,6 +616,7 @@ lp_mass_trace <- function() {
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
 #'   lp_spectra(mode = "closest", rt = 2785)
+#' p
 lp_spectra <- function(
     sample_ids = NULL,
     mode = 'closest_apex',
@@ -629,8 +681,8 @@ lp_spectra <- function(
 #'
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
 #'   lp_total_ion_current(type = "violin") +
-#'   lp_arrange(group_by = "sample_id") +
-#'   lp_labels(title = "Total ion current", legend = "Sample ID")
+#'   lp_arrange(group_by = "sample_id")
+#' p
 lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
     function(obj) {
         if (!is_xcms_data(obj@data@data_obj)) {
@@ -683,6 +735,7 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #'     mz_range = c(200, 600),
 #'     rt_range = c(4200, 4500),
 #'     density = TRUE)
+#' p
 lp_intensity_map <- function(
     mz_range,
     rt_range,
@@ -727,6 +780,7 @@ lp_intensity_map <- function(
 #'   should_group_peaks = TRUE)
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
 #'   lp_rt_diff_plot()
+#' p
 lp_rt_diff_plot <- function() {
     function(obj) {
         if (!is_xcms_data(obj@data@data_obj)) {
@@ -764,11 +818,15 @@ lp_rt_diff_plot <- function() {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Plots chromatograms overlayed without specifying a grouping factor
 #' p <- lcmsPlot(raw_files) +
-#'   lp_chromatogram(aggregation_fun = "max") +
-#'   lp_arrange(group_by = "sample_id") +
-#'   lp_legend(position = "bottom") +
-#'   lp_labels(legend = "Sample")
+#'   lp_chromatogram(aggregation_fun = "max")
+#' p
+#'
+#' ## Plots chromatograms overlayed specifying a grouping factor
+#' ## (e.g., sample_id)
+#' p <- p + lp_arrange(group_by = "sample_id")
+#' p
 lp_arrange <- function(group_by) {
     make_interface_function(
         name = "lp_arrange",
@@ -806,9 +864,14 @@ lp_arrange <- function(group_by) {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Plots chromatograms overlayed
 #' p <- lcmsPlot(raw_files) +
-#'   lp_chromatogram(aggregation_fun = "max") +
-#'   lp_facets(facets = "sample_id")
+#'   lp_chromatogram(aggregation_fun = "max")
+#' p
+#'
+#' ## Using lp_facets we create facets for each sample_id
+#' p <- p + lp_facets(facets = "sample_id")
+#' p
 lp_facets <- function(
     facets,
     ncol = NULL,
@@ -857,19 +920,26 @@ lp_facets <- function(
 #'   recursive = TRUE
 #' )[1:4]
 #'
+#' ## Create metadata for the samples
 #' metadata <- data.frame(
 #'   sample_id = sub("\\.CDF", "", basename(raw_files)),
 #'   factor1 = c("S", "S", "C", "C"),
 #'   factor2 = c("T", "U", "T", "U")
 #' )
 #'
+#' ## Create feature chromatograms for the specified samples
 #' p <- lcmsPlot(raw_files, metadata = metadata) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
 #'     mzmax = 335.1,
 #'     rtmin = 2700,
-#'     rtmax = 2900))) +
-#'   lp_grid(rows = "factor1", cols = "factor2")
+#'     rtmax = 2900)))
+#' p
+#'
+#' ## Arrange chromatograms in a grid split by experimental factors
+#' ## Rows correspond to `factor1` and columns correspond to `factor2`
+#' p <- p + lp_grid(rows = "factor1", cols = "factor2")
+#' p
 lp_grid <- function(rows, cols, free_x = FALSE, free_y = FALSE) {
     make_interface_function(
         name = "lp_grid",
@@ -904,15 +974,20 @@ lp_grid <- function(rows, cols, free_x = FALSE, free_y = FALSE) {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Create a chromatogram plot by grouping samples into batches
+#' ## By default, the legend is derived from the grouping variable
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
 #'     mzmax = 335.1,
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
-#'   lp_arrange(group_by = "sample_id") +
-#'   lp_legend(position = "bottom") +
-#'   lp_labels(legend = "Sample")
+#'   lp_arrange(group_by = "sample_id")
+#' p
+#'
+#' ## Customise the legend label
+#' p <- p + lp_labels(legend = "Sample")
+#' p
 lp_labels <- function(title = NULL, legend = NULL) {
     make_interface_function(
         name = "lp_labels",
@@ -942,6 +1017,7 @@ lp_labels <- function(title = NULL, legend = NULL) {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:5]
 #'
+#' ## Create a chromatogram plot grouped by sample with a custom legend label
 #' p <- lcmsPlot(raw_files, batch_size = 2) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
@@ -949,8 +1025,12 @@ lp_labels <- function(title = NULL, legend = NULL) {
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
 #'   lp_arrange(group_by = "sample_id") +
-#'   lp_legend(position = "bottom") +
 #'   lp_labels(legend = "Sample")
+#' p
+#'
+#' ## Move the legend below the plot
+#' p <- p + lp_legend(position = "bottom")
+#' p
 lp_legend <- function(position = NULL)  {
     make_interface_function(
         name = "lp_legend",
@@ -983,14 +1063,19 @@ lp_legend <- function(position = NULL)  {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:4]
 #'
+#' ## Create chromatogram plots faceted by sample
 #' p <- lcmsPlot(raw_files) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
 #'     mzmax = 335.1,
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
-#'   lp_facets(facets = 'sample_id', ncol = 4) +
-#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+#'   lp_facets(facets = 'sample_id', ncol = 4)
+#' p
+#'
+#' ## Add a vertical retention time reference line
+#' p <- p + lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+#' p
 lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
     make_interface_function(
         name = "lp_rt_line",
@@ -1021,6 +1106,7 @@ lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #' @examples
 #' data_obj <- get_XCMSnExp_object_example(indices = 1)
 #'
+#' ## Plot chromatograms and spectra for selected samples and features
 #' p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
 #'   lp_chromatogram(
 #'     features = rbind(
@@ -1031,10 +1117,10 @@ lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #'     highlight_peaks = TRUE
 #'   ) +
 #'   lp_spectra(mode = "closest_apex", ms_level = 1) +
-#'   lp_facets(facets = "feature_id", ncol = 2) +
-#'   lp_labels(legend = "Sample") +
-#'   lp_legend(position = "bottom") +
-#'   lp_layout(design = "C\nS\nS")
+#'   lp_facets(facets = "feature_id", ncol = 2)
+#'
+#' ## Customise panel layout to place chromatogram above spectra
+#' p <- p + lp_layout(design = "C\nS\nS")
 lp_layout <- function(design = NULL) {
     make_interface_function(
         name = "lp_layout",
@@ -1076,7 +1162,7 @@ lp_layout <- function(design = NULL) {
 #' the `lcmsPlot` object.
 #' @export
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' lcmsPlot("cd_example.cdResult") +
 #'   lp_compound_discoverer(
 #'     compounds_query = 'name %in% c("Proline", "Betaine")',
@@ -1119,6 +1205,7 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #'    full.names = TRUE,
 #'    recursive = TRUE)[1:4]
 #'
+#' ## Create faceted chromatogram plots with a reference RT line
 #' p <- lcmsPlot(raw_files) +
 #'   lp_chromatogram(features = rbind(c(
 #'     mzmin = 334.9,
@@ -1126,9 +1213,14 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #'     rtmin = 2700,
 #'     rtmax = 2900))) +
 #'   lp_facets(facets = 'sample_id', ncol = 4) +
-#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red') +
+#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+#' p
+#'
+#' ## Extract the ggplot object and apply a theme
+#' p <- p +
 #'   lp_get_plot() +
 #'   ggplot2::theme_bw()
+#' p
 lp_get_plot <- function() {
     function(obj) {
         obj <- .render_plot(obj, additional_datasets = list())

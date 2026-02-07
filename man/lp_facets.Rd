@@ -36,7 +36,12 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:5]
 
+## Plots chromatograms overlayed
 p <- lcmsPlot(raw_files) +
-  lp_chromatogram(aggregation_fun = "max") +
-  lp_facets(facets = "sample_id")
+  lp_chromatogram(aggregation_fun = "max")
+p
+
+## Using lp_facets we create facets for each sample_id
+p <- p + lp_facets(facets = "sample_id")
+p
 }

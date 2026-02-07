@@ -60,6 +60,91 @@ setValidity("ExternalDataSource", function(object) {
     TRUE
 })
 
+#' Show a summary of an instance of class `ExternalDataSource`
+#'
+#' @param object An instance of class `ExternalDataSource`.
+#' @return Invisible \code{NULL}
+#' @export
+#' @examples
+#' ## Create dummy metadata
+#' metadata <- data.frame(
+#'   sample_id = c("S1", "S2"),
+#'   sample_path = c("sample1.mzML", "sample2.mzML"),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' ## Create dummy peaks
+#' peaks <- data.frame(
+#'   mz = c(100.1, 150.2),
+#'   rt = c(300, 450),
+#'   rtmin = c(290, 440),
+#'   rtmax = c(310, 460),
+#'   into = c(10000, 15000),
+#'   maxo = c(2000, 2500),
+#'   sample_index = c(1, 2)
+#' )
+#'
+#' ## Create ExternalDataSource object
+#' eds <- new(
+#'   "ExternalDataSource",
+#'   name = "Example data source",
+#'   metadata = metadata,
+#'   peaks = peaks
+#' )
+#'
+#' ## Show summary
+#' eds
+setMethod(
+    f = "show",
+    signature = "ExternalDataSource",
+    function(object) {
+        cat("Object of class", class(object), "\n")
+
+        # Name
+        cat(" Name:", object@name, "\n")
+
+        # Metadata summary
+        if (!is.null(object@metadata) && nrow(object@metadata) > 0) {
+            cat(
+                " Metadata:",
+                paste0(
+                    nrow(object@metadata),
+                    " rows, ",
+                    ncol(object@metadata),
+                    " columns"
+                ),
+                "\n"
+            )
+
+            if ("sample_path" %in% colnames(object@metadata)) {
+                cat(" Sample paths (first 3):\n")
+                cat(
+                    paste0("  ", utils::head(object@metadata$sample_path, 3), collapse = "\n"),
+                    "\n"
+                )
+            }
+        } else {
+            cat(" Metadata: <empty>\n")
+        }
+
+        # Peaks summary
+        if (!is.null(object@peaks) && nrow(object@peaks) > 0) {
+            cat(
+                " Peaks:",
+                paste0(
+                    nrow(object@peaks),
+                    " rows, ",
+                    ncol(object@peaks),
+                    " columns"
+                ),
+                "\n"
+            )
+        } else {
+            cat(" Peaks: <none>\n")
+        }
+    }
+)
+
 #' Process sample metadata
 #'
 #' Construct a metadata data frame aligned with a set of sample paths. If a

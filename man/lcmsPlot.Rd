@@ -8,8 +8,8 @@ lcmsPlot(
   dataset,
   sample_id_column = "sample_id",
   metadata = NULL,
-  parallel_param = NULL,
-  batch_size = NULL
+  batch_size = NULL,
+  BPPARAM = BiocParallel::SerialParam()
 )
 }
 \arguments{
@@ -24,13 +24,13 @@ should be used as the sample ID. By default it is \code{"sample_id"}.}
 \item{metadata}{A \code{data.frame} containing the samples metadata
 in case it is not provided in the dataset object.}
 
-\item{parallel_param}{A \code{BiocParallelParam} object for enabling parallelism.
-See https://bioconductor.org/packages/release/bioc/html/BiocParallel.html
-for more information.}
-
 \item{batch_size}{A \code{numeric} value indicating the number of
 samples per batch. This parameter is necessary when plotting
 multiple batches using the \code{iterate_plot_batches} or \code{next_plot} functions.}
+
+\item{BPPARAM}{A \code{BiocParallelParam} object for enabling parallelism.
+See \link[BiocParallel:BiocParallelParam-class]{BiocParallelParam}
+for more information.}
 }
 \value{
 An instance of \code{lcmsPlotClass}. It will create the necessary

@@ -28,9 +28,13 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:5]
 
+## Plots chromatograms overlayed without specifying a grouping factor
 p <- lcmsPlot(raw_files) +
-  lp_chromatogram(aggregation_fun = "max") +
-  lp_arrange(group_by = "sample_id") +
-  lp_legend(position = "bottom") +
-  lp_labels(legend = "Sample")
+  lp_chromatogram(aggregation_fun = "max")
+p
+
+## Plots chromatograms overlayed specifying a grouping factor
+## (e.g., sample_id)
+p <- p + lp_arrange(group_by = "sample_id")
+p
 }

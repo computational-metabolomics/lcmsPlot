@@ -37,7 +37,9 @@ p <- lcmsPlot(raw_files, batch_size = 2) +
   lp_legend(position = "bottom") +
   lp_labels(legend = "Sample")
 
+pdf(tempfile(fileext = ".pdf"))
 iterate_plot_batches(p, function(plot_obj) {
   print(plot_obj)
 })
+dev.off()
 }

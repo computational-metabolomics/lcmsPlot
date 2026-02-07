@@ -22,6 +22,7 @@ Define the plot layout
 \examples{
 data_obj <- get_XCMSnExp_object_example(indices = 1)
 
+## Plot chromatograms and spectra for selected samples and features
 p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
   lp_chromatogram(
     features = rbind(
@@ -32,8 +33,8 @@ p <- lcmsPlot(data_obj, sample_id_column = 'sample_name') +
     highlight_peaks = TRUE
   ) +
   lp_spectra(mode = "closest_apex", ms_level = 1) +
-  lp_facets(facets = "feature_id", ncol = 2) +
-  lp_labels(legend = "Sample") +
-  lp_legend(position = "bottom") +
-  lp_layout(design = "C\nS\nS")
+  lp_facets(facets = "feature_id", ncol = 2)
+
+## Customise panel layout to place chromatogram above spectra
+p <- p + lp_layout(design = "C\nS\nS")
 }
