@@ -316,7 +316,7 @@ setMethod(
                 additional_metadata_index <- rep(1, nrow(chroms))
             }
 
-            chromatograms = data.frame(
+            chromatograms <- data.frame(
                 rt = chroms$rt,
                 intensity = chroms$intensity,
                 metadata_index = sample_metadata$sample_index,
