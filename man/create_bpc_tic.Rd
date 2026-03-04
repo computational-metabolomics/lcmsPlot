@@ -7,7 +7,7 @@
 create_bpc_tic(raw_data, aggregation_fun, rt_adjusted = NULL)
 }
 \arguments{
-\item{raw_data}{An instance of class \code{mzR}.}
+\item{raw_data}{An instance of class \code{MsRawReader}.}
 
 \item{aggregation_fun}{A \code{function} indicating the aggregation method.
 One of \code{"sum"} or \code{"max"}.}

@@ -23,8 +23,8 @@ setMethod(
 
         process_sample <- function(i) {
             sample_metadata <- metadata[i, ]
-            ms <- mzR::openMSfile(sample_metadata$sample_path)
-            hdr <- mzR::header(ms)
+            ms <- open_raw_reader(sample_metadata$sample_path)
+            hdr <- ms_header(ms)
 
             rt_range <- options$intensity_maps$rt_range
             mz_range <- options$intensity_maps$mz_range
@@ -34,7 +34,7 @@ setMethod(
                     hdr$retentionTime <= rt_range[2])
 
             scans <- lapply(idx, function(j) {
-                pk <- mzR::peaks(ms, j)
+                pk <- ms_peaks(ms, j)[[1]]
                 if (nrow(pk) > 0) {
                     pk <- pk[pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ]
                     if (nrow(pk) > 0) {
@@ -51,7 +51,7 @@ setMethod(
                 }
             })
 
-            mzR::close(ms)
+            ms_close(ms)
 
             df <- do.call(rbind, scans)
 

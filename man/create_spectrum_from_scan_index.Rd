@@ -7,7 +7,7 @@
 create_spectrum_from_scan_index(raw_data, sample_metadata, scan_index)
 }
 \arguments{
-\item{raw_data}{An instance of class \code{mzR}.}
+\item{raw_data}{An instance of class \code{MsRawReader}.}
 
 \item{sample_metadata}{A \code{data.frame} indicating the sample metadata.}
 

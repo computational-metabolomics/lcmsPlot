@@ -36,7 +36,7 @@ lcmsPlot <- function(
     sample_id_column = "sample_id",
     metadata = NULL,
     batch_size = NULL,
-    BPPARAM = BiocParallel::SerialParam()
+    BPPARAM = NULL
 ) {
     opts <- default_options()
     opts$sample_id_column <- sample_id_column
@@ -102,25 +102,26 @@ setClass(
                 data_df <- additional_datasets[[dataset_name]]
             }
 
-            if (nrow(data_df) == 0) {
-                stop("Empty dataset ", dataset_name)
-            }
-
-            data_df <- merge_by_index(
-                data_df,
-                object@data@metadata,
-                index_col = 'metadata_index'
-            )
-
-            if (nrow(object@data@additional_metadata) > 0) {
+            if (nrow(data_df) > 0) {
                 data_df <- merge_by_index(
                     data_df,
-                    object@data@additional_metadata,
-                    index_col = 'additional_metadata_index'
+                    object@data@metadata,
+                    index_col = 'metadata_index'
                 )
-            }
 
-            return(data_df)
+                if (nrow(object@data@additional_metadata) > 0) {
+                    data_df <- merge_by_index(
+                        data_df,
+                        object@data@additional_metadata,
+                        index_col = 'additional_metadata_index'
+                    )
+                }
+
+                return(data_df)
+            } else {
+                warning("Empty dataset ", dataset_name)
+                return(NULL)
+            }
         } else {
             return(NULL)
         }

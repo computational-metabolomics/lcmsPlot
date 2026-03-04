@@ -7,7 +7,7 @@
 create_spectrum_from_closest_scan_to_rt(raw_data, rt, ms_level)
 }
 \arguments{
-\item{raw_data}{An instance of class \code{mzR}.}
+\item{raw_data}{An instance of class \code{MsRawReader}.}
 
 \item{rt}{A \code{numeric} value indicating the RT to consider.}
 

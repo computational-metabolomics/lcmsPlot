@@ -9,7 +9,7 @@ lcmsPlot(
   sample_id_column = "sample_id",
   metadata = NULL,
   batch_size = NULL,
-  BPPARAM = BiocParallel::SerialParam()
+  BPPARAM = NULL
 )
 }
 \arguments{

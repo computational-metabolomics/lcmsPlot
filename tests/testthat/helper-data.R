@@ -1,10 +1,10 @@
 get_raw_data <- function(file_index = 1) {
   raw_file <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE, recursive = TRUE)[file_index]
-  mzR::openMSfile(raw_file)
+  new("MzrReader", connection = mzR::openMSfile(raw_file))
 }
 
 close_raw_data <- function(raw_data) {
-  mzR::close(raw_data)
+  ms_close(raw_data)
 }
 
 get_test_sample_paths <- function(indices = c(1, 7)) {
