@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 0.99.16
+Version: 0.99.17
 Authors@R: c(
     person(
         "Ossama",
@@ -44,19 +44,20 @@ Imports:
     patchwork,
     DBI,
     RSQLite
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     BiocStyle,
     openxlsx,
     faahKO,
+    rawrr,
     testthat (>= 3.0.0)
 Collate:
     'lcmsPlot-package.R'
     'zzz.R'
     'helpers-data.R'
     'helpers-s4.R'
-    'io-raw-data.R'
+    'raw-file-reader.R'
     'options.R'
     'processing-xcms.R'
     'data-source.R'
@@ -84,7 +85,7 @@ Collate:
     'lcmsPlot-class.R'
 VignetteBuilder: knitr
 URL: https://github.com/computational-metabolomics/lcmsPlot
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 biocViews: Metabolomics, MassSpectrometry
 BugReports: https://github.com/computational-metabolomics/lcmsPlot/issues

@@ -55,7 +55,7 @@ setMethod(
         # Process each sample
         for (i in seq_len(nrow(metadata))) {
             sample_metadata <- metadata[i,]
-            raw_obj <- mzR::openMSfile(sample_metadata$sample_path)
+            raw_obj <- open_raw_reader(sample_metadata$sample_path)
 
             if (is_standalone) {
                 spectra <- create_spectra_for_sample(
@@ -100,7 +100,7 @@ setMethod(
                 }
             }
 
-            mzR::close(raw_obj)
+            ms_close(raw_obj)
         }
 
         all_spectra <- all_spectra |>

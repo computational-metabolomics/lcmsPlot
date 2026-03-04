@@ -14,7 +14,7 @@ create_chromatogram(
 )
 }
 \arguments{
-\item{raw_data}{An instance of class \code{mzR}.}
+\item{raw_data}{An instance of class \code{MsRawReader}.}
 
 \item{mz_range}{A \code{numeric} vector indicating the m/z range.}
 

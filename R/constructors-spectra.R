@@ -1,13 +1,13 @@
 #' Create a spectrum of the closest scan to the specified RT
 #'
-#' @param raw_data An instance of class `mzR`.
+#' @param raw_data An instance of class `MsRawReader`.
 #' @param rt A `numeric` value indicating the RT to consider.
 #' @param ms_level A `numeric` value indicating the MS level of the scans.
 #' @return A `data.frame` representing a spectrum with columns
 #' `mz`, `intensity`, and `rt`.
 #' @keywords internal
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
-    hdr <- mzR::header(raw_data)
+    hdr <- ms_header(raw_data)
 
     ms_level_indices <- which(hdr$msLevel == ms_level)
 
@@ -20,7 +20,7 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
     closest_index <- ms_level_indices[which.min(rt_diffs)]
     closest_scan_id <- hdr[closest_index,]$seqNum
 
-    spectrum_data <- mzR::peaks(raw_data, closest_scan_id)
+    spectrum_data <- ms_peaks(raw_data, closest_scan_id)[[1]]
 
     spectrum_df <- data.frame(
         mz = spectrum_data[, 1],
@@ -33,7 +33,7 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
 
 #' Create a spectrum of the specified scan
 #'
-#' @param raw_data An instance of class `mzR`.
+#' @param raw_data An instance of class `MsRawReader`.
 #' @param sample_metadata A `data.frame` indicating the sample metadata.
 #' @param scan_index A `numeric` value indicating the scan index.
 #' @return A `data.frame` representing a spectrum with columns
@@ -44,13 +44,13 @@ create_spectrum_from_scan_index <- function(
     sample_metadata,
     scan_index
 ) {
-    hdr <- mzR::header(raw_data)
+    hdr <- ms_header(raw_data)
     if (is.character(scan_index)) {
         sidx <- sample_metadata[[scan_index]]
     } else {
         sidx <- scan_index
     }
-    spectrum_data <- mzR::peaks(raw_data, sidx)
+    spectrum_data <- ms_peaks(raw_data, sidx)[[1]]
     spectrum_df <- data.frame(
         mz = spectrum_data[, 1],
         intensity = spectrum_data[, 2],

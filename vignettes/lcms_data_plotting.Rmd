@@ -147,7 +147,7 @@ In the example below we plot the BPC for the eight samples:
 
 ```{r bpc, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+    lp_chromatogram(aggregation_fun = "max") +
     lp_facets(facets = "sample_name", ncol = 4)
 ```
 
@@ -157,7 +157,7 @@ grouped by sample group, and displayed together in one panel.
 
 ```{r bpc-overlapped}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "max") +
+    lp_chromatogram(aggregation_fun = "max") +
     lp_arrange(group_by = "sample_group") +
     lp_labels(title = "Base peak chromatograms", legend = "Sample group") +
     lp_legend(position = "bottom")
@@ -171,7 +171,7 @@ the detector, not just the most abundant ones.
 
 ```{r tic, fig.height=6, fig.width=10}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
-    lp_chromatogram(ppm = 5, rt_tol = 10, aggregation_fun = "sum") +
+    lp_chromatogram(aggregation_fun = "sum") +
     lp_facets(facets = "sample_name", ncol = 4)
 ```
 
@@ -516,6 +516,30 @@ lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
         )
     ) +
     lp_grid(rows = 'feature_id', cols = 'sample_type', free_y = TRUE)
+```
+
+`lcmsPlot` also supports ThermoFisher `.raw` files.
+The examples below are not evaluated due to file size constraints in Bioconductor.
+
+Chromatograms can be plotted directly from `.raw` files:
+
+```{r plot-raw, eval=FALSE}
+raw_files <- c("sample1.raw", "sample2.raw", "sample3.raw")
+    
+lcmsPlot(raw_files) +
+    lp_chromatogram(aggregation_fun = "max") +
+    lp_arrange(group_by = "sample_id")
+```
+
+Spectra can be plotted from `.raw` files as well:
+
+```{r plot-raw-spectra, eval=FALSE, fig.height=9, fig.width=5}
+raw_files <- c("sample1.raw", "sample2.raw", "sample3.raw")
+
+lcmsPlot(raw_files) +
+    lp_chromatogram(features = rbind(c(mz = 181.0706641)), ppm = 10) +
+    lp_spectra(rt = 120, mode = "closest") +
+    lp_facets(facets = "sample_id", ncol = 1)
 ```
 
 # Plot spectra

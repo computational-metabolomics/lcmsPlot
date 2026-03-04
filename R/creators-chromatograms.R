@@ -33,7 +33,12 @@ setMethod(
         detected_peaks <- data.frame()
 
         chromatograms <- data.frame()
-        mass_traces <- data.frame()
+        mass_traces <- data.frame(
+            rt = numeric(),
+            mz = numeric(),
+            metadata_index = numeric(),
+            additional_metadata_index = numeric()
+        )
         additional_metadata <- data.frame()
 
         for (i in seq_len(nrow(grouped_peaks))) {
@@ -90,12 +95,14 @@ setMethod(
                     additional_metadata_index = nrow(additional_metadata)
                 ))
 
-                mass_traces <- rbind(mass_traces, data.frame(
-                    rt = data$mass_traces$rt,
-                    mz = data$mass_traces$mz,
-                    metadata_index = sample_metadata$sample_index,
-                    additional_metadata_index = nrow(additional_metadata)
-                ))
+                if (nrow(data$mass_traces) > 0) {
+                    mass_traces <- rbind(mass_traces, data.frame(
+                        rt = data$mass_traces$rt,
+                        mz = data$mass_traces$mz,
+                        metadata_index = sample_metadata$sample_index,
+                        additional_metadata_index = nrow(additional_metadata)
+                    ))
+                }
             }
         }
 
@@ -151,7 +158,7 @@ setMethod(
                 sample_adjusted_rt <- NULL
             }
 
-            hdr <- mzR::header(raw_obj)
+            hdr <- ms_header(raw_obj)
             full_rt_range <- range(hdr$retentionTime)
 
             chromatograms_list <- list()
@@ -207,17 +214,30 @@ setMethod(
                     additional_metadata_index = additional_metadata_index
                 )
 
-                mass_traces_list[[j]] <- data.frame(
-                    rt = data$mass_traces$rt,
-                    mz = data$mass_traces$mz,
-                    metadata_index = sample_metadata$sample_index,
-                    additional_metadata_index = additional_metadata_index
+                if (nrow(data$mass_traces) > 0) {
+                    mass_traces_list[[j]] <- data.frame(
+                        rt = data$mass_traces$rt,
+                        mz = data$mass_traces$mz,
+                        metadata_index = sample_metadata$sample_index,
+                        additional_metadata_index = additional_metadata_index
+                    )
+                }
+            }
+
+            if (length(mass_traces_list) == 0) {
+                mass_traces <- data.frame(
+                    rt = numeric(),
+                    mz = numeric(),
+                    metadata_index = numeric(),
+                    additional_metadata_index = numeric()
                 )
+            } else {
+                mass_traces <- do.call(rbind, mass_traces_list)
             }
 
             list(
                 chromatograms = do.call(rbind, chromatograms_list),
-                mass_traces = do.call(rbind, mass_traces_list),
+                mass_traces = mass_traces,
                 additional_metadata = do.call(rbind, additional_metadata_list),
                 detected_peaks = do.call(rbind, detected_peaks_list)
             )

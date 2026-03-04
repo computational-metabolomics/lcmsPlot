@@ -73,3 +73,5 @@ rsconnect/
 data.zip
 /doc/
 /Meta/
+
+*.playground.*
