@@ -5,6 +5,10 @@
 \alias{get_metadata.character}
 \alias{get_metadata.XCMSnExp}
 \alias{get_metadata.MsExperiment}
+\alias{get_metadata.MChromatograms}
+\alias{get_metadata.XChromatograms}
+\alias{get_metadata.XChromatogram}
+\alias{get_metadata.XcmsRawList}
 \alias{get_metadata.ExternalDataSource}
 \alias{get_metadata.DBIConnection}
 \title{Get the metadata associated with the input object}
@@ -16,6 +20,14 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{XCMSnExp}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{MsExperiment}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{MChromatograms}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{XChromatograms}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{XChromatogram}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{XcmsRawList}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{ExternalDataSource}(obj, sample_id_column, metadata)
 

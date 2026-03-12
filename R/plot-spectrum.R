@@ -56,10 +56,8 @@ plot_spectrum <- function(
     }
 
     # Determine dynamic y-axis limits
-    y_max <- max(dataset_for_plot$intensity)
-
-    # Round limits to nearest 10 for clean breaks
-    y_max <- ceiling(y_max / 10) * 10
+    y_max <- ceiling(max(dataset_for_plot$intensity) / 10) * 10
+    y_min <- floor(min(dataset_for_plot$intensity) / 10) * 10
 
     p <- ggplot(
         data = dataset_for_plot,
@@ -69,22 +67,21 @@ plot_spectrum <- function(
         geom_text(
             data = top_peaks,
             aes(label = round(.data$mz, 4)),
-            nudge_y = 0.05 * max(dataset_for_plot$intensity),
-            size = 3,
+            nudge_y = 0.05 * y_max,
+            size = options$spectra$peak_label_size,
             color = "red"
         ) +
         labs(x = "m/z", y = "Relative intensity (%)") +
-        expand_limits(y = max(dataset_for_plot$intensity) * 1.1) +
         scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) +
         scale_y_continuous(
-            limits = c(0, y_max * 1.1),
-            breaks = seq(0, y_max, by = 20),
+            limits = c(y_min * 1.1, y_max * 1.1),
+            breaks = seq(y_min, y_max, by = options$spectra$intensity_breaks_by),
             labels = function(x) abs(x)
         ) +
         theme_minimal() +
         extra_layers
 
-    if (is.null(options$facets$facets)) {
+    if (is.null(options$facets$facets) && options$spectra$auto_facet) {
         p <- p + facet_wrap(~ sample_id_rt, ncol = 1)
     }
 

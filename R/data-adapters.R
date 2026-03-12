@@ -91,11 +91,19 @@ get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
         xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
     }
 
-    xcms::phenoData(obj)@data |>
+    paths <- xcms::fileNames(obj)
+    df <- xcms::phenoData(obj)@data
+    df |>
         mutate(
             sample_index = row_number(),
-            sample_id = .data[[sample_id_column]],
-            sample_path = xcms::fileNames(obj)
+            sample_id = if (
+                !is.null(sample_id_column) && sample_id_column %in% colnames(df)
+            ) {
+                df[[sample_id_column]]
+            } else {
+                tools::file_path_sans_ext(basename(paths))
+            },
+            sample_path = paths
         )
 }
 
@@ -106,13 +114,155 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
         MsExperiment::sampleData(obj) <- metadata
     }
 
-    MsExperiment::sampleData(obj) |>
-        as.data.frame() |>
+    paths <- xcms::fileNames(obj)
+    df <- MsExperiment::sampleData(obj) |> as.data.frame()
+    df |>
         mutate(
             sample_index = row_number(),
-            sample_id = .data[[sample_id_column]],
-            sample_path = xcms::fileNames(obj)
+            sample_id = if (
+                !is.null(sample_id_column) && sample_id_column %in% colnames(df)
+            ) {
+                df[[sample_id_column]]
+            } else {
+                tools::file_path_sans_ext(basename(paths))
+            },
+            sample_path = paths
         )
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
+    df <- MSnbase::phenoData(obj)@data |> as.data.frame()
+
+    if (!is.null(sample_id_column) && sample_id_column %in% colnames(df)) {
+        sample_ids <- df[[sample_id_column]]
+    } else if ("spectraOrigin" %in% colnames(df)) {
+        sample_ids <- tools::file_path_sans_ext(basename(df$spectraOrigin))
+    } else {
+        sample_ids <- paste0("sample", seq_len(nrow(df)))
+    }
+
+    sample_paths <- if ("spectraOrigin" %in% colnames(df)) {
+        df$spectraOrigin
+    } else {
+        rep(NA_character_, nrow(df))
+    }
+
+    df_metadata <- df |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = sample_ids,
+            sample_path = sample_paths
+        )
+
+    if (!is.null(metadata)) {
+        df_metadata <- cbind(df_metadata, metadata)
+    }
+
+    return(df_metadata)
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+get_metadata.XChromatograms <- function(obj, sample_id_column, metadata) {
+    df <- MSnbase::phenoData(obj)@data |> as.data.frame()
+
+    if (!is.null(sample_id_column) && sample_id_column %in% colnames(df)) {
+        sample_ids <- df[[sample_id_column]]
+    } else if ("spectraOrigin" %in% colnames(df)) {
+        sample_ids <- tools::file_path_sans_ext(basename(df$spectraOrigin))
+    } else {
+        sample_ids <- paste0("sample", seq_len(nrow(df)))
+    }
+
+    sample_paths <- if ("spectraOrigin" %in% colnames(df)) {
+        df$spectraOrigin
+    } else {
+        rep(NA_character_, nrow(df))
+    }
+
+    df_metadata <- df |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = sample_ids,
+            sample_path = sample_paths
+        )
+
+    if (!is.null(metadata)) {
+        df_metadata <- cbind(df_metadata, metadata)
+    }
+
+    return(df_metadata)
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+get_metadata.XChromatogram <- function(obj, sample_id_column, metadata) {
+    if (!is.null(metadata)) {
+        if (nrow(metadata) != 1) {
+            stop("metadata needs to have one element for XChromatogram input.")
+        }
+
+        metadata |>
+            mutate(
+                sample_index = row_number(),
+                sample_id = if (
+                    !is.null(sample_id_column) &&
+                    sample_id_column %in% colnames(metadata)
+                ) {
+                    .data[[sample_id_column]]
+                } else {
+                    paste0("sample", row_number())
+                },
+                sample_path = NA_character_
+            )
+    } else {
+        data.frame(
+            sample_index = 1L,
+            sample_id = "sample1",
+            sample_path = NA_character_
+        )
+    }
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
+    objs <- obj@data
+    paths <- vapply(objs, function(x) {
+        if (length(x@filepath) > 0L) x@filepath[[1L]] else NA_character_
+    }, character(1L))
+    default_ids <- tools::file_path_sans_ext(basename(paths))
+
+    if (!is.null(metadata)) {
+        if (nrow(metadata) != length(objs)) {
+            stop(
+                "metadata must have one row per xcmsRaw object (",
+                length(objs), " expected, ", nrow(metadata), " provided)."
+            )
+        }
+
+        metadata |>
+            mutate(
+                sample_index = row_number(),
+                sample_id = if (
+                    !is.null(sample_id_column) &&
+                    sample_id_column %in% colnames(metadata)
+                ) {
+                    .data[[sample_id_column]]
+                } else {
+                    default_ids
+                },
+                sample_path = paths
+            )
+    } else {
+        data.frame(
+            sample_index = seq_along(objs),
+            sample_id = default_ids,
+            sample_path = paths
+        )
+    }
 }
 
 #' @rdname get_metadata
@@ -132,7 +282,8 @@ get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
     cd_metadata <- get_workflow_input_files(obj) |>
         dplyr::mutate(
             sample_index = dplyr::row_number(),
-            sample_id = .data$StudyFileID
+            sample_id = .data$StudyFileID,
+            sample_path = .data$PhysicalFileName
         )
 
     if (is.null(metadata)) {
@@ -191,7 +342,7 @@ get_detected_peaks <- function(obj) {
 #' @rdname get_detected_peaks
 #' @keywords internal
 get_detected_peaks.character <- function(obj) {
-    return(NULL)
+    NULL
 }
 
 #' @rdname get_detected_peaks
@@ -204,6 +355,56 @@ get_detected_peaks.XCMSnExp <- function(obj) {
 #' @keywords internal
 get_detected_peaks.MsExperiment <- function(obj) {
     .get_detected_peaks_xcms(obj)
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+get_detected_peaks.MChromatograms <- function(obj) {
+    NULL
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+get_detected_peaks.XChromatograms <- function(obj) {
+    if (any(xcms::hasChromPeaks(obj))) {
+        peaks <- as.data.frame(xcms::chromPeaks(obj)) |>
+            dplyr::rename(sample_index = "column") |>
+            select(-dplyr::all_of("mz")) # This is already present in mz_info
+
+        # Extract mz ranges from each row of the XChromatograms object
+        mz_info <- do.call(rbind, lapply(seq_len(nrow(obj)), function(i) {
+            mz_range <- MSnbase::mz(obj[i, 1L])[[1L]]
+            data.frame(
+                row   = i,
+                mz    = mean(mz_range)
+            )
+        }))
+
+        dplyr::left_join(peaks, mz_info, by = "row")
+    } else {
+        NULL
+    }
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+get_detected_peaks.XChromatogram <- function(obj) {
+    if (xcms::hasChromPeaks(obj)) {
+        mz_range <- MSnbase::mz(obj)
+        as.data.frame(xcms::chromPeaks(obj)) |>
+            mutate(
+                mz = mean(mz_range),
+                sample_index = obj@fromFile
+            )
+    } else {
+        NULL
+    }
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+get_detected_peaks.XcmsRawList <- function(obj) {
+    NULL
 }
 
 #' @rdname get_detected_peaks

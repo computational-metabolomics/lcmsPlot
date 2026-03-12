@@ -33,7 +33,14 @@ setMethod(
                     x
             })()
 
-        all_spectra <- data.frame()
+        all_spectra <- data.frame(
+            mz = numeric(),
+            intensity = numeric(),
+            rt = numeric(),
+            metadata_index = numeric(),
+            feature_metadata_id = numeric(),
+            reference = logical()
+        )
 
         # Retrieve the spectral library
         spectral_library <- NULL
@@ -50,14 +57,18 @@ setMethod(
                 source = source)
         }
 
-        additional_metadata_index <- 1
+        feature_metadata_id <- 1
 
         # Process each sample
         for (i in seq_len(nrow(metadata))) {
             sample_metadata <- metadata[i,]
             raw_obj <- open_raw_reader(sample_metadata$sample_path)
 
-            if (is_standalone) {
+            if (
+                is_standalone ||
+                !is.null(opt$scan_index) ||
+                (opt$mode == "closest" && !is.null(opt$rt))
+            ) {
                 spectra <- create_spectra_for_sample(
                     raw_obj,
                     obj@detected_peaks,
@@ -67,7 +78,7 @@ setMethod(
                 spectra <- spectra |>
                     mutate(
                         metadata_index = sample_metadata$sample_index,
-                        additional_metadata_index = NA
+                        feature_metadata_id = NA_real_
                     )
                 all_spectra <- rbind(all_spectra, spectra)
             } else {
@@ -91,12 +102,12 @@ setMethod(
                         mutate(
                             metadata_index =
                                 sample_metadata$sample_index,
-                            additional_metadata_index =
-                                additional_metadata_index
+                            feature_metadata_id =
+                                feature_metadata_id
                         )
                     all_spectra <- rbind(all_spectra, spectra)
 
-                    additional_metadata_index <- additional_metadata_index + 1
+                    feature_metadata_id <- feature_metadata_id + 1
                 }
             }
 
@@ -158,8 +169,8 @@ setMethod(
                         all_spectra_as_list[[i]]$rt),
                     metadata_index = unique(
                         all_spectra_as_list[[i]]$metadata_index),
-                    additional_metadata_index = unique(
-                        all_spectra_as_list[[i]]$additional_metadata_index),
+                    feature_metadata_id = unique(
+                        all_spectra_as_list[[i]]$feature_metadata_id),
                     reference = TRUE
                 ))
 

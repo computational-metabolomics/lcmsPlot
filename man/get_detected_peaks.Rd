@@ -5,6 +5,10 @@
 \alias{get_detected_peaks.character}
 \alias{get_detected_peaks.XCMSnExp}
 \alias{get_detected_peaks.MsExperiment}
+\alias{get_detected_peaks.MChromatograms}
+\alias{get_detected_peaks.XChromatograms}
+\alias{get_detected_peaks.XChromatogram}
+\alias{get_detected_peaks.XcmsRawList}
 \alias{get_detected_peaks.ExternalDataSource}
 \title{Get the detected peaks from the data object (e.g. XCMSnExp)}
 \usage{
@@ -15,6 +19,14 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{XCMSnExp}(obj)
 
 \method{get_detected_peaks}{MsExperiment}(obj)
+
+\method{get_detected_peaks}{MChromatograms}(obj)
+
+\method{get_detected_peaks}{XChromatograms}(obj)
+
+\method{get_detected_peaks}{XChromatogram}(obj)
+
+\method{get_detected_peaks}{XcmsRawList}(obj)
 
 \method{get_detected_peaks}{ExternalDataSource}(obj)
 }

@@ -82,11 +82,15 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
     facets_options <- obj@options$facets
     facets <- facets_options$facets
 
-    metadata <- left_join(
-        obj@data@additional_metadata,
-        obj@data@metadata,
-        by = c("metadata_index" = "sample_index")
-    )
+    if (nrow(obj@data@feature_metadata) == 0) {
+        metadata <- obj@data@metadata
+    } else {
+        metadata <- left_join(
+            obj@data@feature_metadata,
+            obj@data@metadata,
+            by = c("metadata_index" = "sample_index")
+        )
+    }
 
     all_plots <- metadata |>
         group_by(!!!syms(facets)) |>

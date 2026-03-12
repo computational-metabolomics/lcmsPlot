@@ -1,41 +1,75 @@
 .validators <- list(
-    additional_metadata = function(df) {
-        TRUE
+    metadata = function(df) {
+        validate_data_frame(df, list(
+            field("sample_index", is.numeric),
+            field("sample_id", is.character)
+        ))
+    },
+    feature_metadata = function(df) {
+        validate_data_frame(df, list(
+            field("feature_metadata_id", is.numeric)
+        ))
     },
     chromatograms = function(df) {
-        cols <- c(
-            "rt", "intensity", "metadata_index", "additional_metadata_index")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("intensity", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ))
     },
     mass_traces = function(df) {
-        cols <- c("rt", "mz", "metadata_index", "additional_metadata_index")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("mz", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
     },
     spectra = function(df) {
-        cols <- c(
-            "mz", "intensity", "rt", "metadata_index",
-            "additional_metadata_index", "reference")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("mz", is.numeric),
+            field("intensity", is.numeric),
+            field("rt", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric),
+            field("reference", is.logical)
+        ), exact = TRUE)
     },
     total_ion_current = function(df) {
-        cols <- c("intensity", "metadata_index", "additional_metadata_index")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("intensity", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
     },
     intensity_maps = function(df) {
-        cols <- c(
-            "rt", "mz", "intensity",
-            "metadata_index", "additional_metadata_index")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("mz", is.numeric),
+            field("intensity", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
     },
     rt_diff = function(df) {
-        cols <- c(
-            "rt_raw", "rt_adj", "diff",
-            "metadata_index", "additional_metadata_index")
-        nrow(df) == 0 || identical(colnames(df), cols)
+        validate_data_frame(df, list(
+            field("rt_raw", is.numeric),
+            field("rt_adj", is.numeric),
+            field("diff", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
     },
     detected_peaks = function(df) {
-        cols <- c("mz", "rt", "rtmin", "rtmax", "sample_index")
-        nrow(df) == 0 || all(cols %in% colnames(df))
+        validate_data_frame(df, list(
+            field("mz", is.numeric),
+            field("rt", is.numeric),
+            field("rtmin", is.numeric),
+            field("rtmax", is.numeric),
+            field("sample_index", is.numeric),
+            field("sample_id", is.character)
+        ))
     }
 )
 
@@ -92,7 +126,7 @@ create_data_container_from_obj <- function(
         total_ion_current = data.frame(),
         intensity_maps = data.frame(),
         rt_diff = data.frame(),
-        additional_metadata = data.frame(),
+        feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
         detected_peaks = data.frame())
 }
 
@@ -103,7 +137,8 @@ create_data_container_from_obj <- function(
 #' This class can be used independently from the plotting utilities,
 #' however the preferred approach is to use it with the `lcmsPlotClass` class.
 #'
-#' @slot data_obj The data object. One of: `XCMSnExp`, `MsExperiment` or
+#' @slot data_obj The data object. One of: `XCMSnExp`, `MsExperiment`,
+#' `MChromatograms`, `XChromatograms`, `XChromatogram`, `XcmsRawList`, or
 #' `character` representing mzML paths.
 #' @slot metadata A `data.frame` containing the sample metadata.
 #' @slot chromatograms A `data.frame` containing the chromatograms.
@@ -113,8 +148,8 @@ create_data_container_from_obj <- function(
 #' @slot intensity_maps A `data.frame` containing the 2D intensity maps
 #' representing the distribution of detected peaks across m/z and RT.
 #' @slot rt_diff A `data.frame` containing the raw and adjusted RT values.
-#' @slot additional_metadata A `data.frame` containing additional information
-#' attached to datasets through a column called `additional_metadata_index`.
+#' @slot feature_metadata A `data.frame` containing feature/compound annotations
+#' attached to datasets through a column called `feature_metadata_id`.
 #' @slot detected_peaks A `data.frame` containing the detected peaks from
 #' an `XCMSnExp` or `MsExperiment` object.
 #' @export
@@ -129,7 +164,7 @@ setClass(
         total_ion_current = "data.frame",
         intensity_maps = "data.frame",
         rt_diff = "data.frame",
-        additional_metadata = "data.frame",
+        feature_metadata = "data.frame",
         detected_peaks = "data.frame"
     ),
     prototype = list(
@@ -141,7 +176,7 @@ setClass(
         total_ion_current = NULL,
         intensity_maps = NULL,
         rt_diff = NULL,
-        additional_metadata = NULL,
+        feature_metadata = NULL,
         detected_peaks = NULL
     )
 )
@@ -152,6 +187,10 @@ setValidity("lcmsPlotDataContainer", function(object) {
     obj_types <- c(
         "XCMSnExp",
         "MsExperiment",
+        "MChromatograms",
+        "XChromatograms",
+        "XChromatogram",
+        "XcmsRawList",
         "ExternalDataSource",
         "DBIConnection",
         "character")
@@ -162,14 +201,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
             paste(obj_types, collapse = ", ")
         )
     } else {
-        for (validator_name in names(.validators)) {
-            df <- slot(object, validator_name)
-
-            if (!.validators[[validator_name]](df)) {
-                ret <- paste0(validator_name, " did not pass validation.")
-                break
-            }
-        }
+        ret <- validate_object(object, .validators)
     }
 
     ret
@@ -195,7 +227,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #'     total_ion_current = data.frame(),
 #'     intensity_maps = data.frame(),
 #'     rt_diff = data.frame(),
-#'     additional_metadata = data.frame(),
+#'     feature_metadata = data.frame(),
 #'     detected_peaks = data.frame())
 #' data_obj
 setMethod(
@@ -223,7 +255,7 @@ setMethod(
         print_df_dim(object@total_ion_current, "total_ion_current")
         print_df_dim(object@intensity_maps, "intensity_maps")
         print_df_dim(object@rt_diff, "rt_diff")
-        print_df_dim(object@additional_metadata, "additional_metadata")
+        print_df_dim(object@feature_metadata, "feature_metadata")
         print_df_dim(object@detected_peaks, "detected_peaks")
     }
 )

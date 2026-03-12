@@ -28,7 +28,7 @@ setMethod(
             rt_adj = rt_adj,
             diff = rt_adj - rt_raw,
             metadata_index = xcms::fromFile(obj@data_obj),
-            additional_metadata_index = xcms::fromFile(obj@data_obj)
+            feature_metadata_id = xcms::fromFile(obj@data_obj)
         )
 
         obj@rt_diff <- rt_diff

@@ -32,7 +32,7 @@ setMethod(
             lapply(seq_along(tc), function(i) {
                 x <- tc[[i]] |>
                     as.data.frame() |>
-                    mutate(metadata_index = i, additional_metadata_index = i)
+                    mutate(metadata_index = i, feature_metadata_id = i)
                 colnames(x)[1] <- "intensity"
                 x
             })

@@ -4,6 +4,7 @@
 \alias{ms_header}
 \alias{ms_header,MzrReader-method}
 \alias{ms_header,RawrrReader-method}
+\alias{ms_header,XcmsRawReader-method}
 \title{Get scan header information from a raw MS file reader}
 \usage{
 ms_header(reader)
@@ -11,6 +12,8 @@ ms_header(reader)
 \S4method{ms_header}{MzrReader}(reader)
 
 \S4method{ms_header}{RawrrReader}(reader)
+
+\S4method{ms_header}{XcmsRawReader}(reader)
 }
 \arguments{
 \item{reader}{An instance of \code{MsRawReader}.}

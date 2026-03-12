@@ -141,8 +141,8 @@ setMethod("ms_header", "RawrrReader", function(reader) {
     }
 
     idx <- rawrr::readIndex(reader@path)
-    bpc <- rawrr::readChromatogram(rawfile = rawfile, type = "bpc")
-    tic <- rawrr::readChromatogram(rawfile = rawfile, type = "tic")
+    bpc <- rawrr::readChromatogram(rawfile = reader@path, type = "bpc")
+    tic <- rawrr::readChromatogram(rawfile = reader@path, type = "tic")
     data.frame(
         seqNum = idx$scan,
         retentionTime = idx$StartTime * 60,
@@ -177,6 +177,91 @@ setMethod(
 setMethod("ms_close", "RawrrReader", function(reader) {
     invisible(NULL)
 })
+
+#' An `xcmsRaw`-backed raw MS file reader
+#'
+#' Wraps an in-memory `xcmsRaw` object. No file connection is opened or closed.
+#'
+#' @slot obj An `xcmsRaw` object.
+#' @keywords internal
+setClass(
+    "XcmsRawReader",
+    contains = "MsRawReader",
+    slots = list(obj = "ANY")
+)
+
+#' @rdname ms_header
+setMethod("ms_header", "XcmsRawReader", function(reader) {
+    obj <- reader@obj
+    scanidx <- obj@scanindex
+    ints <- obj@env$intensity
+    nscans <- length(scanidx)
+
+    bpi <- numeric(nscans)
+    for (i in seq_len(nscans)) {
+        start <- scanidx[i] + 1L
+        end <- if (i < nscans) scanidx[i + 1L] else length(ints)
+        bpi[i] <- if (start <= end && length(ints) > 0) max(ints[start:end]) else 0
+    }
+
+    data.frame(
+        seqNum = seq_len(nscans),
+        retentionTime = obj@scantime,
+        msLevel = 1L,
+        basePeakIntensity = bpi,
+        totIonCurrent = obj@tic
+    )
+})
+
+#' @rdname ms_peaks
+setMethod("ms_peaks", "XcmsRawReader", function(reader, scans) {
+    obj <- reader@obj
+    scanidx <- obj@scanindex
+    mzs <- obj@env$mz
+    ints <- obj@env$intensity
+    nscans <- length(scanidx)
+
+    lapply(scans, function(s) {
+        start <- scanidx[s] + 1L
+        end <- if (s < nscans) scanidx[s + 1L] else length(mzs)
+        if (start <= end) {
+            cbind(mz = mzs[start:end], intensity = ints[start:end])
+        } else {
+            matrix(numeric(0), ncol = 2,
+                   dimnames = list(NULL, c("mz", "intensity")))
+        }
+    })
+})
+
+#' @rdname ms_chromatogram
+setMethod(
+    "ms_chromatogram", "XcmsRawReader",
+    function(reader, mz, ppm, rt_range) {
+        stop("ms_chromatogram() is not implemented for XcmsRawReader.")
+    }
+)
+
+#' @rdname ms_close
+setMethod("ms_close", "XcmsRawReader", function(reader) {
+    invisible(NULL)
+})
+
+#' Convert an `XcmsRawList` to a named list of `XcmsRawReader`s
+#'
+#' Each element is keyed by the file path stored in `@filepath` of the
+#' corresponding `xcmsRaw` object.
+#'
+#' @param xcmsraw_list An `XcmsRawList` object.
+#' @return A named `list` of `XcmsRawReader` objects.
+#' @keywords internal
+xcmsraw_to_readers <- function(xcmsraw_list) {
+    objs <- xcmsraw_list@data
+    paths <- vapply(objs, function(obj) {
+        if (length(obj@filepath) > 0L) obj@filepath[[1L]] else ""
+    }, character(1L))
+    readers <- lapply(objs, function(obj) new("XcmsRawReader", obj = obj))
+    setNames(readers, paths)
+}
 
 #' Open a raw MS file as an `MsRawReader`
 #'
