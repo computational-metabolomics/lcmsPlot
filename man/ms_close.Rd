@@ -4,6 +4,7 @@
 \alias{ms_close}
 \alias{ms_close,MzrReader-method}
 \alias{ms_close,RawrrReader-method}
+\alias{ms_close,XcmsRawReader-method}
 \title{Close a raw MS file reader connection}
 \usage{
 ms_close(reader)
@@ -11,6 +12,8 @@ ms_close(reader)
 \S4method{ms_close}{MzrReader}(reader)
 
 \S4method{ms_close}{RawrrReader}(reader)
+
+\S4method{ms_close}{XcmsRawReader}(reader)
 }
 \arguments{
 \item{reader}{An instance of \code{MsRawReader}.}

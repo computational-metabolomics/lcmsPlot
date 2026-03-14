@@ -30,7 +30,7 @@ data_obj <- new("lcmsPlotDataContainer",
     total_ion_current = data.frame(),
     intensity_maps = data.frame(),
     rt_diff = data.frame(),
-    additional_metadata = data.frame(),
+    feature_metadata = data.frame(),
     detected_peaks = data.frame())
 data_obj
 }

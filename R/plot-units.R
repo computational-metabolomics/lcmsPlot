@@ -24,7 +24,7 @@ highlight_peaks_aes <- function(ymax, options) {
 }
 
 highlight_peaks <- function(dataset, detected_peaks, options) {
-    if (options$chromatograms$highlight_peaks) {
+    if (options$chromatograms$highlight_peaks && nrow(detected_peaks) > 0) {
         highlight_df <- detected_peaks |>
             mutate(peak_id = row_number()) |>
             rowwise() |>

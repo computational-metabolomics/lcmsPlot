@@ -17,6 +17,6 @@ test_that("create_spectra creates standalone spectra (i.e., without chromatogram
   # assert
   expect_equal(nrow(data_container@chromatograms), 0)
   expect_gt(nrow(data_container@spectra), 0)
-  expect_equal(colnames(data_container@spectra), c("mz", "intensity", "rt", "metadata_index", "additional_metadata_index", "reference"))
+  expect_equal(colnames(data_container@spectra), c("mz", "intensity", "rt", "metadata_index", "feature_metadata_id", "reference"))
   expect_equal(round(unique(data_container@spectra$rt)), 2739)
 })

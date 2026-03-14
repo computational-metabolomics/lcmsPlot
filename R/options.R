@@ -28,6 +28,7 @@ default_options <- function() {
             rt_unit = "second",
             intensity_unit = "absolute",
             fill_gaps = FALSE,
+            na.rm = FALSE,
             highlight_apices = list(
                 column = NULL,
                 top_n = NULL
@@ -45,7 +46,10 @@ default_options <- function() {
             scan_index = NULL,
             interval = 3, # mode=across_peak
             spectral_match_db = NULL,
-            match_target_index = 1
+            match_target_index = 1,
+            peak_label_size = 3,
+            intensity_breaks_by = 20,
+            auto_facet = TRUE
         ),
         total_ion_current = list(
             show = FALSE,

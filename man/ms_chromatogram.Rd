@@ -4,6 +4,7 @@
 \alias{ms_chromatogram}
 \alias{ms_chromatogram,MzrReader-method}
 \alias{ms_chromatogram,RawrrReader-method}
+\alias{ms_chromatogram,XcmsRawReader-method}
 \title{Extract an extracted ion chromatogram (XIC) using the native backend}
 \usage{
 ms_chromatogram(reader, mz, ppm, rt_range)
@@ -11,6 +12,8 @@ ms_chromatogram(reader, mz, ppm, rt_range)
 \S4method{ms_chromatogram}{MzrReader}(reader, mz, ppm, rt_range)
 
 \S4method{ms_chromatogram}{RawrrReader}(reader, mz, ppm, rt_range)
+
+\S4method{ms_chromatogram}{XcmsRawReader}(reader, mz, ppm, rt_range)
 }
 \arguments{
 \item{reader}{An instance of \code{MsRawReader}.}

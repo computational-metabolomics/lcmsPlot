@@ -68,7 +68,7 @@ setMethod(
                     ) |>
                     mutate(
                         metadata_index = sample_metadata$sample_index,
-                        additional_metadata_index = sample_metadata$sample_index
+                        feature_metadata_id = sample_metadata$sample_index
                     )
             } else {
                 NULL

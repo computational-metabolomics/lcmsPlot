@@ -4,6 +4,7 @@
 \alias{ms_peaks}
 \alias{ms_peaks,MzrReader-method}
 \alias{ms_peaks,RawrrReader-method}
+\alias{ms_peaks,XcmsRawReader-method}
 \title{Get peak matrices for selected scans from a raw MS file reader}
 \usage{
 ms_peaks(reader, scans)
@@ -11,6 +12,8 @@ ms_peaks(reader, scans)
 \S4method{ms_peaks}{MzrReader}(reader, scans)
 
 \S4method{ms_peaks}{RawrrReader}(reader, scans)
+
+\S4method{ms_peaks}{XcmsRawReader}(reader, scans)
 }
 \arguments{
 \item{reader}{An instance of \code{MsRawReader}.}

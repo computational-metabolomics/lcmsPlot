@@ -109,12 +109,12 @@ setClass(
                     index_col = 'metadata_index'
                 )
 
-                if (nrow(object@data@additional_metadata) > 0) {
-                    data_df <- merge_by_index(
-                        data_df,
-                        object@data@additional_metadata,
-                        index_col = 'additional_metadata_index'
-                    )
+                if (nrow(object@data@feature_metadata) > 0) {
+                    data_df <- data_df |>
+                        left_join(
+                            object@data@feature_metadata,
+                            by = "feature_metadata_id"
+                        )
                 }
 
                 return(data_df)
@@ -142,7 +142,7 @@ setClass(
         "total_ion_current",
         "intensity_maps",
         "rt_diff",
-        "additional_metadata",
+        "feature_metadata",
         "detected_peaks"
     )
 
@@ -424,6 +424,8 @@ make_interface_function <- function(name, args_list, fn) {
 #' the intensity axis; one of `"absolute"` or `"relative"`.
 #' @param fill_gaps A `logical` value indicating whether to fill gaps
 #' in RT with 0 intensity.
+#' @param na.rm A `logical` value. When `TRUE`, data points whose intensity
+#' is `NA` are removed before plotting. Defaults to `FALSE`.
 #' @param highlight_apices A `logical` value indicating whether to
 #' highlight apices with the corresponding RT values in a chromatogram.
 #' @return This function returns another function that takes an `lcmsPlot`
@@ -456,6 +458,7 @@ lp_chromatogram <- function(
     rt_unit = "second",
     intensity_unit = "absolute",
     fill_gaps = FALSE,
+    na.rm = FALSE,
     highlight_apices = list(column = NULL, top_n = NULL)
 ) {
     make_interface_function(
@@ -493,25 +496,20 @@ lp_chromatogram <- function(
                 highlight_apices = highlight_apices
             )
 
-            if (is.null(features)) {
-                if (is_cd_result(obj@data@data_obj)) {
-                    obj@data <- create_chromatograms_from_compound_discoverer(
-                        obj@data,
-                        obj@options)
-                } else {
-                    obj@data <- create_full_rt_chromatograms(
-                        obj@data,
-                        obj@options)
-                }
-            } else if (is.character(features)) {
-                obj@data <- create_chromatograms_from_feature_ids(
-                    obj@data,
-                    obj@options)
+            result <- create_chromatograms(
+                obj@data@data_obj,
+                obj@data@metadata,
+                obj@options,
+                features)
+            obj@data@chromatograms <- if (na.rm) {
+                result$chromatograms[!is.na(result$chromatograms$intensity), ]
             } else {
-                obj@data <- create_chromatograms_from_features(
-                    obj@data,
-                    obj@options)
+                result$chromatograms
             }
+            obj@data@mass_traces <- result$mass_traces
+            obj@data@feature_metadata <- result$feature_metadata
+            obj@data@detected_peaks <- result$detected_peaks
+            validObject(obj@data)
 
             return(obj)
         }
@@ -598,6 +596,13 @@ lp_mass_trace <- function() {
 #' for matching and comparison with the input spectra.
 #' @param match_target_index The index, ranked by descending match score,
 #' identifying which reference spectrum to display in the mirror plot.
+#' @param peak_label_size A `numeric` value controlling the font size of
+#' m/z labels annotated on spectral peaks. Defaults to `3`.
+#' @param intensity_breaks_by A `numeric` value specifying the step size
+#' (in percent) between y-axis intensity breaks. Defaults to `20`.
+#' @param auto_facet A `logical` value. When `TRUE` (default), a facet is
+#' automatically added to separate spectra from different samples or scans.
+#' Set to `FALSE` to suppress automatic faceting.
 #' @return This function returns another function that takes an `lcmsPlot`
 #' object and produces a modified version containing the generated spectra
 #' in its `data` slot. It is designed to be used with the `+` operator,
@@ -626,7 +631,10 @@ lp_spectra <- function(
     scan_index = NULL,
     interval = 3,
     spectral_match_db = NULL,
-    match_target_index = NULL
+    match_target_index = NULL,
+    peak_label_size = 3,
+    intensity_breaks_by = 20,
+    auto_facet = TRUE
 ) {
     make_interface_function(
         name = "lp_spectra",
@@ -651,7 +659,10 @@ lp_spectra <- function(
                 scan_index = scan_index,
                 interval = interval,
                 spectral_match_db = spectral_match_db,
-                match_target_index = match_target_index
+                match_target_index = match_target_index,
+                peak_label_size = peak_label_size,
+                intensity_breaks_by = intensity_breaks_by,
+                auto_facet = auto_facet
             )
 
             obj@data <- create_spectra(obj@data, obj@options)

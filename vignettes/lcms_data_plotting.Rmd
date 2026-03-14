@@ -319,6 +319,57 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_rt_line(intercept = 2850, line_type = 'dashed', color = 'blue')
 ```
 
+You can also plot directly from an `XChromatograms` object which is the xcms
+representation of extracted ion chromatograms (EICs) for one or more features
+across multiple samples.
+`XChromatograms` objects are produced by `xcms::chromatogram()` and store one
+chromatogram per cell of a features x samples matrix.
+
+In the example below, two features are defined by their m/z ranges and the
+corresponding retention time windows.
+`xcms::chromatogram()` is called to extract the EICs from the `faahko` dataset.
+The resulting plot is arranged as a grid with features as rows and
+samples as columns.
+
+```{r plot-XChromatograms, message=FALSE, warning=FALSE, fig.height=4, fig.width=10}
+mzr <- matrix(c(344, 344,
+                 360, 360), ncol = 2, byrow = TRUE)
+
+rtr <- matrix(c(2500, 3500,
+                 2600, 3600), ncol = 2, byrow = TRUE)
+
+chrs <- chromatogram(faahko, mz = mzr, rt = rtr)
+
+lcmsPlot(chrs) +
+    lp_chromatogram(na.rm = TRUE) +
+    lp_grid(rows = "feature_id", cols = "sample_id")
+```
+
+`lcmsPlot` also supports `xcmsRaw` objects, the legacy xcms format for
+in-memory raw MS data.
+The `XcmsRawList` container wraps one or more `xcmsRaw` objects
+(one per sample) and is the recommended way to pass such data to `lcmsPlot`.
+The convenience function `create_xcms_raw_list()` reads a set of raw files
+into memory via `xcms::xcmsRaw()` and returns a ready-to-use `XcmsRawList`.
+
+In the example below, two samples are read from the faahKO dataset and two
+features are plotted side-by-side:
+
+```{r plot-xcmsRaw}
+raw_paths <- sampleData(faahko)$spectraOrigin[c(1, 5)]
+
+xl <- create_xcms_raw_list(raw_paths)
+
+lcmsPlot(xl) +
+    lp_chromatogram(
+        features = rbind(
+            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            c(mzmin = 344.0, mzmax = 344.1, rtmin = 2600, rtmax = 2800)
+        )
+    ) +
+    lp_grid(rows = "feature_id", cols = "sample_id", free_y = TRUE)
+```
+
 # Plot retention time alignment effect
 
 Retention times can vary slightly across LC-MS runs due to instrumental drift
@@ -342,7 +393,7 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
         aggregation_fun = "max",
         rt_type = "both") +
     lp_arrange(group_by = "sample_group") +
-    lp_facets("rt_adjusted", ncol = 1) +
+    lp_facets("rt_type", ncol = 1) +
     lp_labels(legend = "Sample group") +
     lp_legend(position = "bottom")
 ```

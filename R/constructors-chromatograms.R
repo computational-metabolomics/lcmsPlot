@@ -87,7 +87,7 @@ create_chromatogram <- function(
                 mz = numeric()
             )
         }
-    } else if (is(raw_data, "MzrReader")) {
+    } else if (is(raw_data, "MzrReader") || is(raw_data, "XcmsRawReader")) {
         hdr <- ms_header(raw_data)
 
         if (!is.null(adjusted_rt) && nrow(adjusted_rt) == nrow(hdr)) {

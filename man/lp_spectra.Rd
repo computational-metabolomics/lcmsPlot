@@ -12,7 +12,10 @@ lp_spectra(
   scan_index = NULL,
   interval = 3,
   spectral_match_db = NULL,
-  match_target_index = NULL
+  match_target_index = NULL,
+  peak_label_size = 3,
+  intensity_breaks_by = 20,
+  auto_facet = TRUE
 )
 }
 \arguments{
@@ -41,6 +44,16 @@ for matching and comparison with the input spectra.}
 
 \item{match_target_index}{The index, ranked by descending match score,
 identifying which reference spectrum to display in the mirror plot.}
+
+\item{peak_label_size}{A \code{numeric} value controlling the font size of
+m/z labels annotated on spectral peaks. Defaults to \code{3}.}
+
+\item{intensity_breaks_by}{A \code{numeric} value specifying the step size
+(in percent) between y-axis intensity breaks. Defaults to \code{20}.}
+
+\item{auto_facet}{A \code{logical} value. When \code{TRUE} (default), a facet is
+automatically added to separate spectra from different samples or scans.
+Set to \code{FALSE} to suppress automatic faceting.}
 }
 \value{
 This function returns another function that takes an \code{lcmsPlot}

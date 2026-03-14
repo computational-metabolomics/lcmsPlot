@@ -1,0 +1,51 @@
+name: R CMD CHECK
+
+on:
+  push:
+    branches: [devel]
+  pull_request:
+    branches: [devel]
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+
+    container:
+      image: bioconductor/bioconductor_docker:devel
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/R/host-site-library
+          key: ${{ runner.os }}-bioc-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-bioc-
+
+      - name: Install system dependencies
+        run: |
+          apt-get update -y
+          apt-get install -y libnetcdf-dev libhdf5-dev
+
+      - name: Install R package dependencies
+        run: |
+          Rscript -e "
+            BiocManager::install(ask = FALSE, update = TRUE)
+            deps <- remotes::dev_package_deps('.', dependencies = TRUE)
+            BiocManager::install(deps\$package[deps\$diff != 0], ask = FALSE)
+          "
+
+      - name: Run tests
+        run: |
+          Rscript -e "devtools::test(reporter = 'summary')"
+
+      - name: Run R CMD CHECK
+        run: |
+          Rscript -e "rcmdcheck::rcmdcheck(args = c('--no-manual', '--no-vignettes'), error_on = 'warning')"

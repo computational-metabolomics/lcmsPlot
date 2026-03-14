@@ -17,6 +17,7 @@ lp_chromatogram(
   rt_unit = "second",
   intensity_unit = "absolute",
   fill_gaps = FALSE,
+  na.rm = FALSE,
   highlight_apices = list(column = NULL, top_n = NULL)
 )
 }
@@ -74,6 +75,9 @@ the intensity axis; one of \code{"absolute"} or \code{"relative"}.}
 
 \item{fill_gaps}{A \code{logical} value indicating whether to fill gaps
 in RT with 0 intensity.}
+
+\item{na.rm}{A \code{logical} value. When \code{TRUE}, data points whose intensity
+is \code{NA} are removed before plotting. Defaults to \code{FALSE}.}
 
 \item{highlight_apices}{A \code{logical} value indicating whether to
 highlight apices with the corresponding RT values in a chromatogram.}
