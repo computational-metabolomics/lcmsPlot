@@ -19,8 +19,7 @@ Show a summary of an instance of class \code{ExternalDataSource}
 ## Create dummy metadata
 metadata <- data.frame(
   sample_id = c("S1", "S2"),
-  sample_path = c("sample1.mzML", "sample2.mzML"),
-  stringsAsFactors = FALSE
+  sample_path = c("sample1.mzML", "sample2.mzML")
 )
 
 ## Create dummy peaks

@@ -53,12 +53,80 @@
 #' * `sample_id`: extracted using `sample_id_column`
 #' * `sample_path`: values from `xcms::fileNames(obj)`
 #'
+#' @section `MChromatograms` and `XChromatograms` input:
+#' Metadata is taken from `MSnbase::phenoData(obj)`.
+#'
+#' `sample_id` is resolved in the following order:
+#' 1. `sample_id_column` (if provided and present in `phenoData`)
+#' 2. Basename without extension of the `spectraOrigin` column
+#' 3. `"sample1"`, `"sample2"`, ... (fallback)
+#'
+#' `sample_path` is set to `spectraOrigin` if present, otherwise `NA`.
+#'
+#' **If `metadata` is provided:**
+#' It is column-bound onto the extracted `phenoData`.
+#'
+#' The returned metadata always includes:
+#' * `sample_index`: row number
+#' * `sample_id`: resolved as above
+#' * `sample_path`: from `spectraOrigin` or `NA`
+#'
+#' @section `XChromatogram` input:
+#' Represents a single chromatogram (one sample). `sample_path` is always `NA`.
+#'
+#' **If `metadata` is NULL:**
+#' Returns a single-row tibble with `sample_index = 1`, `sample_id = "sample1"`,
+#' and `sample_path = NA`.
+#'
+#' **If `metadata` is provided:**
+#' Must have exactly one row. The supplied metadata is used with:
+#' * `sample_index`: `1`
+#' * `sample_id`: from `sample_id_column` if present, otherwise `"sample1"`
+#' * `sample_path`: `NA`
+#'
+#' @section `XcmsRawList` input:
+#' Each element of the list is an `xcmsRaw` object. `sample_path` is extracted
+#' from the `@@filepath` slot of each `xcmsRaw`.
+#'
+#' **If `metadata` is NULL:**
+#' Metadata is *constructed automatically*:
+#' * `sample_index`: sequential index
+#' * `sample_id`: basename without extension of `sample_path`
+#' * `sample_path`: from `xcmsRaw@@filepath`
+#'
+#' **If `metadata` is provided:**
+#' Must have one row per `xcmsRaw` object. The supplied metadata is used with:
+#' * `sample_index`: row number
+#' * `sample_id`: from `sample_id_column` if present, otherwise basename of path
+#' * `sample_path`: from `xcmsRaw@@filepath`
+#'
+#' @section `ExternalDataSource` input:
+#' Metadata is taken from the `@@metadata` slot of the `ExternalDataSource`
+#' object. The `metadata` parameter is ignored.
+#'
+#' The returned metadata always includes:
+#' * `sample_index`: row number
+#' * `sample_id`: extracted using `sample_id_column`
+#'
+#' @section `DBIConnection` input:
+#' Metadata is queried from a Compound Discoverer SQLite database via
+#' `get_workflow_input_files()`.
+#'
+#' **If `metadata` is NULL:**
+#' Returns the query result with:
+#' * `sample_index`: row number
+#' * `sample_id`: from `StudyFileID`
+#' * `sample_path`: from `PhysicalFileName`
+#'
+#' **If `metadata` is provided:**
+#' It is joined onto the query result using `sample_id_column`.
+#'
 #' @param obj A data object containing or representing samples.
 #' @param sample_id_column A `character` value indicating the column that
 #' should be used as the sample ID.
-#' @param metadata Optional metadata `data.frame` used to replace or augment
+#' @param metadata Optional metadata `tibble` used to replace or augment
 #' sample metadata when not already embedded in the object.
-#' @return A `data.frame` containing standardised metadata with at least
+#' @return A `tibble` containing standardised metadata with at least
 #' `sample_index`, `sample_id`, and `sample_path`.
 #' @keywords internal
 get_metadata <- function(obj, sample_id_column, metadata) {
@@ -69,13 +137,13 @@ get_metadata <- function(obj, sample_id_column, metadata) {
 #' @keywords internal
 get_metadata.character <- function(obj, sample_id_column, metadata) {
     if (is.null(metadata)) {
-        data.frame(sample_path = obj) |>
+        tibble(sample_path = obj) |>
             mutate(
                 sample_index = row_number(),
                 sample_id = tools::file_path_sans_ext(basename(obj))
             )
     } else {
-        metadata |>
+        as_tibble(metadata) |>
             mutate(
                 sample_index = row_number(),
                 sample_id = .data[[sample_id_column]],
@@ -92,7 +160,7 @@ get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
     }
 
     paths <- xcms::fileNames(obj)
-    df <- xcms::phenoData(obj)@data
+    df <- as_tibble(xcms::phenoData(obj)@data)
     df |>
         mutate(
             sample_index = row_number(),
@@ -115,7 +183,7 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
     }
 
     paths <- xcms::fileNames(obj)
-    df <- MsExperiment::sampleData(obj) |> as.data.frame()
+    df <- MsExperiment::sampleData(obj) |> as_tibble()
     df |>
         mutate(
             sample_index = row_number(),
@@ -133,7 +201,7 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
 #' @rdname get_metadata
 #' @keywords internal
 get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
-    df <- MSnbase::phenoData(obj)@data |> as.data.frame()
+    df <- MSnbase::phenoData(obj)@data |> as_tibble()
 
     if (!is.null(sample_id_column) && sample_id_column %in% colnames(df)) {
         sample_ids <- df[[sample_id_column]]
@@ -157,7 +225,7 @@ get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
         )
 
     if (!is.null(metadata)) {
-        df_metadata <- cbind(df_metadata, metadata)
+        df_metadata <- as_tibble(cbind(df_metadata, metadata))
     }
 
     return(df_metadata)
@@ -166,7 +234,7 @@ get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
 #' @rdname get_metadata
 #' @keywords internal
 get_metadata.XChromatograms <- function(obj, sample_id_column, metadata) {
-    df <- MSnbase::phenoData(obj)@data |> as.data.frame()
+    df <- MSnbase::phenoData(obj)@data |> as_tibble()
 
     if (!is.null(sample_id_column) && sample_id_column %in% colnames(df)) {
         sample_ids <- df[[sample_id_column]]
@@ -190,7 +258,7 @@ get_metadata.XChromatograms <- function(obj, sample_id_column, metadata) {
         )
 
     if (!is.null(metadata)) {
-        df_metadata <- cbind(df_metadata, metadata)
+        df_metadata <- as_tibble(cbind(df_metadata, metadata))
     }
 
     return(df_metadata)
@@ -204,7 +272,7 @@ get_metadata.XChromatogram <- function(obj, sample_id_column, metadata) {
             stop("metadata needs to have one element for XChromatogram input.")
         }
 
-        metadata |>
+        as_tibble(metadata) |>
             mutate(
                 sample_index = row_number(),
                 sample_id = if (
@@ -218,7 +286,7 @@ get_metadata.XChromatogram <- function(obj, sample_id_column, metadata) {
                 sample_path = NA_character_
             )
     } else {
-        data.frame(
+        tibble(
             sample_index = 1L,
             sample_id = "sample1",
             sample_path = NA_character_
@@ -243,7 +311,7 @@ get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
             )
         }
 
-        metadata |>
+        as_tibble(metadata) |>
             mutate(
                 sample_index = row_number(),
                 sample_id = if (
@@ -257,7 +325,7 @@ get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
                 sample_path = paths
             )
     } else {
-        data.frame(
+        tibble(
             sample_index = seq_along(objs),
             sample_id = default_ids,
             sample_path = paths
@@ -269,7 +337,7 @@ get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
 #' @keywords internal
 get_metadata.ExternalDataSource <- function(obj, sample_id_column, metadata) {
     obj@metadata |>
-        as.data.frame() |>
+        as_tibble() |>
         mutate(
             sample_index = row_number(),
             sample_id = .data[[sample_id_column]]
@@ -323,7 +391,7 @@ get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
 #' When peaks are not found or the object is not processed, `NULL` is returned.
 #'
 #' @param obj A data object containing or representing samples.
-#' @return A `data.frame` of detected peaks (one row per peak), or `NULL` if no
+#' @return A `tibble` of detected peaks (one row per peak), or `NULL` if no
 #' peaks are available.
 #' @keywords internal
 get_detected_peaks <- function(obj) {
@@ -332,7 +400,7 @@ get_detected_peaks <- function(obj) {
 
 .get_detected_peaks_xcms <- function(obj) {
     if (is_xcms_processed_data(obj) && xcms::hasChromPeaks(obj)) {
-        as.data.frame(xcms::chromPeaks(obj)) |>
+        as_tibble(xcms::chromPeaks(obj)) |>
             dplyr::rename(sample_index = sample)
     } else {
         NULL
@@ -367,14 +435,14 @@ get_detected_peaks.MChromatograms <- function(obj) {
 #' @keywords internal
 get_detected_peaks.XChromatograms <- function(obj) {
     if (any(xcms::hasChromPeaks(obj))) {
-        peaks <- as.data.frame(xcms::chromPeaks(obj)) |>
+        peaks <- as_tibble(xcms::chromPeaks(obj)) |>
             dplyr::rename(sample_index = "column") |>
             select(-dplyr::all_of("mz")) # This is already present in mz_info
 
         # Extract mz ranges from each row of the XChromatograms object
         mz_info <- do.call(rbind, lapply(seq_len(nrow(obj)), function(i) {
             mz_range <- MSnbase::mz(obj[i, 1L])[[1L]]
-            data.frame(
+            tibble(
                 row   = i,
                 mz    = mean(mz_range)
             )
@@ -391,7 +459,7 @@ get_detected_peaks.XChromatograms <- function(obj) {
 get_detected_peaks.XChromatogram <- function(obj) {
     if (xcms::hasChromPeaks(obj)) {
         mz_range <- MSnbase::mz(obj)
-        as.data.frame(xcms::chromPeaks(obj)) |>
+        as_tibble(xcms::chromPeaks(obj)) |>
             mutate(
                 mz = mean(mz_range),
                 sample_index = obj@fromFile
@@ -419,7 +487,7 @@ get_detected_peaks.ExternalDataSource <- function(obj) {
 #' grouped peaks, i.e., chromatographic peaks aligned across samples.
 #'
 #' @param obj A data object containing or representing samples.
-#' @return A `data.frame` of grouped (feature-level) peaks,
+#' @return A `tibble` of grouped (feature-level) peaks,
 #' or `NULL` if not available.
 #' @keywords internal
 get_grouped_peaks <- function(obj) {
@@ -434,7 +502,7 @@ get_grouped_peaks.default <- function(obj) {
 
 .get_grouped_peaks_xcms <- function(obj) {
     if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
-        as.data.frame(xcms::featureDefinitions(obj)) |>
+        as_tibble(xcms::featureDefinitions(obj)) |>
             rename(all_of(c(mz = "mzmed", rt = "rtmed"))) |>
             mutate(name = xcms_utils$group_names(obj)) |>
             xcms_utils$format_feature_identifiers(

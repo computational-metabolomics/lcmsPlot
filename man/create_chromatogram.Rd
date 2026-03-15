@@ -26,7 +26,7 @@ of the scans to consider.}
 \item{fill_gaps}{A \code{logical} indicating whether to fill gaps
 between scans with zeros.}
 
-\item{adjusted_rt}{A \code{data.frame}}
+\item{adjusted_rt}{A \code{tibble} containing the raw and adjusted RTs.}
 }
 \value{
 A \code{list} with two data frames (\code{chromatograms} and \code{mass_traces})

@@ -15,7 +15,7 @@ merge_by_index(a, b, index_col)
 referring to \code{b}.}
 }
 \value{
-A \code{data.frame} resulting from a left join of \code{a} and the indexed \code{b}.
+A \code{tibble} resulting from a left join of \code{a} and the indexed \code{b}.
 }
 \description{
 Merge two data frames using a row-index match

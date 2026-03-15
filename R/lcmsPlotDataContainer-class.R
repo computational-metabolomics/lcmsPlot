@@ -2,7 +2,8 @@
     metadata = function(df) {
         validate_data_frame(df, list(
             field("sample_index", is.numeric),
-            field("sample_id", is.character)
+            field("sample_id", is.character),
+            field("sample_path", is.character, required = FALSE)
         ))
     },
     feature_metadata = function(df) {
@@ -68,7 +69,8 @@
             field("rtmin", is.numeric),
             field("rtmax", is.numeric),
             field("sample_index", is.numeric),
-            field("sample_id", is.character)
+            field("sample_id", is.character),
+            field("sample_path", is.character, required = FALSE)
         ))
     }
 )
@@ -120,14 +122,17 @@ create_data_container_from_obj <- function(
     new("lcmsPlotDataContainer",
         data_obj = data_obj,
         metadata = get_metadata(data_obj, sample_id_column, metadata),
-        chromatograms = data.frame(),
-        mass_traces = data.frame(),
-        spectra = data.frame(),
-        total_ion_current = data.frame(),
-        intensity_maps = data.frame(),
-        rt_diff = data.frame(),
-        feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
-        detected_peaks = data.frame())
+        chromatograms = tibble(),
+        mass_traces = tibble(),
+        spectra = tibble(),
+        total_ion_current = tibble(),
+        intensity_maps = tibble(),
+        rt_diff = tibble(),
+        feature_metadata = tibble(
+            feature_metadata_id = numeric(),
+            metadata_index = numeric()
+        ),
+        detected_peaks = tibble())
 }
 
 #' A unified storing mechanism for LC-MS data
@@ -220,15 +225,15 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #'
 #' data_obj <- new("lcmsPlotDataContainer",
 #'     data_obj = raw_files,
-#'     metadata = data.frame(),
-#'     chromatograms = data.frame(),
-#'     mass_traces = data.frame(),
-#'     spectra = data.frame(),
-#'     total_ion_current = data.frame(),
-#'     intensity_maps = data.frame(),
-#'     rt_diff = data.frame(),
-#'     feature_metadata = data.frame(),
-#'     detected_peaks = data.frame())
+#'     metadata = tibble::tibble(),
+#'     chromatograms = tibble::tibble(),
+#'     mass_traces = tibble::tibble(),
+#'     spectra = tibble::tibble(),
+#'     total_ion_current = tibble::tibble(),
+#'     intensity_maps = tibble::tibble(),
+#'     rt_diff = tibble::tibble(),
+#'     feature_metadata = tibble::tibble(),
+#'     detected_peaks = tibble::tibble())
 #' data_obj
 setMethod(
     f = "show",
@@ -244,7 +249,7 @@ setMethod(
                 d <- dim(x)
                 cat(" ", name, ":", d[1], "rows x", d[2], "columns\n")
             } else {
-                cat(" ", name, ": not a data.frame\n")
+                cat(" ", name, ": not a data frame\n")
             }
         }
 

@@ -10,7 +10,7 @@ get_workflow_input_files(conn)
 \item{conn}{A \code{DBIConnection} to a Compound Discoverer results database.}
 }
 \value{
-A \code{data.frame} containing information about the workflow input files.
+A \code{tibble} containing information about the workflow input files.
 }
 \description{
 Extracts the contents of the \code{WorkflowInputFiles} table from a

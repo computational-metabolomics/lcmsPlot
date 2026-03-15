@@ -31,11 +31,14 @@ setValidity("XcmsRawList", function(object) {
 #' @return An instance of `XcmsRawList`.
 #' @export
 #' @examples
-#' \dontrun{
-#' raw1 <- xcms::xcmsRaw("sample1.mzML")
-#' raw2 <- xcms::xcmsRaw("sample2.mzML")
+#' paths <- dir(
+#'     system.file("cdf", package = "faahKO"),
+#'     full.names = TRUE,
+#'     recursive = TRUE
+#' )[c(1, 2)]
+#' raw1 <- xcms::xcmsRaw(paths[1])
+#' raw2 <- xcms::xcmsRaw(paths[2])
 #' xl <- XcmsRawList(raw1, raw2)
-#' }
 XcmsRawList <- function(...) {
     objs <- list(...)
     # Allow passing a pre-built list: XcmsRawList(list(raw1, raw2))

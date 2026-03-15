@@ -16,7 +16,7 @@ field <- function(name, type = NULL, required = TRUE) {
 #' Returns `TRUE` on success or a `character` string describing the first
 #' failure. `NULL` and empty data frames always pass.
 #'
-#' @param df A `data.frame` to validate.
+#' @param df A `data.frame` or `tibble` to validate.
 #' @param fields A `list` of field specifications created with `field()`.
 #' @param exact A `logical` value. If `TRUE`, the column names of `df` must
 #' be identical to the names in `fields` (same set, same order). Defaults
@@ -25,7 +25,13 @@ field <- function(name, type = NULL, required = TRUE) {
 #' the first failure.
 #' @keywords internal
 validate_data_frame <- function(df, fields, exact = FALSE) {
-    if (is.null(df) || nrow(df) == 0) return(TRUE)
+    if (is.null(df) || nrow(df) == 0) {
+        return(TRUE)
+    }
+
+    if (!is_tibble(df)) {
+        return("The data is not a tibble.")
+    }
 
     for (field in fields) {
         present <- field$name %in% colnames(df)
@@ -58,7 +64,7 @@ validate_data_frame <- function(df, fields, exact = FALSE) {
 #'
 #' @param object An S4 object whose slots are to be validated.
 #' @param validators A named `list` of functions, where each name matches a
-#' slot of `object` and each function accepts a `data.frame` and returns
+#' slot of `object` and each function accepts a `data.frame`/`tibble` and returns
 #' `TRUE` or a character error string (as produced by `validate_data_frame()`).
 #' @return `TRUE` if all validators pass, or a `character` string describing
 #' the first failure in the form `"@slot_name: <message>"`.

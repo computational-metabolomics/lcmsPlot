@@ -35,7 +35,7 @@ setClass(
 #' Get scan header information from a raw MS file reader
 #'
 #' @param reader An instance of `MsRawReader`.
-#' @return A `data.frame` with at least the columns `seqNum`,
+#' @return A `tibble` with at least the columns `seqNum`,
 #' `retentionTime`, `msLevel`, `basePeakIntensity`, and `totIonCurrent`.
 #' @keywords internal
 setGeneric("ms_header", function(reader) standardGeneric("ms_header"))
@@ -70,7 +70,7 @@ setGeneric("ms_close", function(reader) standardGeneric("ms_close"))
 #' @param mz A `numeric` scalar — the target m/z.
 #' @param ppm A `numeric` scalar — the mass tolerance in ppm.
 #' @param rt_range A length-2 `numeric` vector — the RT window in seconds.
-#' @return A `list` with two `data.frame`s: `chromatograms` (columns `rt` and
+#' @return A `list` with two `tibble`s: `chromatograms` (columns `rt` and
 #' `intensity`) and `mass_traces` (empty for backends that do not expose
 #' per-scan m/z data via this interface).
 #' @keywords internal
@@ -143,7 +143,7 @@ setMethod("ms_header", "RawrrReader", function(reader) {
     idx <- rawrr::readIndex(reader@path)
     bpc <- rawrr::readChromatogram(rawfile = reader@path, type = "bpc")
     tic <- rawrr::readChromatogram(rawfile = reader@path, type = "tic")
-    data.frame(
+    tibble(
         seqNum = idx$scan,
         retentionTime = idx$StartTime * 60,
         msLevel = .rawrr_ms_order_to_level(idx$MSOrder),
@@ -166,7 +166,7 @@ setMethod(
             reader@path, type = "xic", mass = mz, tol = ppm)
         rt_seconds <- chrom[[1]]$times * 60
         in_range <- rt_seconds >= rt_range[1] & rt_seconds <= rt_range[2]
-        data.frame(
+        tibble(
             rt = rt_seconds[in_range],
             intensity = chrom[[1]]$intensities[in_range]
         )
@@ -204,7 +204,7 @@ setMethod("ms_header", "XcmsRawReader", function(reader) {
         bpi[i] <- if (start <= end && length(ints) > 0) max(ints[start:end]) else 0
     }
 
-    data.frame(
+    tibble(
         seqNum = seq_len(nscans),
         retentionTime = obj@scantime,
         msLevel = 1L,
@@ -227,8 +227,11 @@ setMethod("ms_peaks", "XcmsRawReader", function(reader, scans) {
         if (start <= end) {
             cbind(mz = mzs[start:end], intensity = ints[start:end])
         } else {
-            matrix(numeric(0), ncol = 2,
-                   dimnames = list(NULL, c("mz", "intensity")))
+            matrix(
+                numeric(0),
+                ncol = 2,
+                dimnames = list(NULL, c("mz", "intensity"))
+            )
         }
     })
 })

@@ -34,7 +34,7 @@ get_detected_peaks(obj)
 \item{obj}{A data object containing or representing samples.}
 }
 \value{
-A \code{data.frame} of detected peaks (one row per peak), or \code{NULL} if no
+A \code{tibble} of detected peaks (one row per peak), or \code{NULL} if no
 peaks are available.
 }
 \description{

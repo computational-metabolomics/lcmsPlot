@@ -33,7 +33,7 @@ setMethod(
                     x
             })()
 
-        all_spectra <- data.frame(
+        all_spectra <- tibble(
             mz = numeric(),
             intensity = numeric(),
             rt = numeric(),
@@ -162,7 +162,7 @@ setMethod(
                 hit_intensities <- Spectra::intensity(spectral_library)
                 hit_intensities <- hit_intensities[[target_index]]
 
-                all_spectra <- rbind(all_spectra, data.frame(
+                all_spectra <- rbind(all_spectra, tibble(
                     mz = hit_mzs,
                     intensity = hit_intensities,
                     rt = unique(

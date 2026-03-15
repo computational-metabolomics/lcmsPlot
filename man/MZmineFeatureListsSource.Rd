@@ -42,7 +42,7 @@ sample_paths <- file.path(
 ## Create a minimal MZmine 2 feature list CSV
 feature_list_path <- file.path(tmp_dir, "mzmine_features.csv")
 
-mzmine_features <- data.frame(
+mzmine_features <- tibble::tibble(
   "row m/z" = c(100.1, 200.2),
   "sample1.mzML Feature status" = c("DETECTED", "DETECTED"),
   "sample1.mzML Feature m/z" = c(100.1, 200.2),

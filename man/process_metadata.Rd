@@ -13,7 +13,7 @@ process_metadata(sample_paths, metadata_path = NULL)
 metadata file with a header.}
 }
 \value{
-A \code{data.frame} containing a \code{sample_path} column and
+A \code{tibble} containing a \code{sample_path} column and
 any additional metadata.
 }
 \description{

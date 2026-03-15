@@ -7,7 +7,7 @@
 convert_rt_to_seconds(peaks)
 }
 \arguments{
-\item{peaks}{A \code{data.frame} containing \code{rt}, \code{rtmin}, and \code{rtmax}
+\item{peaks}{A \code{tibble} containing \code{rt}, \code{rtmin}, and \code{rtmax}
 columns in minutes.}
 }
 \value{

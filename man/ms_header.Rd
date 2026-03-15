@@ -19,7 +19,7 @@ ms_header(reader)
 \item{reader}{An instance of \code{MsRawReader}.}
 }
 \value{
-A \code{data.frame} with at least the columns \code{seqNum},
+A \code{tibble} with at least the columns \code{seqNum},
 \code{retentionTime}, \code{msLevel}, \code{basePeakIntensity}, and \code{totIonCurrent}.
 }
 \description{

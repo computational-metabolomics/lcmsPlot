@@ -3,7 +3,7 @@
 #' @param raw_data An instance of class `MsRawReader`.
 #' @param rt A `numeric` value indicating the RT to consider.
 #' @param ms_level A `numeric` value indicating the MS level of the scans.
-#' @return A `data.frame` representing a spectrum with columns
+#' @return A `tibble` representing a spectrum with columns
 #' `mz`, `intensity`, and `rt`.
 #' @keywords internal
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
@@ -22,7 +22,7 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
 
     spectrum_data <- ms_peaks(raw_data, closest_scan_id)[[1]]
 
-    spectrum_df <- data.frame(
+    spectrum_df <- tibble(
         mz = spectrum_data[, 1],
         intensity = spectrum_data[, 2],
         rt = hdr$retentionTime[closest_index]
@@ -34,9 +34,9 @@ create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
 #' Create a spectrum of the specified scan
 #'
 #' @param raw_data An instance of class `MsRawReader`.
-#' @param sample_metadata A `data.frame` indicating the sample metadata.
+#' @param sample_metadata A `tibble` indicating the sample metadata.
 #' @param scan_index A `numeric` value indicating the scan index.
-#' @return A `data.frame` representing a spectrum with columns
+#' @return A `tibble` representing a spectrum with columns
 #' `mz`, `intensity`, and `rt`.
 #' @keywords internal
 create_spectrum_from_scan_index <- function(
@@ -51,7 +51,7 @@ create_spectrum_from_scan_index <- function(
         sidx <- scan_index
     }
     spectrum_data <- ms_peaks(raw_data, sidx)[[1]]
-    spectrum_df <- data.frame(
+    spectrum_df <- tibble(
         mz = spectrum_data[, 1],
         intensity = spectrum_data[, 2],
         rt = hdr$retentionTime[sidx]
@@ -62,13 +62,13 @@ create_spectrum_from_scan_index <- function(
 #' Create spectra for a single sample
 #'
 #' @param raw_obj An instance of class `mzR`.
-#' @param detected_peaks A `data.frame` containing the detected peaks to
+#' @param detected_peaks A `tibble` containing the detected peaks to
 #' consider. Only applicable for modes `"closest_apex"` and `"across_peak"`.
-#' @param sample_metadata A `data.frame` containing the sample's metadata.
+#' @param sample_metadata A `tibble` containing the sample's metadata.
 #' @param options A `list` representing the plot object's options.
 #' @param rt_range A `numeric` value indicating the RT range to apply to the
 #' detected peaks.
-#' @return A `data.frame` representing spectra with columns `mz`, `intensity`,
+#' @return A `tibble` representing spectra with columns `mz`, `intensity`,
 #' and `rt`.
 #' @keywords internal
 create_spectra_for_sample <- function(

@@ -36,12 +36,12 @@ create_chromatograms(data_obj, metadata, options, features)
 \arguments{
 \item{data_obj}{The data object (e.g. \code{XCMSnExp}, \code{DBIConnection}, \code{character}).}
 
-\item{metadata}{A \code{data.frame} of sample metadata.}
+\item{metadata}{A \code{tibble} of sample metadata.}
 
 \item{options}{A \code{list} of plot options.}
 
 \item{features}{\code{NULL}, a \code{character} vector of feature IDs, or a
-\code{matrix}/\code{data.frame} of feature ranges.}
+\code{matrix}/\code{tibble} of feature ranges.}
 }
 \value{
 A named \code{list} with elements \code{chromatograms}, \code{mass_traces},

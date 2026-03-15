@@ -15,10 +15,10 @@ create_spectra_for_sample(
 \arguments{
 \item{raw_obj}{An instance of class \code{mzR}.}
 
-\item{detected_peaks}{A \code{data.frame} containing the detected peaks to
+\item{detected_peaks}{A \code{tibble} containing the detected peaks to
 consider. Only applicable for modes \code{"closest_apex"} and \code{"across_peak"}.}
 
-\item{sample_metadata}{A \code{data.frame} containing the sample's metadata.}
+\item{sample_metadata}{A \code{tibble} containing the sample's metadata.}
 
 \item{options}{A \code{list} representing the plot object's options.}
 
@@ -26,7 +26,7 @@ consider. Only applicable for modes \code{"closest_apex"} and \code{"across_peak
 detected peaks.}
 }
 \value{
-A \code{data.frame} representing spectra with columns \code{mz}, \code{intensity},
+A \code{tibble} representing spectra with columns \code{mz}, \code{intensity},
 and \code{rt}.
 }
 \description{

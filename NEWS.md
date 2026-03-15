@@ -1,3 +1,17 @@
+# lcmsPlot 0.99.19
+
+- Migrated all internal data structures from `data.frame` to `tibble`;
+  `tibble` is now a formal `Imports` dependency.
+- Fixed `all_of()` call in the `DBIConnection` chromatogram creator to pass
+  column names as a single character vector.
+- Qualified `tibble()` calls in `MZmineFeatureListsSource` and
+  `MsDialPeaksSource` examples as `tibble::tibble()` to avoid
+  `could not find function "tibble"` errors during `R CMD check`.
+- Expanded `get_metadata()` documentation with dedicated sections describing
+  the behaviour for all nine dispatch methods: `character`, `XCMSnExp`,
+  `MsExperiment`, `MChromatograms`, `XChromatograms`, `XChromatogram`,
+  `XcmsRawList`, `ExternalDataSource`, and `DBIConnection`.
+
 # lcmsPlot 0.99.18
 
 - Added support for `xcmsRaw` objects via the new `XcmsRawList` S4 container

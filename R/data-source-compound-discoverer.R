@@ -33,7 +33,7 @@ open_cd_result_connection <- function(cd_result_path) {
 #' Compound Discoverer results database.
 #'
 #' @param conn A `DBIConnection` to a Compound Discoverer results database.
-#' @return A `data.frame` containing information about the workflow input files.
+#' @return A `tibble` containing information about the workflow input files.
 #' @keywords internal
 get_workflow_input_files <- function(conn) {
     tbl(conn, "WorkflowInputFiles") |>
@@ -54,7 +54,7 @@ get_workflow_input_files <- function(conn) {
 #' @param compounds_query_str A `character` value giving a filtering expression
 #' evaluated on the resulting compound table (e.g. using compound name,
 #' formula, retention time, or m/z).
-#' @return A `data.frame` containing XIC trace metadata and binary trace data
+#' @return A `tibble` containing XIC trace metadata and binary trace data
 #' for the selected compounds.
 #' @keywords internal
 get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
@@ -170,7 +170,7 @@ get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
 #' database and converts it into a retention time-intensity data frame.
 #'
 #' @param data A raw vector or binary object containing the encoded XIC trace.
-#' @return A `data.frame` with columns:
+#' @return A `tibble` with columns:
 #' \describe{
 #'   \item{rt}{Retention time in seconds.}
 #'   \item{intensity}{Signal intensity.}
@@ -312,7 +312,7 @@ parse_trace <- function(data) {
     }
 
     # build points
-    data.frame(
+    tibble(
         rt = times * 60,
         intensity = intensities
     )

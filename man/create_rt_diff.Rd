@@ -17,7 +17,7 @@ create_rt_diff(obj, options)
 }
 \value{
 An instance of class \code{lcmsPlotDataContainer} with the created
-RT adjustment dataset, a \code{data.frame}
+RT adjustment dataset, a \code{tibble}
 with columns \code{rt_raw}, \code{rt_adj}, and \code{diff}.
 }
 \description{

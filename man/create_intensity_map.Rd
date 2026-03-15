@@ -16,7 +16,7 @@ create_intensity_map(obj, options)
 }
 \value{
 An instance of class \code{lcmsPlotDataContainer} with the created
-intensity map, a \code{data.frame} with columns \code{mz} and \code{rt}.
+intensity map, a \code{tibble} with columns \code{mz} and \code{rt}.
 }
 \description{
 This function creates an \code{lcmsPlotDataContainer} object from

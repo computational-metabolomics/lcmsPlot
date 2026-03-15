@@ -17,7 +17,7 @@ create_total_ion_current(obj, options)
 }
 \value{
 An instance of class \code{lcmsPlotDataContainer} with the created
-RT adjustment dataset, a \code{data.frame}
+RT adjustment dataset, a \code{tibble}
 with columns \code{sample_id} and \code{intensity}.
 }
 \description{

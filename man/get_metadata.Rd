@@ -39,11 +39,11 @@ get_metadata(obj, sample_id_column, metadata)
 \item{sample_id_column}{A \code{character} value indicating the column that
 should be used as the sample ID.}
 
-\item{metadata}{Optional metadata \code{data.frame} used to replace or augment
+\item{metadata}{Optional metadata \code{tibble} used to replace or augment
 sample metadata when not already embedded in the object.}
 }
 \value{
-A \code{data.frame} containing standardised metadata with at least
+A \code{tibble} containing standardised metadata with at least
 \code{sample_index}, \code{sample_id}, and \code{sample_path}.
 }
 \description{
@@ -116,6 +116,98 @@ The returned metadata includes:
 \item \code{sample_id}: extracted using \code{sample_id_column}
 \item \code{sample_path}: values from \code{xcms::fileNames(obj)}
 }
+}
+
+\section{\code{MChromatograms} and \code{XChromatograms} input}{
+
+Metadata is taken from \code{MSnbase::phenoData(obj)}.
+
+\code{sample_id} is resolved in the following order:
+\enumerate{
+\item \code{sample_id_column} (if provided and present in \code{phenoData})
+\item Basename without extension of the \code{spectraOrigin} column
+\item \code{"sample1"}, \code{"sample2"}, ... (fallback)
+}
+
+\code{sample_path} is set to \code{spectraOrigin} if present, otherwise \code{NA}.
+
+\strong{If \code{metadata} is provided:}
+It is column-bound onto the extracted \code{phenoData}.
+
+The returned metadata always includes:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: resolved as above
+\item \code{sample_path}: from \code{spectraOrigin} or \code{NA}
+}
+}
+
+\section{\code{XChromatogram} input}{
+
+Represents a single chromatogram (one sample). \code{sample_path} is always \code{NA}.
+
+\strong{If \code{metadata} is NULL:}
+Returns a single-row tibble with \code{sample_index = 1}, \code{sample_id = "sample1"},
+and \code{sample_path = NA}.
+
+\strong{If \code{metadata} is provided:}
+Must have exactly one row. The supplied metadata is used with:
+\itemize{
+\item \code{sample_index}: \code{1}
+\item \code{sample_id}: from \code{sample_id_column} if present, otherwise \code{"sample1"}
+\item \code{sample_path}: \code{NA}
+}
+}
+
+\section{\code{XcmsRawList} input}{
+
+Each element of the list is an \code{xcmsRaw} object. \code{sample_path} is extracted
+from the \verb{@filepath} slot of each \code{xcmsRaw}.
+
+\strong{If \code{metadata} is NULL:}
+Metadata is \emph{constructed automatically}:
+\itemize{
+\item \code{sample_index}: sequential index
+\item \code{sample_id}: basename without extension of \code{sample_path}
+\item \code{sample_path}: from \code{xcmsRaw@filepath}
+}
+
+\strong{If \code{metadata} is provided:}
+Must have one row per \code{xcmsRaw} object. The supplied metadata is used with:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: from \code{sample_id_column} if present, otherwise basename of path
+\item \code{sample_path}: from \code{xcmsRaw@filepath}
+}
+}
+
+\section{\code{ExternalDataSource} input}{
+
+Metadata is taken from the \verb{@metadata} slot of the \code{ExternalDataSource}
+object. The \code{metadata} parameter is ignored.
+
+The returned metadata always includes:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: extracted using \code{sample_id_column}
+}
+}
+
+\section{\code{DBIConnection} input}{
+
+Metadata is queried from a Compound Discoverer SQLite database via
+\code{get_workflow_input_files()}.
+
+\strong{If \code{metadata} is NULL:}
+Returns the query result with:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: from \code{StudyFileID}
+\item \code{sample_path}: from \code{PhysicalFileName}
+}
+
+\strong{If \code{metadata} is provided:}
+It is joined onto the query result using \code{sample_id_column}.
 }
 
 \keyword{internal}

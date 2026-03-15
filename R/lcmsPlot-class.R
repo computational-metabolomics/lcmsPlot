@@ -501,6 +501,7 @@ lp_chromatogram <- function(
                 obj@data@metadata,
                 obj@options,
                 features)
+
             obj@data@chromatograms <- if (na.rm) {
                 result$chromatograms[!is.na(result$chromatograms$intensity), ]
             } else {

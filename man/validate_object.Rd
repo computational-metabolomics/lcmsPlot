@@ -10,7 +10,7 @@ validate_object(object, validators)
 \item{object}{An S4 object whose slots are to be validated.}
 
 \item{validators}{A named \code{list} of functions, where each name matches a
-slot of \code{object} and each function accepts a \code{data.frame} and returns
+slot of \code{object} and each function accepts a \code{data.frame}/\code{tibble} and returns
 \code{TRUE} or a character error string (as produced by \code{validate_data_frame()}).}
 }
 \value{
