@@ -7,7 +7,7 @@
 #' @param obj An instance of class `lcmsPlotDataContainer`.
 #' @param options A `list` representing the plot object's options.
 #' @return An instance of class `lcmsPlotDataContainer` with the created
-#' RT adjustment dataset, a `data.frame`
+#' RT adjustment dataset, a `tibble`
 #' with columns `rt_raw`, `rt_adj`, and `diff`.
 #' @keywords internal
 setGeneric(
@@ -23,7 +23,7 @@ setMethod(
         rt_raw <- xcms::rtime(obj@data_obj, adjusted = FALSE)
         rt_adj <- xcms::adjustedRtime(obj@data_obj)
 
-        rt_diff <- data.frame(
+        rt_diff <- tibble(
             rt_raw = rt_raw,
             rt_adj = rt_adj,
             diff = rt_adj - rt_raw,

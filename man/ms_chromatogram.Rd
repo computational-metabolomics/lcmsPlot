@@ -25,7 +25,7 @@ ms_chromatogram(reader, mz, ppm, rt_range)
 \item{rt_range}{A length-2 \code{numeric} vector — the RT window in seconds.}
 }
 \value{
-A \code{list} with two \code{data.frame}s: \code{chromatograms} (columns \code{rt} and
+A \code{list} with two \code{tibble}s: \code{chromatograms} (columns \code{rt} and
 \code{intensity}) and \code{mass_traces} (empty for backends that do not expose
 per-scan m/z data via this interface).
 }

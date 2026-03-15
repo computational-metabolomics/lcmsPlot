@@ -65,10 +65,9 @@ get_XCMSnExp_object_example <- function(
         fixed = TRUE
     )
 
-    pd <- data.frame(
+    pd <- tibble(
         sample_name = sample_names,
-        sample_group = toupper(sub("[0-9]+", "", sample_names)),
-        stringsAsFactors = FALSE
+        sample_group = toupper(sub("[0-9]+", "", sample_names))
     )
 
     raw_data <- MSnbase::readMSData(
@@ -105,7 +104,7 @@ get_XCMSnExp_object_example <- function(
 #' @param b The right data frame whose row order defines the index.
 #' @param index_col The name of the column in `a` that contains row indices
 #' referring to `b`.
-#' @return A `data.frame` resulting from a left join of `a` and the indexed `b`.
+#' @return A `tibble` resulting from a left join of `a` and the indexed `b`.
 #' @keywords internal
 merge_by_index <- function(a, b, index_col) {
     b_mod <- b |> mutate(row_id = row_number())
@@ -145,7 +144,7 @@ get_mz_range <- function(mz, ppm = 5) {
 #' @return A named list defining a feature with names: feature_id, mzr, rtr.
 #' @keywords internal
 get_feature_data <- function(feature, options, full_rt_range) {
-    # Helper: safely extract a value by name from vector or data.frame
+    # Helper: safely extract a value by name from vector or tibble
     get_val <- function(x, name) {
         if (is.data.frame(x)) {
             if (name %in% names(x)) return(x[[name]][1])
@@ -155,8 +154,8 @@ get_feature_data <- function(feature, options, full_rt_range) {
         return(NA)
     }
 
-    mz     <- get_val(feature, "mz")
-    rt     <- get_val(feature, "rt")
+    mz <- get_val(feature, "mz")
+    rt <- get_val(feature, "rt")
     mzmin  <- get_val(feature, "mzmin")
     mzmax  <- get_val(feature, "mzmax")
     rtmin  <- get_val(feature, "rtmin")
@@ -250,7 +249,7 @@ get_features <- function(
 #' adjustment has not been applied, the function returns \code{NULL}.
 #'
 #' @param obj An object potentially containing xcms-processed LC-MS data.
-#' @return A `data.frame` with one row per detected feature, containing:
+#' @return A `tibble` with one row per scan, containing:
 #' \describe{
 #'   \item{file_index}{Index of the originating raw data file.}
 #'   \item{raw_rt}{Original (unadjusted) retention time.}
@@ -262,7 +261,7 @@ get_adjusted_rts <- function(obj) {
     if (is_xcms_processed_data(obj) && xcms::hasAdjustedRtime(obj)) {
         adjusted_rt <- xcms::adjustedRtime(obj)
         file_indices <- xcms::fromFile(obj)
-        return(data.frame(
+        return(tibble(
             file_index = file_indices,
             raw_rt = xcms::rtime(obj, adjusted = FALSE),
             adj_rt = adjusted_rt

@@ -14,7 +14,7 @@ evaluated on the resulting compound table (e.g. using compound name,
 formula, retention time, or m/z).}
 }
 \value{
-A \code{data.frame} containing XIC trace metadata and binary trace data
+A \code{tibble} containing XIC trace metadata and binary trace data
 for the selected compounds.
 }
 \description{

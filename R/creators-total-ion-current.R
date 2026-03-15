@@ -7,7 +7,7 @@
 #' @param obj An instance of class `lcmsPlotDataContainer`.
 #' @param options A `list` representing the plot object's options.
 #' @return An instance of class `lcmsPlotDataContainer` with the created
-#' RT adjustment dataset, a `data.frame`
+#' RT adjustment dataset, a `tibble`
 #' with columns `sample_id` and `intensity`.
 #' @keywords internal
 setGeneric(
@@ -31,7 +31,7 @@ setMethod(
             rbind,
             lapply(seq_along(tc), function(i) {
                 x <- tc[[i]] |>
-                    as.data.frame() |>
+                    as_tibble() |>
                     mutate(metadata_index = i, feature_metadata_id = i)
                 colnames(x)[1] <- "intensity"
                 x

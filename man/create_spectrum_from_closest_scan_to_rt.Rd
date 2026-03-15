@@ -14,7 +14,7 @@ create_spectrum_from_closest_scan_to_rt(raw_data, rt, ms_level)
 \item{ms_level}{A \code{numeric} value indicating the MS level of the scans.}
 }
 \value{
-A \code{data.frame} representing a spectrum with columns
+A \code{tibble} representing a spectrum with columns
 \code{mz}, \code{intensity}, and \code{rt}.
 }
 \description{

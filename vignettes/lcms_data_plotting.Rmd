@@ -332,11 +332,9 @@ The resulting plot is arranged as a grid with features as rows and
 samples as columns.
 
 ```{r plot-XChromatograms, message=FALSE, warning=FALSE, fig.height=4, fig.width=10}
-mzr <- matrix(c(344, 344,
-                 360, 360), ncol = 2, byrow = TRUE)
+mzr <- matrix(c(344, 344, 360, 360), ncol = 2, byrow = TRUE)
 
-rtr <- matrix(c(2500, 3500,
-                 2600, 3600), ncol = 2, byrow = TRUE)
+rtr <- matrix(c(2500, 3500, 2600, 3600), ncol = 2, byrow = TRUE)
 
 chrs <- chromatogram(faahko, mz = mzr, rt = rtr)
 

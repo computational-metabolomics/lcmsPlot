@@ -7,7 +7,7 @@
 validate_data_frame(df, fields, exact = FALSE)
 }
 \arguments{
-\item{df}{A \code{data.frame} to validate.}
+\item{df}{A \code{data.frame} or \code{tibble} to validate.}
 
 \item{fields}{A \code{list} of field specifications created with \code{field()}.}
 

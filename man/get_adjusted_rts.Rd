@@ -10,7 +10,7 @@ get_adjusted_rts(obj)
 \item{obj}{An object potentially containing xcms-processed LC-MS data.}
 }
 \value{
-A \code{data.frame} with one row per detected feature, containing:
+A \code{tibble} with one row per scan, containing:
 \describe{
 \item{file_index}{Index of the originating raw data file.}
 \item{raw_rt}{Original (unadjusted) retention time.}

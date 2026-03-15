@@ -5,7 +5,7 @@
 #' One of `"sum"` or `"max"`.
 #' @param rt_adjusted A `numeric` vector representing the adjusted RT values.
 #' If `NULL` it will use the raw RT values.
-#' @return A `list` with one `data.frame` containing the chromatograms with
+#' @return A `list` with one `tibble` containing the chromatograms with
 #' columns `rt` and `intensity`.
 #' @keywords internal
 create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
@@ -25,7 +25,7 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
     }
 
     return(list(
-        chromatograms = data.frame(rt = rt, intensity = bpi)
+        chromatograms = tibble(rt = rt, intensity = bpi)
     ))
 }
 
@@ -38,7 +38,7 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
 #' of the scans to consider.
 #' @param fill_gaps A `logical` indicating whether to fill gaps
 #' between scans with zeros.
-#' @param adjusted_rt A `data.frame`
+#' @param adjusted_rt A `tibble` containing the raw and adjusted RTs.
 #' @return A `list` with two data frames (`chromatograms` and `mass_traces`)
 #' containing the chromatograms with columns `rt` and `intensity`
 #' and mass traces with columns `rt` and `mz`.
@@ -64,7 +64,7 @@ create_chromatogram <- function(
                     hdr$retentionTime <= rt_range[2],
             ]
             spectra <- ms_peaks(raw_data, scans_in_rt$seqNum)
-            mass_traces <- data.frame()
+            mass_traces <- tibble()
 
             for (i in seq_len(nrow(scans_in_rt))) {
                 spectrum <- spectra[[i]]
@@ -77,12 +77,12 @@ create_chromatogram <- function(
                 if (nrow(in_mz_range) > 0) {
                     mass_traces <- rbind(
                         mass_traces,
-                        data.frame(rt = rt, mz = in_mz_range[, 1])
+                        tibble(rt = rt, mz = in_mz_range[, 1])
                     )
                 }
             }
         } else {
-            mass_traces <- data.frame(
+            mass_traces <- tibble(
                 rt = numeric(),
                 mz = numeric()
             )
@@ -101,8 +101,8 @@ create_chromatogram <- function(
         ]
         spectra <- ms_peaks(raw_data, scans_in_rt$seqNum)
 
-        chr <- data.frame()
-        mass_traces <- data.frame()
+        chr <- tibble()
+        mass_traces <- tibble()
 
         for (i in seq_len(nrow(scans_in_rt))) {
             spectrum <- spectra[[i]]
@@ -115,17 +115,16 @@ create_chromatogram <- function(
             total_intensity <- sum(in_mz_range[, 2])
 
             if (nrow(in_mz_range) > 0) {
-                chr <- rbind(chr, data.frame(rt = rt, intensity = total_intensity))
-                mass_trace <- data.frame(rt = rt, mz = in_mz_range[, 1])
+                chr <- rbind(chr, tibble(rt = rt, intensity = total_intensity))
+                mass_trace <- tibble(rt = rt, mz = in_mz_range[, 1])
                 mass_traces <- rbind(mass_traces, mass_trace)
             } else if (fill_gaps) {
-                chr <- rbind(chr, data.frame(rt = rt, intensity = 0))
+                chr <- rbind(chr, tibble(rt = rt, intensity = 0))
             }
         }
     } else {
         stop("Input raw data is not of a supported type.")
     }
-
 
     return(list(
         chromatograms = chr,

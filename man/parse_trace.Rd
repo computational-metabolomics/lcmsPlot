@@ -10,7 +10,7 @@ parse_trace(data)
 \item{data}{A raw vector or binary object containing the encoded XIC trace.}
 }
 \value{
-A \code{data.frame} with columns:
+A \code{tibble} with columns:
 \describe{
 \item{rt}{Retention time in seconds.}
 \item{intensity}{Signal intensity.}

@@ -16,7 +16,7 @@ One of \code{"sum"} or \code{"max"}.}
 If \code{NULL} it will use the raw RT values.}
 }
 \value{
-A \code{list} with one \code{data.frame} containing the chromatograms with
+A \code{list} with one \code{tibble} containing the chromatograms with
 columns \code{rt} and \code{intensity}.
 }
 \description{

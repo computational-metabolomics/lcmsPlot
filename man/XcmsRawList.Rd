@@ -18,9 +18,12 @@ Wraps one or more \code{xcmsRaw} objects into an \code{XcmsRawList} container fo
 as the \code{dataset} argument of \code{lcmsPlot}.
 }
 \examples{
-\dontrun{
-raw1 <- xcms::xcmsRaw("sample1.mzML")
-raw2 <- xcms::xcmsRaw("sample2.mzML")
+paths <- dir(
+    system.file("cdf", package = "faahKO"),
+    full.names = TRUE,
+    recursive = TRUE
+)[c(1, 2)]
+raw1 <- xcms::xcmsRaw(paths[1])
+raw2 <- xcms::xcmsRaw(paths[2])
 xl <- XcmsRawList(raw1, raw2)
-}
 }

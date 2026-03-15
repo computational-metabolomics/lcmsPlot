@@ -28,7 +28,7 @@ setValidity("ExternalDataSource", function(object) {
     }
 
     if (!is.data.frame(object@metadata)) {
-        return("metadata must be a data.frame")
+        return("metadata must be a data frame or tibble")
     }
 
     if (!"sample_path" %in% colnames(object@metadata)) {
@@ -40,7 +40,7 @@ setValidity("ExternalDataSource", function(object) {
     }
 
     if (!is.data.frame(object@peaks)) {
-        return("peaks must be a data.frame")
+        return("peaks must be a data frame or tibble")
     }
 
     required_cols <- c(
@@ -69,8 +69,7 @@ setValidity("ExternalDataSource", function(object) {
 #' ## Create dummy metadata
 #' metadata <- data.frame(
 #'   sample_id = c("S1", "S2"),
-#'   sample_path = c("sample1.mzML", "sample2.mzML"),
-#'   stringsAsFactors = FALSE
+#'   sample_path = c("sample1.mzML", "sample2.mzML")
 #' )
 #'
 #' ## Create dummy peaks
@@ -154,7 +153,7 @@ setMethod(
 #' @param sample_paths A `character` vector of sample file paths.
 #' @param metadata_path A `character` value indicating the path to a delimited
 #' metadata file with a header.
-#' @return A `data.frame` containing a `sample_path` column and
+#' @return A `tibble` containing a `sample_path` column and
 #' any additional metadata.
 #' @keywords internal
 process_metadata <- function(sample_paths, metadata_path = NULL) {
@@ -164,7 +163,7 @@ process_metadata <- function(sample_paths, metadata_path = NULL) {
             sep = detect_separator(metadata_path),
             header = TRUE,
             stringsAsFactors = FALSE
-        )
+        ) |> as_tibble()
 
         if (nrow(metadata) != length(sample_paths)) {
             stop("Metadata rows must match length of sample_paths")
@@ -172,9 +171,8 @@ process_metadata <- function(sample_paths, metadata_path = NULL) {
 
         metadata$sample_path <- sample_paths
     } else {
-        metadata <- data.frame(
-            sample_path = sample_paths,
-            stringsAsFactors = FALSE
+        metadata <- tibble(
+            sample_path = sample_paths
         )
     }
 
@@ -185,7 +183,7 @@ process_metadata <- function(sample_paths, metadata_path = NULL) {
 #'
 #' Convert retention time columns from minutes to seconds.
 #'
-#' @param peaks A `data.frame` containing `rt`, `rtmin`, and `rtmax`
+#' @param peaks A `tibble` containing `rt`, `rtmin`, and `rtmax`
 #' columns in minutes.
 #'
 #' @return `peaks` with retention time columns converted to seconds.

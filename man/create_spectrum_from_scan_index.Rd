@@ -9,12 +9,12 @@ create_spectrum_from_scan_index(raw_data, sample_metadata, scan_index)
 \arguments{
 \item{raw_data}{An instance of class \code{MsRawReader}.}
 
-\item{sample_metadata}{A \code{data.frame} indicating the sample metadata.}
+\item{sample_metadata}{A \code{tibble} indicating the sample metadata.}
 
 \item{scan_index}{A \code{numeric} value indicating the scan index.}
 }
 \value{
-A \code{data.frame} representing a spectrum with columns
+A \code{tibble} representing a spectrum with columns
 \code{mz}, \code{intensity}, and \code{rt}.
 }
 \description{

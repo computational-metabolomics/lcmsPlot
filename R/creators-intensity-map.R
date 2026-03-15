@@ -6,7 +6,7 @@
 #' @param obj An instance of class `lcmsPlotDataContainer`.
 #' @param options A `list` representing the plot object's options.
 #' @return An instance of class `lcmsPlotDataContainer` with the created
-#' intensity map, a `data.frame` with columns `mz` and `rt`.
+#' intensity map, a `tibble` with columns `mz` and `rt`.
 #' @keywords internal
 setGeneric(
     "create_intensity_map",
@@ -38,7 +38,7 @@ setMethod(
                 if (nrow(pk) > 0) {
                     pk <- pk[pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ]
                     if (nrow(pk) > 0) {
-                        data.frame(
+                        tibble(
                             rt = rep(hdr$retentionTime[j], nrow(pk)),
                             mz = pk[,1],
                             intensity = pk[,2]

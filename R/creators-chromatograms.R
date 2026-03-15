@@ -1,4 +1,3 @@
-
 #' Create chromatogram data from a data object
 #'
 #' Dispatches to the appropriate implementation based on the type of `data_obj`
@@ -6,10 +5,10 @@
 #' `lcmsPlotDataContainer`.
 #'
 #' @param data_obj The data object (e.g. `XCMSnExp`, `DBIConnection`, `character`).
-#' @param metadata A `data.frame` of sample metadata.
+#' @param metadata A `tibble` of sample metadata.
 #' @param options A `list` of plot options.
 #' @param features `NULL`, a `character` vector of feature IDs, or a
-#' `matrix`/`data.frame` of feature ranges.
+#' `matrix`/`tibble` of feature ranges.
 #' @return A named `list` with elements `chromatograms`, `mass_traces`,
 #' `feature_metadata`, and `detected_peaks`.
 #' @keywords internal
@@ -43,8 +42,8 @@ setMethod(
                 .keep_all = TRUE
             ) |>
             ungroup() |>
-            select(name, formula, adduct, mz) |>
-            as.data.frame() |>
+            select(all_of(c("name", "formula", "adduct", "mz"))) |>
+            as_tibble() |>
             mutate(index = row_number())
 
         process_sample <- function(i) {
@@ -62,7 +61,7 @@ setMethod(
                 xic_entry <- xic_traces_results |>
                     filter(.data$sample_id == sample_metadata$sample_id) |>
                     inner_join(compound_data, by = cols) |>
-                    as.data.frame()
+                    as_tibble()
 
                 if (nrow(xic_entry) > 0) {
                     chroms <- parse_trace(xic_entry$trace[[1]]) |>
@@ -70,14 +69,14 @@ setMethod(
                             .data$rt >= xic_entry$rtmin - cd_opts$rt_extend,
                             .data$rt <= xic_entry$rtmax + cd_opts$rt_extend)
 
-                    chromatograms_list[[j]] <- data.frame(
+                    chromatograms_list[[j]] <- tibble(
                         rt = chroms$rt,
                         intensity = chroms$intensity,
                         metadata_index = sample_metadata$sample_index,
                         feature_metadata_id = compound_data$index
                     )
 
-                    additional_metadata_list[[j]] <- data.frame(
+                    additional_metadata_list[[j]] <- tibble(
                         feature_metadata_id = compound_data$index,
                         metadata_index = sample_metadata$sample_index,
                         name = compound_data$name,
@@ -122,7 +121,7 @@ setMethod(
             chromatograms = do.call(
                 rbind,
                 lapply(results, `[[`, "chromatograms")),
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
@@ -155,7 +154,7 @@ setMethod(
             data <- create_bpc_tic(raw_obj, options$chromatograms$aggregation_fun)
             chroms <- data$chromatograms
 
-            data.frame(
+            tibble(
                 rt = chroms$rt,
                 intensity = chroms$intensity,
                 metadata_index = sample_metadata$sample_index,
@@ -174,14 +173,14 @@ setMethod(
 
         list(
             chromatograms = do.call(rbind, chromatograms_list),
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
                 feature_metadata_id = numeric()
             ),
-            feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
-            detected_peaks = data.frame()
+            feature_metadata = tibble(feature_metadata_id = numeric(), metadata_index = numeric()),
+            detected_peaks = tibble()
         )
     }
 )
@@ -227,13 +226,13 @@ setMethod(
 
                 feature_metadata_id <- (i - 1) * n_features + j
 
-                additional_metadata_list[[j]] <- data.frame(
+                additional_metadata_list[[j]] <- tibble(
                     feature_metadata_id = feature_metadata_id,
                     metadata_index = sample_metadata$sample_index,
                     feature_id = feature_data$feature_id
                 )
 
-                chromatograms_list[[j]] <- data.frame(
+                chromatograms_list[[j]] <- tibble(
                     rt = data$chromatograms$rt,
                     intensity = data$chromatograms$intensity,
                     metadata_index = sample_metadata$sample_index,
@@ -241,7 +240,7 @@ setMethod(
                 )
 
                 if (nrow(data$mass_traces) > 0) {
-                    mass_traces_list[[j]] <- data.frame(
+                    mass_traces_list[[j]] <- tibble(
                         rt = data$mass_traces$rt,
                         mz = data$mass_traces$mz,
                         metadata_index = sample_metadata$sample_index,
@@ -251,7 +250,7 @@ setMethod(
             }
 
             if (length(mass_traces_list) == 0) {
-                mass_traces <- data.frame(
+                mass_traces <- tibble(
                     rt = numeric(),
                     mz = numeric(),
                     metadata_index = numeric(),
@@ -288,7 +287,7 @@ setMethod(
             feature_metadata = do.call(
                 rbind,
                 lapply(results, `[[`, "feature_metadata")),
-            detected_peaks = data.frame()
+            detected_peaks = tibble()
         )
     }
 )
@@ -301,7 +300,7 @@ setMethod(
         metadata <- metadata |>
             filter(.data$sample_id %in% options$chromatograms$sample_ids)
 
-        chromatograms <- data.frame()
+        chromatograms <- tibble()
 
         for (j in seq_len(ncol(data_obj))) {
             sample_metadata <- metadata |>
@@ -312,7 +311,7 @@ setMethod(
             for (i in seq_len(nrow(data_obj))) {
                 chrom <- data_obj[i, j]
 
-                chromatograms <- rbind(chromatograms, data.frame(
+                chromatograms <- rbind(chromatograms, tibble(
                     rt = MSnbase::rtime(chrom),
                     intensity = MSnbase::intensity(chrom),
                     metadata_index = sample_metadata$sample_index,
@@ -323,14 +322,14 @@ setMethod(
 
         list(
             chromatograms = chromatograms,
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
                 feature_metadata_id = numeric()
             ),
-            feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
-            detected_peaks = data.frame()
+            feature_metadata = tibble(feature_metadata_id = numeric(), metadata_index = numeric()),
+            detected_peaks = tibble()
         )
     }
 )
@@ -340,7 +339,7 @@ setMethod(
     f = "create_chromatograms",
     signature = c("XChromatogram", "data.frame", "list", "NULL"),
     definition = function(data_obj, metadata, options, features) {
-        chromatograms <- data.frame(
+        chromatograms <- tibble(
             rt = MSnbase::rtime(data_obj),
             intensity = MSnbase::intensity(data_obj),
             metadata_index = 1L,
@@ -352,18 +351,18 @@ setMethod(
             detected_peaks <- detected_peaks_raw |>
                 left_join(metadata, by = "sample_index")
         } else {
-            detected_peaks <- data.frame()
+            detected_peaks <- tibble()
         }
 
         list(
             chromatograms = chromatograms,
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
                 feature_metadata_id = numeric()
             ),
-            feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
+            feature_metadata = tibble(feature_metadata_id = numeric(), metadata_index = numeric()),
             detected_peaks = detected_peaks
         )
     }
@@ -406,14 +405,14 @@ setMethod(
                 counter <- counter + 1L
                 chrom <- data_obj[i, j]
 
-                chromatograms_list[[counter]] <- data.frame(
+                chromatograms_list[[counter]] <- tibble(
                     rt = MSnbase::rtime(chrom),
                     intensity = MSnbase::intensity(chrom),
                     metadata_index = sample_metadata$sample_index,
                     feature_metadata_id = counter
                 )
 
-                feature_metadata_list[[counter]] <- data.frame(
+                feature_metadata_list[[counter]] <- tibble(
                     feature_metadata_id = counter,
                     metadata_index = sample_metadata$sample_index,
                     feature_id = row_feature_info[[i]]$feature_id
@@ -422,13 +421,13 @@ setMethod(
         }
 
         if (length(chromatograms_list) == 0L) {
-            chromatograms <- data.frame(
+            chromatograms <- tibble(
                 rt = numeric(),
                 intensity = numeric(),
                 metadata_index = numeric(),
                 feature_metadata_id = numeric()
             )
-            feature_metadata <- data.frame(
+            feature_metadata <- tibble(
                 feature_metadata_id = numeric(),
                 metadata_index = numeric(),
                 feature_id = character()
@@ -443,12 +442,12 @@ setMethod(
             detected_peaks <- detected_peaks_raw |>
                 left_join(metadata, by = "sample_index")
         } else {
-            detected_peaks <- data.frame()
+            detected_peaks <- tibble()
         }
 
         list(
             chromatograms = chromatograms,
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
@@ -502,7 +501,7 @@ setMethod(
                 chroms <- chroms |> mutate(rt_type = NA_character_)
             }
 
-            data.frame(
+            tibble(
                 rt = chroms$rt,
                 intensity = chroms$intensity,
                 rt_type = chroms$rt_type,
@@ -528,14 +527,14 @@ setMethod(
 
         list(
             chromatograms = chromatograms,
-            mass_traces = data.frame(
+            mass_traces = tibble(
                 rt = numeric(),
                 mz = numeric(),
                 metadata_index = numeric(),
                 feature_metadata_id = numeric()
             ),
-            feature_metadata = data.frame(feature_metadata_id = numeric(), metadata_index = numeric()),
-            detected_peaks = data.frame()
+            feature_metadata = tibble(feature_metadata_id = numeric(), metadata_index = numeric()),
+            detected_peaks = tibble()
         )
     }
 )
@@ -556,16 +555,16 @@ setMethod(
         all_detected_peaks <- get_detected_peaks(data_obj)
         grouped_peaks <- get_grouped_peaks(data_obj) |>
             filter(.data$name %in% options$chromatograms$features)
-        detected_peaks <- data.frame()
+        detected_peaks <- tibble()
 
-        chromatograms <- data.frame()
-        mass_traces <- data.frame(
+        chromatograms <- tibble()
+        mass_traces <- tibble(
             rt = numeric(),
             mz = numeric(),
             metadata_index = numeric(),
             feature_metadata_id = numeric()
         )
-        feature_metadata <- data.frame(feature_metadata_id = numeric(), metadata_index = numeric())
+        feature_metadata <- tibble(feature_metadata_id = numeric(), metadata_index = numeric())
         feature_metadata_counter <- 0L
 
         for (i in seq_len(nrow(grouped_peaks))) {
@@ -611,13 +610,13 @@ setMethod(
                 )
 
                 feature_metadata_counter <- feature_metadata_counter + 1L
-                feature_metadata <- rbind(feature_metadata, data.frame(
+                feature_metadata <- rbind(feature_metadata, tibble(
                     feature_metadata_id = feature_metadata_counter,
                     metadata_index = sample_metadata$sample_index,
                     feature_id = feature$name
                 ))
 
-                chromatograms <- rbind(chromatograms, data.frame(
+                chromatograms <- rbind(chromatograms, tibble(
                     rt = data$chromatograms$rt,
                     intensity = data$chromatograms$intensity,
                     metadata_index = sample_metadata$sample_index,
@@ -625,7 +624,7 @@ setMethod(
                 ))
 
                 if (nrow(data$mass_traces) > 0) {
-                    mass_traces <- rbind(mass_traces, data.frame(
+                    mass_traces <- rbind(mass_traces, tibble(
                         rt = data$mass_traces$rt,
                         mz = data$mass_traces$mz,
                         metadata_index = sample_metadata$sample_index,
@@ -705,7 +704,7 @@ setMethod(
                         ) |>
                         left_join(metadata, by = "sample_index")
                 } else {
-                    peaks <- data.frame()
+                    peaks <- tibble()
                 }
 
                 detected_peaks_list[[j]] <- peaks
@@ -713,13 +712,13 @@ setMethod(
                 n_features <- nrow(options$chromatograms$features)
                 feature_metadata_id <- (i - 1) * n_features + j
 
-                additional_metadata_list[[j]] <- data.frame(
+                additional_metadata_list[[j]] <- tibble(
                     feature_metadata_id = feature_metadata_id,
                     metadata_index = sample_metadata$sample_index,
                     feature_id = feature_data$feature_id
                 )
 
-                chromatograms_list[[j]] <- data.frame(
+                chromatograms_list[[j]] <- tibble(
                     rt = data$chromatograms$rt,
                     intensity = data$chromatograms$intensity,
                     metadata_index = sample_metadata$sample_index,
@@ -727,7 +726,7 @@ setMethod(
                 )
 
                 if (nrow(data$mass_traces) > 0) {
-                    mass_traces_list[[j]] <- data.frame(
+                    mass_traces_list[[j]] <- tibble(
                         rt = data$mass_traces$rt,
                         mz = data$mass_traces$mz,
                         metadata_index = sample_metadata$sample_index,
@@ -737,7 +736,7 @@ setMethod(
             }
 
             if (length(mass_traces_list) == 0) {
-                mass_traces <- data.frame(
+                mass_traces <- tibble(
                     rt = numeric(),
                     mz = numeric(),
                     metadata_index = numeric(),
