@@ -34,6 +34,10 @@ jobs:
           apt-get update -y
           apt-get install -y libnetcdf-dev libhdf5-dev
 
+      - name: Install R toolchain packages
+        run: |
+          Rscript -e "install.packages(c('remotes', 'rcmdcheck', 'devtools'), repos = 'https://cloud.r-project.org')"
+
       - name: Install R package dependencies
         run: |
           Rscript -e "
