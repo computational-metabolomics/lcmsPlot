@@ -40,6 +40,7 @@ run_matching_plot_variant <- function(datasets, obj) {
         chromatograms = plot_chromatogram,
         mass_traces = plot_mass_trace,
         spectra = plot_spectrum,
+        peak_density = plot_peak_density,
         total_ion_current = plot_total_ion_current,
         intensity_maps = plot_intensity_map,
         rt_diff = plot_rt_diff

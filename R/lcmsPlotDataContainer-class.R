@@ -53,6 +53,19 @@
             field("feature_metadata_id", is.numeric)
         ), exact = TRUE)
     },
+    peak_density = function(df) {
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("density", is.numeric),
+            field("rtmin", is.numeric),
+            field("rtmax", is.numeric),
+            field("data_type", is.character),
+            field("mzmin", is.numeric),
+            field("mzmax", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ))
+    },
     rt_diff = function(df) {
         validate_data_frame(df, list(
             field("rt_raw", is.numeric),
@@ -79,6 +92,7 @@ DATASET_TYPES <- c(
     "chromatograms",
     "mass_traces",
     "spectra",
+    "peak_density",
     "intensity_maps",
     "total_ion_current",
     "rt_diff"
@@ -125,6 +139,7 @@ create_data_container_from_obj <- function(
         chromatograms = tibble(),
         mass_traces = tibble(),
         spectra = tibble(),
+        peak_density = tibble(),
         total_ion_current = tibble(),
         intensity_maps = tibble(),
         rt_diff = tibble(),
@@ -166,6 +181,7 @@ setClass(
         chromatograms = "data.frame",
         mass_traces = "data.frame",
         spectra = "data.frame",
+        peak_density = "data.frame",
         total_ion_current = "data.frame",
         intensity_maps = "data.frame",
         rt_diff = "data.frame",
@@ -178,6 +194,7 @@ setClass(
         chromatograms = NULL,
         mass_traces = NULL,
         spectra = NULL,
+        peak_density = NULL,
         total_ion_current = NULL,
         intensity_maps = NULL,
         rt_diff = NULL,
@@ -257,6 +274,7 @@ setMethod(
         print_df_dim(object@chromatograms, "chromatograms")
         print_df_dim(object@mass_traces, "mass_traces")
         print_df_dim(object@spectra, "spectra")
+        print_df_dim(object@peak_density, "peak_density")
         print_df_dim(object@total_ion_current, "total_ion_current")
         print_df_dim(object@intensity_maps, "intensity_maps")
         print_df_dim(object@rt_diff, "rt_diff")

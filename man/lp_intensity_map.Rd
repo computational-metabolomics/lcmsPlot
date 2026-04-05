@@ -4,7 +4,15 @@
 \alias{lp_intensity_map}
 \title{Define a 2D intensity map}
 \usage{
-lp_intensity_map(mz_range, rt_range, sample_ids = NULL, density = FALSE)
+lp_intensity_map(
+  mz_range,
+  rt_range,
+  sample_ids = NULL,
+  density = FALSE,
+  x_dim = "rt",
+  y_dim = "mz",
+  fill_scale = NULL
+)
 }
 \arguments{
 \item{mz_range}{A \code{numeric} value indicating the m/z range of the map.}
@@ -16,6 +24,17 @@ to include in the plot. If \code{NULL}, the function uses the sample IDs
 specified in the \code{lcmsPlot} object.}
 
 \item{density}{A \code{logical} value indicating whether to show a density plot.}
+
+\item{x_dim}{A \code{character} value indicating which dimension to place on the
+x-axis. One of \code{"rt"} (default) or \code{"mz"}.}
+
+\item{y_dim}{A \code{character} value indicating which dimension to place on the
+y-axis. One of \code{"mz"} (default) or \code{"rt"}.}
+
+\item{fill_scale}{A ggplot2 scale object to use for the fill aesthetic
+(e.g. \code{scale_fill_gradient(low = "white", high = "red")}). When \code{NULL}
+(default), uses \code{scale_fill_viridis_c} for intensity and
+\code{scale_fill_viridis_d} for density plots.}
 }
 \value{
 This function returns another function that takes an
@@ -27,8 +46,7 @@ adding new data or visual components.
 }
 \description{
 The \code{lp_intensity_map} function produces an intensity map
-in which retention time is shown on the x-axis, m/z on the y-axis,
-and signal intensity is represented at each corresponding coordinate.
+in which signal intensity is represented at each m/z / RT coordinate.
 }
 \examples{
 raw_files <- dir(

@@ -66,7 +66,7 @@ plot_chromatogram <- function(
             options = options,
             group = "sample_id")
     ) +
-        geom_line() +
+        geom_line(linetype = options$chromatograms$line_type) +
         labs(x = x_label, y = y_label) +
         scale_fill_discrete(guide = "none") + # Removes peak highlight legend
         scale_x_continuous(breaks = scales::pretty_breaks()) +

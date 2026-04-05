@@ -24,59 +24,114 @@ highlight_peaks_aes <- function(ymax, options) {
 }
 
 highlight_peaks <- function(dataset, detected_peaks, options) {
-    if (options$chromatograms$highlight_peaks && nrow(detected_peaks) > 0) {
-        highlight_df <- detected_peaks |>
-            mutate(peak_id = row_number()) |>
-            rowwise() |>
-            do({
-                peak <- .
-                subset <- dataset |>
-                    filter(.data$sample_id == peak$sample_id) |>
-                    filter(.data$rt >= peak$rtmin, .data$rt <= peak$rtmax) |>
-                    mutate(peak_id = peak$peak_id)
-                subset
-            }) |>
-            bind_rows()
-
-        common_args <- list(
-            data = highlight_df,
-            alpha = 0.3,
-            linetype = 1
-        )
-
-        highlight_peaks_color <- options$chromatograms$highlight_peaks_color
-        highlight_peaks_factor <- options$chromatograms$highlight_peaks_factor
-
-        if (is.null(highlight_peaks_color)) {
-            gr <- do.call(geom_ribbon, c(
-                common_args,
-                list(mapping = aes(
-                    ymin = 0,
-                    ymax = .data$intensity,
-                    group = .data$peak_id,
-                    fill = .data[[highlight_peaks_factor]],
-                    colour = .data[[highlight_peaks_factor]]
-                ))
-            ))
-        } else {
-            gr <- do.call(geom_ribbon, c(
-                common_args,
-                list(
-                    mapping = aes(
-                        ymin = 0,
-                        ymax = .data$intensity,
-                        group = .data$peak_id
-                    ),
-                    fill = highlight_peaks_color,
-                    colour = highlight_peaks_color
-                )
-            ))
-        }
-
-        return(gr)
-    } else {
+    if (!options$chromatograms$highlight_peaks || nrow(detected_peaks) == 0) {
         return(NULL)
     }
+
+    mode <- options$chromatograms$highlight_peaks_mode
+    highlight_peaks_color <- options$chromatograms$highlight_peaks_color
+    highlight_peaks_factor <- options$chromatograms$highlight_peaks_factor
+
+    if (mode == "polygon") {
+        plot_data <- build_ribbon_data(dataset, detected_peaks)
+    } else {
+        rt_scale <- if (options$chromatograms$rt_unit == "minute") 60 else 1
+        plot_data <- detected_peaks |>
+            mutate(
+                rt_plot = .data$rt / rt_scale,
+                rtmin_plot = .data$rtmin / rt_scale,
+                rtmax_plot = .data$rtmax / rt_scale
+            )
+    }
+
+    build_geom(mode, plot_data, highlight_peaks_color, highlight_peaks_factor)
+}
+
+build_ribbon_data <- function(dataset, detected_peaks) {
+    detected_peaks |>
+        mutate(peak_id = row_number()) |>
+        rowwise() |>
+        do({
+            peak <- .
+            dataset |>
+                filter(.data$sample_id == peak$sample_id) |>
+                filter(.data$rt >= peak$rtmin, .data$rt <= peak$rtmax) |>
+                mutate(peak_id = peak$peak_id)
+        }) |>
+        bind_rows()
+}
+
+build_geom <- function(mode, plot_data, color, factor) {
+    has_color <- !is.null(color)
+
+    switch(mode,
+           polygon = {
+               common <- list(data = plot_data, alpha = 0.3, linetype = 1)
+               if (!has_color) {
+                   do.call(geom_ribbon, c(common, list(mapping = aes(
+                       ymin = 0,
+                       ymax = .data$intensity,
+                       group = .data$peak_id,
+                       fill = .data[[factor]],
+                       colour = .data[[factor]]
+                   ))))
+               } else {
+                   do.call(geom_ribbon, c(common, list(
+                       mapping = aes(
+                           ymin = 0,
+                           ymax = .data$intensity,
+                           group = .data$peak_id
+                       ),
+                       fill = color,
+                       colour = color
+                   )))
+               }
+           },
+           rectangle = {
+               common <- list(data = plot_data, alpha = 0.2, inherit.aes = FALSE)
+               if (!has_color) {
+                   do.call(geom_rect, c(common, list(mapping = aes(
+                       xmin = .data$rtmin_plot,
+                       xmax = .data$rtmax_plot,
+                       ymin = 0,
+                       ymax = .data$maxo,
+                       fill = .data[[factor]],
+                       colour = .data[[factor]]
+                   ))))
+               } else {
+                   do.call(geom_rect, c(common, list(
+                       mapping = aes(
+                           xmin = .data$rtmin_plot,
+                           xmax = .data$rtmax_plot,
+                           ymin = 0,
+                           ymax = .data$maxo
+                       ),
+                       fill = color,
+                       colour = color
+                   )))
+               }
+           },
+           point = {
+               common <- list(data = plot_data, size = 2, inherit.aes = FALSE)
+               if (!has_color) {
+                   do.call(geom_point, c(common, list(mapping = aes(
+                       x = .data$rt_plot,
+                       y = .data$maxo,
+                       colour = .data[[factor]]
+                   ))))
+               } else {
+                   do.call(geom_point, c(common, list(
+                       mapping = aes(
+                           x = .data$rt_plot,
+                           y = .data$maxo
+                       ),
+                       colour = color
+                   )))
+               }
+           },
+           stop("Unknown highlight_peaks_mode: '", mode, "'. ",
+                "Expected 'polygon', 'rectangle', or 'point'.")
+    )
 }
 
 highlight_apices <- function(dataset, options, grouping_vars) {

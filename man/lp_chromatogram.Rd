@@ -9,8 +9,10 @@ lp_chromatogram(
   sample_ids = NULL,
   ppm = 10,
   rt_tol = 10,
+  line_type = "solid",
   highlight_peaks = FALSE,
   highlight_peaks_color = NULL,
+  highlight_peaks_mode = "polygon",
   highlight_peaks_factor = "sample_id",
   aggregation_fun = "max",
   rt_type = "uncorrected",
@@ -46,12 +48,20 @@ specifies both \code{mzmin} and \code{mzmax}.}
 when generating chromatograms. Ignored when the \code{features} parameter
 specifies both \code{rtmin} and \code{rtmax}.}
 
+\item{line_type}{A \code{character} value specifying the line type (from ggplot2).
+One of: "solid", "dashed", "dotted", "dotdash", "longdash", "twodash".}
+
 \item{highlight_peaks}{A \code{logical} value indicating whether to highlight
 the detected peaks; the input data must be an \code{XCMSnExp} or \code{MsExperiment}
 object.}
 
 \item{highlight_peaks_color}{A \code{character} value indicating the color of the
 highlighted peaks.}
+
+\item{highlight_peaks_mode}{A \code{character} value indicating how the peaks
+should be highlighted. One of \code{"polygon"} (fills the area under the curve),
+\code{"rectangle"} (draws a bounding box from rtmin to rtmax up to the peak apex),
+or \code{"point"} (marks the peak apex with a point). Defaults to \code{"polygon"}.}
 
 \item{highlight_peaks_factor}{A \code{character} value indicating the factor from
 the metadata that determines the color. By default it colors by \code{sample_id}.}

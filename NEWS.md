@@ -1,3 +1,30 @@
+# lcmsPlot 0.99.20
+
+- Added `lp_peak_density()` for peak density plots that mirror
+  `xcms::plotChromPeakDensity()`: y-axis shows sample indices positioned
+  within the kernel density range, x-axis shows RT, coloured points mark
+  individual detected peaks per sample, and a density line is overlaid.
+  When `min_fraction` and `sample_groups` are provided the density-descent
+  grouping algorithm is simulated and semi-transparent rectangles highlight
+  RT regions that would form feature groups.
+  When used after `lp_chromatogram()`, `features` is inherited automatically.
+  Supports `rt_unit` (`"second"` / `"minute"`), `bw`, `min_samples`,
+  `max_features`, and multiple m/z windows with auto-faceting.
+- Fixed `highlight_peaks_mode = "rectangle"` and `"point"` in
+  `lp_chromatogram()`: geoms now use `inherit.aes = FALSE` to avoid
+  evaluating the global `x = rt_plot` aesthetic against `detected_peaks`,
+  which previously caused an `object 'rt_plot' not found` error.
+  RT values for rectangle and point modes are now scaled correctly when
+  `rt_unit = "minute"`.
+- Added `line_type` parameter to `lp_chromatogram()` (passed through to
+  `geom_line()`; any ggplot2 linetype string is accepted).
+- Added `x_dim`, `y_dim`, and `fill_scale` parameters to
+  `lp_intensity_map()`, allowing the m/z and RT axes to be swapped and
+  the fill colour scale to be replaced with any ggplot2 scale object.
+- Expanded the "Plot peak density" section of the `lcms_data_plotting`
+  vignette with explanatory prose and a combined chromatogram + peak
+  density example.
+
 # lcmsPlot 0.99.19
 
 - Migrated all internal data structures from `data.frame` to `tibble`;

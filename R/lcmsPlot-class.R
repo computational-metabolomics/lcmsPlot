@@ -402,11 +402,17 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param rt_tol A `numeric` value specifying the RT tolerance used
 #' when generating chromatograms. Ignored when the `features` parameter
 #' specifies both `rtmin` and `rtmax`.
+#' @param line_type A `character` value specifying the line type (from ggplot2).
+#' One of: "solid", "dashed", "dotted", "dotdash", "longdash", "twodash".
 #' @param highlight_peaks A `logical` value indicating whether to highlight
 #' the detected peaks; the input data must be an `XCMSnExp` or `MsExperiment`
 #' object.
 #' @param highlight_peaks_color A `character` value indicating the color of the
 #' highlighted peaks.
+#' @param highlight_peaks_mode A `character` value indicating how the peaks
+#' should be highlighted. One of `"polygon"` (fills the area under the curve),
+#' `"rectangle"` (draws a bounding box from rtmin to rtmax up to the peak apex),
+#' or `"point"` (marks the peak apex with a point). Defaults to `"polygon"`.
 #' @param highlight_peaks_factor A `character` value indicating the factor from
 #' the metadata that determines the color. By default it colors by `sample_id`.
 #' @param aggregation_fun A `character` value indicating which aggregation
@@ -450,8 +456,10 @@ lp_chromatogram <- function(
     sample_ids = NULL,
     ppm = 10,
     rt_tol = 10,
+    line_type = "solid",
     highlight_peaks = FALSE,
     highlight_peaks_color = NULL,
+    highlight_peaks_mode = "polygon",
     highlight_peaks_factor = "sample_id",
     aggregation_fun = "max",
     rt_type = "uncorrected",
@@ -484,9 +492,11 @@ lp_chromatogram <- function(
                 features = features,
                 sample_ids = batch_sample_ids,
                 ppm = ppm,
+                line_type = line_type,
                 rt_tol = rt_tol,
                 highlight_peaks = highlight_peaks,
                 highlight_peaks_color = highlight_peaks_color,
+                highlight_peaks_mode = highlight_peaks_mode,
                 highlight_peaks_factor = highlight_peaks_factor,
                 aggregation_fun = aggregation_fun,
                 rt_type = rt_type,
@@ -672,6 +682,111 @@ lp_spectra <- function(
     )
 }
 
+#' Plot the peak density for one or more m/z features
+#'
+#' The `lp_peak_density` function produces a peak density plot.
+#' For each supplied feature (m/z bin):
+#' - The x axis shows retention time.
+#' - The y axis shows sample indices (1 to n), positioned within the density
+#'   range.
+#' - Detected peaks are plotted as coloured points at each sample's position.
+#' - The kernel density estimate of peak apex RTs is drawn as a line.
+#' - When `min_fraction` is supplied, the density-descent grouping algorithm
+#'   is simulated and feature groups that pass the threshold are highlighted
+#'   with semi-transparent rectangles.
+#'
+#' @param features A `matrix` or `data.frame` with columns `mzmin` and `mzmax`
+#' (required) and `rtmin`, `rtmax` (optional). Each row defines one m/z bin.
+#' When omitted, the features are taken from `lp_chromatogram` if it has
+#' already been called on the same object.
+#' @param bw A `numeric` value specifying the kernel density bandwidth in
+#' seconds. Passed to [stats::density()]. Defaults to `30`.
+#' @param min_fraction A `numeric` value in `[0, 1]`. When supplied, simulates
+#' the `PeakDensityParam` grouping algorithm and draws semi-transparent
+#' rectangles for feature groups where at least this fraction of samples (per
+#' group) contain a peak. Defaults to `NULL` (no simulation).
+#' @param min_samples An `integer` specifying the minimum absolute number of
+#' samples per group required to define a feature group. Only used when
+#' `min_fraction` is set. Defaults to `1L`.
+#' @param sample_groups A vector of length equal to the number of samples
+#' assigning each sample to a group (as in `PeakDensityParam`). Defaults to
+#' `NULL`, which treats all samples as a single group.
+#' @param max_features An `integer` specifying the maximum number of feature
+#' group rectangles to draw per m/z bin. Defaults to `50L`.
+#' @param rt_unit A `character` value indicating the unit for the RT axis;
+#' one of `"second"` (default) or `"minute"`.
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated peak density
+#' data in its `data` slot. It is designed to be used with the `+` operator,
+#' which serves as a layering mechanism.
+#' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(
+#'   indices = 1:3,
+#'   should_group_peaks = TRUE)
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+#'   lp_peak_density(
+#'     features = rbind(c(mzmin = 334.9, mzmax = 335.1,
+#'                        rtmin = 2700,  rtmax = 2900)),
+#'     bw = 30,
+#'     min_fraction = 0.5)
+#' p
+lp_peak_density <- function(
+    features = NULL,
+    bw = 30,
+    min_fraction = NULL,
+    min_samples = 1L,
+    sample_groups = NULL,
+    max_features = 50L,
+    rt_unit = "second"
+) {
+    make_interface_function(
+        name = "lp_peak_density",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_xcms_data(obj@data@data_obj)) {
+                stop(
+                    "lp_peak_density: the data object must be an XCMSnExp ",
+                    "or MsExperiment with detected peaks."
+                )
+            }
+
+            if (is.null(features)) {
+                features <- obj@options$chromatograms$features
+                if (is.null(features)) {
+                    stop(
+                        "lp_peak_density: 'features' is missing and no ",
+                        "chromatogram features are set. Either provide ",
+                        "'features' or call lp_chromatogram() first."
+                    )
+                }
+            }
+
+            features <- as.data.frame(features)
+            if (!all(c("mzmin", "mzmax") %in% names(features))) {
+                stop("lp_peak_density: 'features' must have columns 'mzmin' and 'mzmax'.")
+            }
+            if (!"rtmin" %in% names(features)) features$rtmin <- NA_real_
+            if (!"rtmax" %in% names(features)) features$rtmax <- NA_real_
+
+            obj@options$peak_density <- list(
+                show = TRUE,
+                features = features,
+                bw = bw,
+                min_fraction = min_fraction,
+                min_samples = min_samples,
+                sample_groups = sample_groups,
+                max_features = max_features,
+                rt_unit = rt_unit
+            )
+
+            obj@data <- create_peak_density(obj@data, obj@options)
+
+            return(obj)
+        }
+    )
+}
+
 #' Define the total ion current (TIC)
 #'
 #' The `lp_total_ion_current` generates summary data for the
@@ -721,8 +836,7 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' Define a 2D intensity map
 #'
 #' The `lp_intensity_map` function produces an intensity map
-#' in which retention time is shown on the x-axis, m/z on the y-axis,
-#' and signal intensity is represented at each corresponding coordinate.
+#' in which signal intensity is represented at each m/z / RT coordinate.
 #'
 #' @param mz_range A `numeric` value indicating the m/z range of the map.
 #' @param rt_range A `numeric` value indicating the RT range of the map.
@@ -730,6 +844,14 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object.
 #' @param density A `logical` value indicating whether to show a density plot.
+#' @param x_dim A `character` value indicating which dimension to place on the
+#' x-axis. One of `"rt"` (default) or `"mz"`.
+#' @param y_dim A `character` value indicating which dimension to place on the
+#' y-axis. One of `"mz"` (default) or `"rt"`.
+#' @param fill_scale A ggplot2 scale object to use for the fill aesthetic
+#' (e.g. `scale_fill_gradient(low = "white", high = "red")`). When `NULL`
+#' (default), uses `scale_fill_viridis_c` for intensity and
+#' `scale_fill_viridis_d` for density plots.
 #' @return This function returns another function that takes an
 #' `lcmsPlot` object and produces a modified version containing the generated
 #' 2D intensity map in its `data` slot. It is designed to be used with the
@@ -753,8 +875,14 @@ lp_intensity_map <- function(
     mz_range,
     rt_range,
     sample_ids = NULL,
-    density = FALSE
+    density = FALSE,
+    x_dim = "rt",
+    y_dim = "mz",
+    fill_scale = NULL
 ) {
+    x_dim <- match.arg(x_dim, c("rt", "mz"))
+    y_dim <- match.arg(y_dim, c("mz", "rt"))
+
     function(obj) {
         if (is.null(sample_ids)) {
             sample_ids <- obj@data@metadata$sample_id
@@ -765,7 +893,10 @@ lp_intensity_map <- function(
             sample_ids = sample_ids,
             mz_range = mz_range,
             rt_range = rt_range,
-            density = density
+            density = density,
+            x_dim = x_dim,
+            y_dim = y_dim,
+            fill_scale = fill_scale
         )
 
         obj@data <- create_intensity_map(obj@data, obj@options)

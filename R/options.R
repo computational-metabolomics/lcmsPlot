@@ -20,8 +20,10 @@ default_options <- function() {
             sample_ids = NULL,
             ppm = 10,
             rt_tol = 10,
+            line_type = "solid",
             highlight_peaks = FALSE,
             highlight_peaks_color = NULL,
+            highlight_peaks_mode = "polygon",
             highlight_peaks_factor = "sample_id",
             aggregation_fun = "max",
             rt_type = "uncorrected",
@@ -51,6 +53,16 @@ default_options <- function() {
             intensity_breaks_by = 20,
             auto_facet = TRUE
         ),
+        peak_density = list(
+            show = FALSE,
+            features = NULL,
+            bw = 30,
+            min_fraction = NULL,
+            min_samples = 1L,
+            sample_groups = NULL,
+            max_features = 50L,
+            rt_unit = "second"
+        ),
         total_ion_current = list(
             show = FALSE,
             sample_ids = NULL,
@@ -61,7 +73,10 @@ default_options <- function() {
             sample_ids = NULL,
             mz_range = NULL,
             rt_range = NULL,
-            density = FALSE
+            density = FALSE,
+            x_dim = "rt",
+            y_dim = "mz",
+            fill_scale = NULL
         ),
         rt_diff = list(
             show = FALSE

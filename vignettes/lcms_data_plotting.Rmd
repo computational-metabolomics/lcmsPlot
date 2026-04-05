@@ -334,7 +334,7 @@ samples as columns.
 ```{r plot-XChromatograms, message=FALSE, warning=FALSE, fig.height=4, fig.width=10}
 mzr <- matrix(c(344, 344, 360, 360), ncol = 2, byrow = TRUE)
 
-rtr <- matrix(c(2500, 3500, 2600, 3600), ncol = 2, byrow = TRUE)
+rtr <- matrix(c(2500, 2880, 2600, 2880), ncol = 2, byrow = TRUE)
 
 chrs <- chromatogram(faahko, mz = mzr, rt = rtr)
 
@@ -453,6 +453,43 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_facets(facets = 'feature_id', ncol = 2, free_x = TRUE, free_y = TRUE) +
     lp_labels(title = "Four selected features", legend = "Sample") +
     lp_legend(position = "bottom")
+```
+
+## Plot peak density alongside chromatograms
+
+Peak density plots visualise how detected chromatographic peaks are
+distributed along the retention time axis for a given m/z window.
+The y-axis shows sample indices and the x-axis shows retention time.
+Each detected peak is drawn as a coloured point at its sample's
+y-coordinate, and the kernel density estimate of peak apex RTs is
+overlaid as a line.
+This makes it straightforward to assess whether peaks from different
+samples are well-aligned in retention time and whether a feature group
+is tightly defined.
+
+When `lp_peak_density()` is combined with `lp_chromatogram()`,
+`features` can be omitted — it is inherited automatically
+from the chromatogram layer.
+
+The `bw` parameter controls the kernel density bandwidth and should
+match the value used in `xcms::PeakDensityParam()` during peak grouping.
+When `min_fraction` and `sample_groups` are provided, the
+density-descent grouping algorithm is simulated and semi-transparent
+rectangles are drawn around RT regions that would be defined as feature
+groups — providing a direct visual check of the grouping parameters.
+
+```{r peak-density}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_chromatogram(
+        sample_ids = c("ko15", "ko16", "wt16", "wt21"),
+        features = rbind(c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900)),
+        highlight_peaks = TRUE
+    ) +
+    lp_peak_density(
+        bw = 30,
+        min_fraction = 0.5
+    ) +
+    lp_labels(legend = "Sample ID")
 ```
 
 # Plot chromatograms with mass traces
