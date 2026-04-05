@@ -90,7 +90,7 @@ setMethod(
                 return(NULL)
             }
 
-            dens <- density(
+            dens <- stats::density(
                 peaks_in$rt,
                 bw = bw,
                 from = dens_from,

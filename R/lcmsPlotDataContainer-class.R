@@ -164,6 +164,8 @@ create_data_container_from_obj <- function(
 #' @slot chromatograms A `data.frame` containing the chromatograms.
 #' @slot mass_traces A `data.frame` containing the mass traces.
 #' @slot spectra A `data.frame` containing the spectra.
+#' @slot peak_density A `data.frame` containing peak density curve data and
+#' optional feature-group rectangles, as produced by `lp_peak_density()`.
 #' @slot total_ion_current A `data.frame` containing the total ion current.
 #' @slot intensity_maps A `data.frame` containing the 2D intensity maps
 #' representing the distribution of detected peaks across m/z and RT.
@@ -246,6 +248,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #'     chromatograms = tibble::tibble(),
 #'     mass_traces = tibble::tibble(),
 #'     spectra = tibble::tibble(),
+#'     peak_density = tibble::tibble(),
 #'     total_ion_current = tibble::tibble(),
 #'     intensity_maps = tibble::tibble(),
 #'     rt_diff = tibble::tibble(),

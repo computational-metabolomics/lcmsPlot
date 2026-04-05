@@ -25,6 +25,9 @@ however the preferred approach is to use it with the \code{lcmsPlotClass} class.
 
 \item{\code{spectra}}{A \code{data.frame} containing the spectra.}
 
+\item{\code{peak_density}}{A \code{data.frame} containing peak density curve data and
+optional feature-group rectangles, as produced by \code{lp_peak_density()}.}
+
 \item{\code{total_ion_current}}{A \code{data.frame} containing the total ion current.}
 
 \item{\code{intensity_maps}}{A \code{data.frame} containing the 2D intensity maps
