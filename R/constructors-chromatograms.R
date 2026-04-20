@@ -101,7 +101,7 @@ create_chromatogram <- function(
         ]
         spectra <- ms_peaks(raw_data, scans_in_rt$seqNum)
 
-        chr <- tibble()
+        chr <- tibble(rt = numeric(), intensity = numeric())
         mass_traces <- tibble()
 
         for (i in seq_len(nrow(scans_in_rt))) {
