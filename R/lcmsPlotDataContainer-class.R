@@ -85,6 +85,15 @@
             field("sample_id", is.character),
             field("sample_path", is.character, required = FALSE)
         ))
+    },
+    purity_scores = function(df) {
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("in_purity", is.numeric),
+            field("precursor_mz", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
     }
 )
 
@@ -147,7 +156,8 @@ create_data_container_from_obj <- function(
             feature_metadata_id = numeric(),
             metadata_index = numeric()
         ),
-        detected_peaks = tibble())
+        detected_peaks = tibble(),
+        purity_scores = tibble())
 }
 
 #' A unified storing mechanism for LC-MS data
@@ -158,8 +168,8 @@ create_data_container_from_obj <- function(
 #' however the preferred approach is to use it with the `lcmsPlotClass` class.
 #'
 #' @slot data_obj The data object. One of: `XCMSnExp`, `MsExperiment`,
-#' `MChromatograms`, `XChromatograms`, `XChromatogram`, `XcmsRawList`, or
-#' `character` representing mzML paths.
+#' `MChromatograms`, `XChromatograms`, `XChromatogram`, `XcmsRawList`,
+#' `purityA`, or `character` representing mzML paths.
 #' @slot metadata A `data.frame` containing the sample metadata.
 #' @slot chromatograms A `data.frame` containing the chromatograms.
 #' @slot mass_traces A `data.frame` containing the mass traces.
@@ -173,7 +183,9 @@ create_data_container_from_obj <- function(
 #' @slot feature_metadata A `data.frame` containing feature/compound annotations
 #' attached to datasets through a column called `feature_metadata_id`.
 #' @slot detected_peaks A `data.frame` containing the detected peaks from
-#' an `XCMSnExp` or `MsExperiment` object.
+#' an `XCMSnExp`, `MsExperiment`, or `purityA` object.
+#' @slot purity_scores A `data.frame` containing per-scan precursor ion purity
+#' scores from a `purityA` object, populated by the msPurity layer functions.
 #' @export
 setClass(
     "lcmsPlotDataContainer",
@@ -188,7 +200,8 @@ setClass(
         intensity_maps = "data.frame",
         rt_diff = "data.frame",
         feature_metadata = "data.frame",
-        detected_peaks = "data.frame"
+        detected_peaks = "data.frame",
+        purity_scores = "data.frame"
     ),
     prototype = list(
         data_obj = NULL,
@@ -201,7 +214,8 @@ setClass(
         intensity_maps = NULL,
         rt_diff = NULL,
         feature_metadata = NULL,
-        detected_peaks = NULL
+        detected_peaks = NULL,
+        purity_scores = NULL
     )
 )
 
@@ -217,6 +231,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
         "XcmsRawList",
         "ExternalDataSource",
         "DBIConnection",
+        "purityA",
         "character")
 
     if (!inherits(object@data_obj, obj_types)) {
@@ -253,7 +268,8 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #'     intensity_maps = tibble::tibble(),
 #'     rt_diff = tibble::tibble(),
 #'     feature_metadata = tibble::tibble(),
-#'     detected_peaks = tibble::tibble())
+#'     detected_peaks = tibble::tibble(),
+#'     purity_scores = tibble::tibble())
 #' data_obj
 setMethod(
     f = "show",
@@ -283,5 +299,6 @@ setMethod(
         print_df_dim(object@rt_diff, "rt_diff")
         print_df_dim(object@feature_metadata, "feature_metadata")
         print_df_dim(object@detected_peaks, "detected_peaks")
+        print_df_dim(object@purity_scores, "purity_scores")
     }
 )

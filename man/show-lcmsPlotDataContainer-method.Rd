@@ -32,6 +32,7 @@ data_obj <- new("lcmsPlotDataContainer",
     intensity_maps = tibble::tibble(),
     rt_diff = tibble::tibble(),
     feature_metadata = tibble::tibble(),
-    detected_peaks = tibble::tibble())
+    detected_peaks = tibble::tibble(),
+    purity_scores = tibble::tibble())
 data_obj
 }

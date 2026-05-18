@@ -14,8 +14,8 @@ however the preferred approach is to use it with the \code{lcmsPlotClass} class.
 
 \describe{
 \item{\code{data_obj}}{The data object. One of: \code{XCMSnExp}, \code{MsExperiment},
-\code{MChromatograms}, \code{XChromatograms}, \code{XChromatogram}, \code{XcmsRawList}, or
-\code{character} representing mzML paths.}
+\code{MChromatograms}, \code{XChromatograms}, \code{XChromatogram}, \code{XcmsRawList},
+\code{purityA}, or \code{character} representing mzML paths.}
 
 \item{\code{metadata}}{A \code{data.frame} containing the sample metadata.}
 
@@ -39,6 +39,9 @@ representing the distribution of detected peaks across m/z and RT.}
 attached to datasets through a column called \code{feature_metadata_id}.}
 
 \item{\code{detected_peaks}}{A \code{data.frame} containing the detected peaks from
-an \code{XCMSnExp} or \code{MsExperiment} object.}
+an \code{XCMSnExp}, \code{MsExperiment}, or \code{purityA} object.}
+
+\item{\code{purity_scores}}{A \code{data.frame} containing per-scan precursor ion purity
+scores from a \code{purityA} object, populated by the msPurity layer functions.}
 }}
 

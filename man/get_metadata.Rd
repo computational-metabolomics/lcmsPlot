@@ -11,6 +11,7 @@
 \alias{get_metadata.XcmsRawList}
 \alias{get_metadata.ExternalDataSource}
 \alias{get_metadata.DBIConnection}
+\alias{get_metadata.purityA}
 \title{Get the metadata associated with the input object}
 \usage{
 get_metadata(obj, sample_id_column, metadata)
@@ -32,6 +33,8 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{ExternalDataSource}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{DBIConnection}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{purityA}(obj, sample_id_column, metadata)
 }
 \arguments{
 \item{obj}{A data object containing or representing samples.}

@@ -8,6 +8,15 @@ is_xcms_data <- function(obj) {
     inherits(obj, c("XCMSnExp", "MsExperiment"))
 }
 
+#' Check whether an object is an msPurity purityA result
+#'
+#' @param obj The input object to check.
+#' @return A `logical` value.
+#' @keywords internal
+is_mspurity_data <- function(obj) {
+    inherits(obj, "purityA")
+}
+
 #' Check whether an object is an XCMS data container
 #'
 #' @param obj The input object to check.

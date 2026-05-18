@@ -19,7 +19,9 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
 
     plt <- plot_config[[dataset_name]](
         datasets = datasets,
-        supporting_datasets = list(detected_peaks = obj@data@detected_peaks),
+        supporting_datasets = list(
+                detected_peaks = obj@data@detected_peaks,
+                purity_scores = obj@data@purity_scores),
         options = obj@options,
         single = TRUE
     )
