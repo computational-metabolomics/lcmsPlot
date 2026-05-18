@@ -41,9 +41,8 @@ jobs:
       - name: Install R package dependencies
         run: |
           Rscript -e "
-            BiocManager::install(ask = FALSE, update = TRUE)
-            deps <- remotes::dev_package_deps('.', dependencies = TRUE)
-            BiocManager::install(deps\$package[deps\$diff != 0], ask = FALSE)
+            BiocManager::install(ask = FALSE, update = FALSE)
+            remotes::install_deps('.', dependencies = TRUE, repos = BiocManager::repositories())
           "
 
       - name: Run tests
