@@ -12,3 +12,5 @@ LICENSE
 README.rst
 ^\.github$
 ^playground$
+^\.positai$
+^\.claude$

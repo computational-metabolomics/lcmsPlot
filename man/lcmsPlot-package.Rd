@@ -39,6 +39,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Ossama Edbali \email{o.edbali@bham.ac.uk} (\href{https://orcid.org/0000-0003-0132-8668}{ORCID})
   \item Ralf Johannes Maria Weber \email{r.j.weber@bham.ac.uk} (\href{https://orcid.org/0000-0002-8796-4771}{ORCID})
 }
 

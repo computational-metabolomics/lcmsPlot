@@ -110,6 +110,27 @@ default_options <- function() {
         compound_discoverer = list(
             compounds_query = NULL,
             rt_extend = 10
+        ),
+        purity_overlay = list(
+            show = FALSE,
+            sample_ids = NULL,
+            threshold = NULL,
+            point_size = 2
+        ),
+        purity_timeline = list(
+            show = FALSE,
+            sample_ids = NULL,
+            threshold = NULL
+        ),
+        purity_distribution = list(
+            show = FALSE,
+            sample_ids = NULL,
+            threshold = NULL,
+            type = "violin"
+        ),
+        isolation_window = list(
+            show = FALSE,
+            half_width = 0.5
         )
     )
 }

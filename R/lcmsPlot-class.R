@@ -142,8 +142,8 @@ setClass(
         "total_ion_current",
         "intensity_maps",
         "rt_diff",
-        "feature_metadata",
-        "detected_peaks"
+        "peak_density",
+        "purity_scores"
     )
 
     any(vapply(
@@ -151,6 +151,19 @@ setClass(
         function(s) nrow(slot(object@data, s)),
         integer(1)
     ) > 0)
+}
+
+.purity_additional_datasets <- function(object) {
+    additional <- list()
+    if (nrow(object@data@purity_scores) > 0) {
+        if (isTRUE(object@options$purity_timeline$show)) {
+            additional$purity_timeline <- object@data@purity_scores
+        }
+        if (isTRUE(object@options$purity_distribution$show)) {
+            additional$purity_distribution <- object@data@purity_scores
+        }
+    }
+    additional
 }
 
 
@@ -328,7 +341,9 @@ setMethod(
     function(object) {
         if (.has_data(object)) {
             if (!object@options$bypass_plot_generation) {
-                object <- .render_plot(object, additional_datasets = list())
+                object <- .render_plot(
+                    object,
+                    additional_datasets = .purity_additional_datasets(object))
             }
             object@options$bypass_plot_generation <- FALSE
             print(object@plot)
@@ -1367,7 +1382,184 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #' p
 lp_get_plot <- function() {
     function(obj) {
-        obj <- .render_plot(obj, additional_datasets = list())
+        obj <- .render_plot(
+            obj,
+            additional_datasets = .purity_additional_datasets(obj))
         return(obj@plot)
     }
+}
+
+# ── msPurity layer functions ──────────────────────────────────────────────────
+
+#' Overlay precursor ion purity scores on a chromatogram
+#'
+#' `lp_purity_overlay()` adds a `geom_point` layer to the chromatogram panel
+#' where each triangle marks the retention time of an MS/MS fragmentation event,
+#' coloured by the interpolated precursor ion purity (`inPurity`). Requires the
+#' data object to be a `purityA` result from the msPurity package and
+#' `lp_chromatogram()` to be called first.
+#'
+#' @param sample_ids A `character` vector of sample IDs to include.
+#' `NULL` uses all samples.
+#' @param threshold A `numeric` value in `[0, 1]` drawn as a reference
+#' on the colour scale midpoint. `NULL` defaults to `0.5`.
+#' @param point_size A `numeric` value controlling the point size.
+#' @return A layer function for use with the `+` operator.
+#' @export
+lp_purity_overlay <- function(
+    sample_ids = NULL,
+    threshold = NULL,
+    point_size = 2
+) {
+    make_interface_function(
+        name = "lp_purity_overlay",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_mspurity_data(obj@data@data_obj)) {
+                stop("lp_purity_overlay requires a purityA data object")
+            }
+
+            if (!isTRUE(obj@options$chromatograms$show)) {
+                stop("lp_purity_overlay must be called after lp_chromatogram()")
+            }
+
+            obj@options$purity_overlay <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                threshold = threshold,
+                point_size = point_size
+            )
+            obj@options$purity_scores_sample_ids <- sample_ids
+
+            obj@data <- create_purity_scores(obj@data, obj@options)
+            return(obj)
+        }
+    )
+}
+
+#' Visualise the isolation window for a precursor fragmentation event
+#'
+#' `lp_isolation_window()` extracts the MS1 survey spectrum at the scan
+#' immediately preceding a chosen MS2 event from a `purityA` object and
+#' annotates it with a semi-transparent rectangle spanning the isolation window
+#' and a dashed line at the precursor m/z. The `inPurity` score is shown as a
+#' plot subtitle.
+#'
+#' @param pid An integer or integer vector of precursor IDs (the `pid` column in
+#' `purityA@@puritydf`) selecting which event(s) to display. `NULL` shows all
+#' events (use with care on large datasets).
+#' @param sample_id A `character` sample ID to filter by when `pid` is `NULL`.
+#' @param half_width A `numeric` value (in Da) for the isolation window
+#' half-width on each side of the precursor m/z. Default is `0.5`.
+#' @param zoom_factor A `numeric` multiplier controlling how far beyond the
+#' isolation window the x-axis extends. The visible range is
+#' `precursor_mz ± zoom_factor * half_width`. Default is `3`.
+#' @return A layer function for use with the `+` operator.
+#' @export
+lp_isolation_window <- function(
+    pid = NULL,
+    sample_id = NULL,
+    half_width = 0.5,
+    zoom_factor = 3
+) {
+    make_interface_function(
+        name = "lp_isolation_window",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_mspurity_data(obj@data@data_obj)) {
+                stop("lp_isolation_window requires a purityA data object")
+            }
+
+            obj@options$isolation_window <- list(
+                show = TRUE,
+                half_width = half_width,
+                zoom_factor = zoom_factor
+            )
+            obj@options$spectra$show <- TRUE
+
+            obj@data <- create_isolation_window(
+                obj@data, obj@options, pid, sample_id)
+            return(obj)
+        }
+    )
+}
+
+#' Plot precursor ion purity scores as a timeline
+#'
+#' `lp_purity_timeline()` generates a scatter plot of `inPurity` (y-axis)
+#' versus retention time (x-axis), one point per MS/MS acquisition event,
+#' coloured by sample. An optional horizontal dashed line marks a purity
+#' threshold. Requires the data object to be a `purityA` result.
+#'
+#' @param sample_ids A `character` vector of sample IDs to include.
+#' `NULL` uses all samples.
+#' @param threshold A `numeric` value in `[0, 1]` drawn as a horizontal
+#' reference line. `NULL` suppresses the line.
+#' @return A layer function for use with the `+` operator.
+#' @export
+lp_purity_timeline <- function(
+    sample_ids = NULL,
+    threshold = NULL
+) {
+    make_interface_function(
+        name = "lp_purity_timeline",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_mspurity_data(obj@data@data_obj)) {
+                stop("lp_purity_timeline requires a purityA data object")
+            }
+
+            obj@options$purity_timeline <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                threshold = threshold
+            )
+            obj@options$purity_scores_sample_ids <- sample_ids
+
+            obj@data <- create_purity_scores(obj@data, obj@options)
+            return(obj)
+        }
+    )
+}
+
+#' Plot the distribution of precursor ion purity scores per sample
+#'
+#' `lp_purity_distribution()` generates a violin (or box/jitter) plot of
+#' `inPurity` scores grouped by sample. An optional horizontal dashed line
+#' marks a purity acceptance threshold. Requires the data object to be a
+#' `purityA` result from the msPurity package.
+#'
+#' @param sample_ids A `character` vector of sample IDs to include.
+#' `NULL` uses all samples.
+#' @param threshold A `numeric` value in `[0, 1]` drawn as a horizontal
+#' reference line. `NULL` suppresses the line.
+#' @param type A `character` value; one of `"violin"`, `"boxplot"`,
+#' or `"jitter"`. Defaults to `"violin"`.
+#' @return A layer function for use with the `+` operator.
+#' @export
+lp_purity_distribution <- function(
+    sample_ids = NULL,
+    threshold = NULL,
+    type = "violin"
+) {
+    make_interface_function(
+        name = "lp_purity_distribution",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_mspurity_data(obj@data@data_obj)) {
+                stop("lp_purity_distribution requires a purityA data object")
+            }
+
+            obj@options$purity_distribution <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                threshold = threshold,
+                type = type
+            )
+            obj@options$purity_scores_sample_ids <- sample_ids
+
+            obj@data <- create_purity_scores(obj@data, obj@options)
+            return(obj)
+        }
+    )
 }

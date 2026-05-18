@@ -135,6 +135,7 @@ get_metadata <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.character <- function(obj, sample_id_column, metadata) {
     if (is.null(metadata)) {
         tibble(sample_path = obj) |>
@@ -154,6 +155,7 @@ get_metadata.character <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
     if (!is.null(metadata)) {
         xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
@@ -177,6 +179,7 @@ get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
     if (!is.null(metadata)) {
         MsExperiment::sampleData(obj) <- metadata
@@ -200,6 +203,7 @@ get_metadata.MsExperiment <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
     df <- MSnbase::phenoData(obj)@data |> as_tibble()
 
@@ -233,6 +237,7 @@ get_metadata.MChromatograms <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.XChromatograms <- function(obj, sample_id_column, metadata) {
     df <- MSnbase::phenoData(obj)@data |> as_tibble()
 
@@ -266,6 +271,7 @@ get_metadata.XChromatograms <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.XChromatogram <- function(obj, sample_id_column, metadata) {
     if (!is.null(metadata)) {
         if (nrow(metadata) != 1) {
@@ -296,6 +302,7 @@ get_metadata.XChromatogram <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
     objs <- obj@data
     paths <- vapply(objs, function(x) {
@@ -335,6 +342,7 @@ get_metadata.XcmsRawList <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.ExternalDataSource <- function(obj, sample_id_column, metadata) {
     obj@metadata |>
         as_tibble() |>
@@ -346,6 +354,7 @@ get_metadata.ExternalDataSource <- function(obj, sample_id_column, metadata) {
 
 #' @rdname get_metadata
 #' @keywords internal
+#' @exportS3Method
 get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
     cd_metadata <- get_workflow_input_files(obj) |>
         dplyr::mutate(
@@ -370,6 +379,36 @@ get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
         cd_metadata,
         by = setNames("sample_id", sample_id_column)
     )
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+#' @exportS3Method
+get_metadata.purityA <- function(obj, sample_id_column, metadata) {
+    paths <- obj@fileList
+    default_ids <- tools::file_path_sans_ext(basename(paths))
+
+    if (!is.null(metadata)) {
+        as_tibble(metadata) |>
+            mutate(
+                sample_index = row_number(),
+                sample_id = if (
+                    !is.null(sample_id_column) &&
+                    sample_id_column %in% colnames(metadata)
+                ) {
+                    .data[[sample_id_column]]
+                } else {
+                    default_ids
+                },
+                sample_path = paths
+            )
+    } else {
+        tibble(
+            sample_index = seq_along(paths),
+            sample_id = default_ids,
+            sample_path = paths
+        )
+    }
 }
 
 #' Get the detected peaks from the data object (e.g. XCMSnExp)
@@ -409,30 +448,35 @@ get_detected_peaks <- function(obj) {
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.character <- function(obj) {
     NULL
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.XCMSnExp <- function(obj) {
     .get_detected_peaks_xcms(obj)
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.MsExperiment <- function(obj) {
     .get_detected_peaks_xcms(obj)
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.MChromatograms <- function(obj) {
     NULL
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.XChromatograms <- function(obj) {
     if (any(xcms::hasChromPeaks(obj))) {
         peaks <- as_tibble(xcms::chromPeaks(obj)) |>
@@ -456,6 +500,7 @@ get_detected_peaks.XChromatograms <- function(obj) {
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.XChromatogram <- function(obj) {
     if (xcms::hasChromPeaks(obj)) {
         mz_range <- MSnbase::mz(obj)
@@ -471,14 +516,34 @@ get_detected_peaks.XChromatogram <- function(obj) {
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.XcmsRawList <- function(obj) {
     NULL
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
+#' @exportS3Method
 get_detected_peaks.ExternalDataSource <- function(obj) {
     obj@peaks
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+#' @exportS3Method
+get_detected_peaks.purityA <- function(obj) {
+    if (is.data.frame(obj@grped_df) && nrow(obj@grped_df) > 0) {
+        as_tibble(obj@grped_df) |>
+            dplyr::rename(sample_index = "sample") |>
+            dplyr::select(
+                dplyr::any_of(
+                    c("mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax",
+                      "into", "maxo", "sample_index")
+                )
+            )
+    } else {
+        NULL
+    }
 }
 
 #' Get the grouped peaks across samples (features) from the data object
@@ -496,6 +561,7 @@ get_grouped_peaks <- function(obj) {
 
 #' @rdname get_grouped_peaks
 #' @keywords internal
+#' @exportS3Method
 get_grouped_peaks.default <- function(obj) {
     return(NULL)
 }
@@ -515,18 +581,39 @@ get_grouped_peaks.default <- function(obj) {
 
 #' @rdname get_grouped_peaks
 #' @keywords internal
+#' @exportS3Method
 get_grouped_peaks.XCMSnExp <- function(obj) {
     .get_grouped_peaks_xcms(obj)
 }
 
 #' @rdname get_grouped_peaks
 #' @keywords internal
+#' @exportS3Method
 get_grouped_peaks.XcmsExperiment <- function(obj) {
     .get_grouped_peaks_xcms(obj)
 }
 
 #' @rdname get_grouped_peaks
 #' @keywords internal
+#' @exportS3Method
 get_grouped_peaks.MsExperiment <- function(obj) {
     .get_grouped_peaks_xcms(obj)
+}
+
+#' @rdname get_grouped_peaks
+#' @keywords internal
+#' @exportS3Method
+get_grouped_peaks.purityA <- function(obj) {
+    if (is.data.frame(obj@grped_df) && nrow(obj@grped_df) > 0) {
+        as_tibble(obj@grped_df) |>
+            dplyr::group_by(.data$grpid) |>
+            dplyr::summarise(
+                mz = mean(.data$mz, na.rm = TRUE),
+                rt = mean(.data$rt, na.rm = TRUE),
+                .groups = "drop"
+            ) |>
+            dplyr::mutate(name = as.character(.data$grpid))
+    } else {
+        NULL
+    }
 }

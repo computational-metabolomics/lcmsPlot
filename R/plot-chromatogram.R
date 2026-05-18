@@ -73,5 +73,9 @@ plot_chromatogram <- function(
         theme_minimal() +
         extra_layers
 
+    if (isTRUE(options$purity_overlay$show)) {
+        p <- purity_overlay_layer(p, supporting_datasets$purity_scores, options)
+    }
+
     return(p)
 }
