@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: bioconductor/bioconductor_docker:devel
+      image: bioconductor/bioconductor_docker:3.23
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -41,11 +41,9 @@ jobs:
       - name: Install R package dependencies
         run: |
           Rscript -e "
-            BiocManager::install(ask = FALSE)
-            BiocManager::install(
-              remotes::dev_package_deps('.', dependencies = TRUE)\$package,
-              ask = FALSE, update = TRUE
-            )
+            BiocManager::install(ask = FALSE, update = TRUE)
+            deps <- remotes::dev_package_deps('.', dependencies = TRUE)
+            BiocManager::install(deps\$package[deps\$diff != 0], ask = FALSE)
           "
 
       - name: Run tests
