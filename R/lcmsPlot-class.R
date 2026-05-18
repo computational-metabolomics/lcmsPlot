@@ -1351,46 +1351,6 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
     )
 }
 
-#' Get the underlying plot object.
-#'
-#' @return A function that takes an `lcmsPlot` object and returns a modified
-#' version with the rendered plot stored in the `plot` slot.
-#' It is intended for use with the `+` operator, which incrementally layers
-#' new data or visual components onto the `lcmsPlot` object.
-#' @export
-#' @examples
-#' raw_files <- dir(
-#'    system.file("cdf", package = "faahKO"),
-#'    full.names = TRUE,
-#'    recursive = TRUE)[1:4]
-#'
-#' ## Create faceted chromatogram plots with a reference RT line
-#' p <- lcmsPlot(raw_files) +
-#'   lp_chromatogram(features = rbind(c(
-#'     mzmin = 334.9,
-#'     mzmax = 335.1,
-#'     rtmin = 2700,
-#'     rtmax = 2900))) +
-#'   lp_facets(facets = 'sample_id', ncol = 4) +
-#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
-#' p
-#'
-#' ## Extract the ggplot object and apply a theme
-#' p <- p +
-#'   lp_get_plot() +
-#'   ggplot2::theme_bw()
-#' p
-lp_get_plot <- function() {
-    function(obj) {
-        obj <- .render_plot(
-            obj,
-            additional_datasets = .purity_additional_datasets(obj))
-        return(obj@plot)
-    }
-}
-
-# ── msPurity layer functions ──────────────────────────────────────────────────
-
 #' Overlay precursor ion purity scores on a chromatogram
 #'
 #' `lp_purity_overlay()` adds a `geom_point` layer to the chromatogram panel
@@ -1407,9 +1367,9 @@ lp_get_plot <- function() {
 #' @return A layer function for use with the `+` operator.
 #' @export
 lp_purity_overlay <- function(
-    sample_ids = NULL,
-    threshold = NULL,
-    point_size = 2
+        sample_ids = NULL,
+        threshold = NULL,
+        point_size = 2
 ) {
     make_interface_function(
         name = "lp_purity_overlay",
@@ -1457,10 +1417,10 @@ lp_purity_overlay <- function(
 #' @return A layer function for use with the `+` operator.
 #' @export
 lp_isolation_window <- function(
-    pid = NULL,
-    sample_id = NULL,
-    half_width = 0.5,
-    zoom_factor = 3
+        pid = NULL,
+        sample_id = NULL,
+        half_width = 0.5,
+        zoom_factor = 3
 ) {
     make_interface_function(
         name = "lp_isolation_window",
@@ -1498,8 +1458,8 @@ lp_isolation_window <- function(
 #' @return A layer function for use with the `+` operator.
 #' @export
 lp_purity_timeline <- function(
-    sample_ids = NULL,
-    threshold = NULL
+        sample_ids = NULL,
+        threshold = NULL
 ) {
     make_interface_function(
         name = "lp_purity_timeline",
@@ -1538,9 +1498,9 @@ lp_purity_timeline <- function(
 #' @return A layer function for use with the `+` operator.
 #' @export
 lp_purity_distribution <- function(
-    sample_ids = NULL,
-    threshold = NULL,
-    type = "violin"
+        sample_ids = NULL,
+        threshold = NULL,
+        type = "violin"
 ) {
     make_interface_function(
         name = "lp_purity_distribution",
@@ -1562,4 +1522,42 @@ lp_purity_distribution <- function(
             return(obj)
         }
     )
+}
+
+#' Get the underlying plot object.
+#'
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the rendered plot stored in the `plot` slot.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
+#' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:4]
+#'
+#' ## Create faceted chromatogram plots with a reference RT line
+#' p <- lcmsPlot(raw_files) +
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_facets(facets = 'sample_id', ncol = 4) +
+#'   lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
+#' p
+#'
+#' ## Extract the ggplot object and apply a theme
+#' p <- p +
+#'   lp_get_plot() +
+#'   ggplot2::theme_bw()
+#' p
+lp_get_plot <- function() {
+    function(obj) {
+        obj <- .render_plot(
+            obj,
+            additional_datasets = .purity_additional_datasets(obj))
+        return(obj@plot)
+    }
 }
