@@ -1,3 +1,21 @@
+# lcmsPlot 1.1.1
+
+- Added support for `purityA` objects (msPurity) as the `data_obj` input to
+  `lcmsPlot()`, enabling direct visualisation of precursor ion purity results.
+- Added `lp_purity_overlay()`: overlays per-scan `inPurity` scores as coloured
+  points on a chromatogram, with a diverging colour scale and an optional
+  threshold midpoint.
+- Added `lp_purity_timeline()`: scatter plot of `inPurity` versus retention
+  time per sample, with an optional horizontal threshold line.
+- Added `lp_purity_distribution()`: violin or boxplot distribution of
+  `inPurity` scores grouped by sample, with an optional threshold line.
+- Added `lp_isolation_window()`: MS1 spectrum plot annotated with the
+  isolation window rectangle, precursor m/z dashed line, and `inPurity` score
+  as a subtitle.
+- Added `purity_scores` slot to `lcmsPlotDataContainer` for storing per-scan
+  purity data extracted from `purityA@puritydf`.
+- Added `msPurity` to `Suggests` in DESCRIPTION.
+
 # lcmsPlot 0.99.20
 
 - Added `lp_peak_density()` for peak density plots that mirror

@@ -64,14 +64,14 @@ With `lcmsPlot`, the same task becomes much simpler and more reproducible:
 library(lcmsPlot)
 
 lcmsPlot(raw_data, sample_id_column = "sample_name") +
-  chromatogram(features = rbind(c(
+  lp_chromatogram(features = rbind(c(
     mzmin = 300,
     mzmax = 305,
     rtmin = 2500,
     rtmax = 2550))) +
-  rt_line(intercept = 2520) +
-  arrange(group_by = "sample_group") +
-  facets(facets = "sample_id", ncol = 3)
+  lp_rt_line(intercept = 2520) +
+  lp_arrange(group_by = "sample_group") +
+  lp_facets(facets = "sample_id", ncol = 3)
 ```
 
 ## Installation
