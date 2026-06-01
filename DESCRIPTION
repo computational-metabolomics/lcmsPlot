@@ -54,6 +54,7 @@ Suggests:
     rawrr,
     msPurity,
     ggnewscale,
+    htmltools,
     shiny,
     shinytoastr,
     shinytest2,
