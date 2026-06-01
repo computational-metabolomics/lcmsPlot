@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.1
+Version: 1.1.3
 Authors@R: c(
     person(
         "Ossama",
@@ -54,6 +54,9 @@ Suggests:
     rawrr,
     msPurity,
     ggnewscale,
+    shiny,
+    shinytoastr,
+    shinytest2,
     testthat (>= 3.0.0)
 Collate:
     'lcmsPlot-package.R'
@@ -92,6 +95,14 @@ Collate:
     'creators-spectra.R'
     'creators-total-ion-current.R'
     'lcmsPlot-class.R'
+    'app-utils.R'
+    'app-options.R'
+    'app-module-chromatogram.R'
+    'app-module-peak-density.R'
+    'app-module-spectra.R'
+    'app-module-tic.R'
+    'app-interface.R'
+    'app-launcher.R'
 VignetteBuilder: knitr
 URL: https://github.com/computational-metabolomics/lcmsPlot
 Roxygen: list(markdown = TRUE)

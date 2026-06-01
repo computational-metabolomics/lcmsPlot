@@ -1,3 +1,41 @@
+# lcmsPlot 1.1.3
+
+- Redesigned `lcmsPlotApp()` as a Tailwind-based dashboard: sticky topbar,
+  left navigation rail with a card-style file uploader and sample picker,
+  and a content area with the plot in a card. The Tailwind CSS is
+  precompiled and shipped under `inst/www/lcmsPlot.css`; no runtime network
+  or Node dependency. Dev sources live in `tools/tailwind/` (excluded from
+  the installed package).
+- Added a per-tab Options panel that exposes `lp_facets()`, `lp_arrange()`,
+  `lp_legend()`, and `lp_labels()` directly from the UI. Users can now
+  facet, group, reposition the legend, and add titles without writing R
+  code.
+- Dashboard CSS is now served via `htmltools::htmlDependency()` and the
+  Tailwind content scan + safelist were hardened so utility classes
+  referenced from R templates actually end up in the compiled stylesheet.
+  The UI is now wrapped in `shiny::bootstrapPage()` so the hidden
+  `tabsetPanel` switches correctly. Card corners reduced from
+  `rounded-2xl` to `rounded-md`, sidebar gap bumped to `gap-6`, and the
+  initial nav highlight is now set statically in markup.
+- The Shiny uploader now accepts additional data-source types: Thermo
+  `.raw` files (multi-file), Compound Discoverer `.cdResult` SQLite
+  results (single file), serialised `XCMSnExp` / `MsExperiment` objects
+  via `.rds` (single file), and saved workspaces containing one such
+  object via `.RData` / `.rda` (single file). All existing mzML / CDF
+  workflows are unchanged.
+
+# lcmsPlot 1.1.2
+
+- Added `lcmsPlotApp()`, an interactive Shiny app for exploring raw LC-MS
+  files. Users can upload one or more mzML / CDF files and view base-peak
+  and total-ion chromatograms, extract ion chromatograms by m/z and ppm
+  (with an optional retention-time window), inspect peak density across
+  samples, and plot spectra by scan index. The app follows Bioconductor's
+  Shiny code-organisation guidelines: all UI/server code lives in `R/`
+  and `lcmsPlotApp()` returns a `shinyApp` object rather than calling
+  `runApp()` internally. `shiny`, `shinytoastr`, and `shinytest2` were
+  added to `Suggests`.
+
 # lcmsPlot 1.1.1
 
 - Added support for `purityA` objects (msPurity) as the `data_obj` input to
