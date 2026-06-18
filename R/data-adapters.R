@@ -355,6 +355,26 @@ get_metadata.ExternalDataSource <- function(obj, sample_id_column, metadata) {
 #' @rdname get_metadata
 #' @keywords internal
 #' @exportS3Method
+get_metadata.CompoundDiscovererNodeSource <- function(
+    obj, sample_id_column, metadata
+) {
+    df <- as_tibble(obj@metadata)
+    df |>
+        mutate(
+            sample_index = row_number(),
+            sample_id = if (
+                !is.null(sample_id_column) && sample_id_column %in% colnames(df)
+            ) {
+                df[[sample_id_column]]
+            } else {
+                df$sample_id
+            }
+        )
+}
+
+#' @rdname get_metadata
+#' @keywords internal
+#' @exportS3Method
 get_metadata.DBIConnection <- function(obj, sample_id_column, metadata) {
     cd_metadata <- get_workflow_input_files(obj) |>
         dplyr::mutate(
@@ -525,6 +545,13 @@ get_detected_peaks.XcmsRawList <- function(obj) {
 #' @keywords internal
 #' @exportS3Method
 get_detected_peaks.ExternalDataSource <- function(obj) {
+    obj@peaks
+}
+
+#' @rdname get_detected_peaks
+#' @keywords internal
+#' @exportS3Method
+get_detected_peaks.CompoundDiscovererNodeSource <- function(obj) {
     obj@peaks
 }
 

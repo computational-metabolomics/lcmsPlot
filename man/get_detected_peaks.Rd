@@ -10,6 +10,7 @@
 \alias{get_detected_peaks.XChromatogram}
 \alias{get_detected_peaks.XcmsRawList}
 \alias{get_detected_peaks.ExternalDataSource}
+\alias{get_detected_peaks.CompoundDiscovererNodeSource}
 \alias{get_detected_peaks.purityA}
 \title{Get the detected peaks from the data object (e.g. XCMSnExp)}
 \usage{
@@ -30,6 +31,8 @@ get_detected_peaks(obj)
 \method{get_detected_peaks}{XcmsRawList}(obj)
 
 \method{get_detected_peaks}{ExternalDataSource}(obj)
+
+\method{get_detected_peaks}{CompoundDiscovererNodeSource}(obj)
 
 \method{get_detected_peaks}{purityA}(obj)
 }

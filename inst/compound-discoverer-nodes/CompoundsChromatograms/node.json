@@ -1,0 +1,103 @@
+{
+  "Guid": "7A1C9F42-3B8E-4D6A-9E21-5C0F8B2D4E77",
+  "Category": "Scripting nodes",
+  "Name": "Compounds Chromatograms",
+  "Description": "Renders one chromatogram plot per compound and links each plot in the Compounds table. Powered by lcmsPlot.",
+  "Version": 1,
+  "Publisher": null,
+  "DevelopedBy": "Ossama Edbali",
+  "Homepage": "https://github.com/computational-metabolomics/lcmsPlot",
+  "LegalInformation": null,
+  "WorkflowType": "Post-Processing",
+  "ImageLarge": "IMG_32x32.png",
+  "ImageSmall": "IMG_16x16.png",
+  "License": null,
+
+  "ScriptProcessorArguments": {
+
+    "ExecutableCommandLineArguments": "\"C:\\Program Files\\Thermo\\Compound Discoverer 3.5\\Tools\\Scripts\\CompoundsChromatograms\\CompoundsChromatograms.R\" %NODEARGS% %PARAMETERS%",
+    "ExecutablePath": "C:\\Program Files\\R\\R-4.3.0\\bin\\Rscript.exe",
+    "ExpectResponse": true,
+    "UseRFriendlyNames": true,
+    "RequestedTablesAndColumns": "Compounds; Compounds per File; Input Files"
+  },
+
+  "Parameters": [
+    {
+      "Category": "General",
+      "DataType": "String",
+      "Name": "Compounds Query",
+      "Default": "compound_rank <= 20",
+      "Description": "Filter selecting which compounds to plot (evaluated on the compound table; compound_rank 1 = most abundant by area). Empty or NULL plots all compounds."
+    },
+    {
+      "Category": "General",
+      "DataType": "String",
+      "Name": "lcmsPlot Source Directory",
+      "Default": "",
+      "Description": "Empty loads the installed lcmsPlot package. Set a path to an lcmsPlot source tree to load that instead (development, via pkgload)."
+    },
+    {
+      "Category": "General",
+      "DataType": "String",
+      "Name": "Output Directory",
+      "Default": "",
+      "Description": "Directory for the per-compound PNGs. Empty writes to a folder next to the Compound Discoverer result file."
+    },
+    {
+      "Category": "Plot",
+      "DataType": "Float",
+      "Name": "Plot Width",
+      "Default": "8",
+      "Minimum": "2",
+      "Maximum": "40",
+      "Description": "Plot width in inches."
+    },
+    {
+      "Category": "Plot",
+      "DataType": "Float",
+      "Name": "Plot Height",
+      "Default": "5",
+      "Minimum": "2",
+      "Maximum": "40",
+      "Description": "Plot height in inches."
+    },
+    {
+      "Category": "Plot",
+      "DataType": "Int",
+      "Name": "Plot DPI",
+      "Default": "150",
+      "Minimum": "72",
+      "Maximum": "600",
+      "Description": "Plot resolution in dots per inch."
+    },
+    {
+      "Category": "Plot",
+      "DataType": "String",
+      "Name": "Plot Path Mode",
+      "Default": "absolute",
+      "Description": "Form of the file path stored in the Compounds column: absolute | filename | relative."
+    },
+    {
+      "Category": "Compounds Column",
+      "DataType": "String",
+      "Name": "Plot Column Name",
+      "Default": "Chromatogram Plot",
+      "Description": "Name of the column added to the Compounds table."
+    },
+    {
+      "Category": "Compounds Column",
+      "DataType": "String",
+      "Name": "Plot Column Position After",
+      "Default": "Name",
+      "Description": "Place the new column after this existing Compounds column."
+    },
+    {
+      "Category": "Compounds Column",
+      "DataType": "String",
+      "Name": "Plot Cell Renderer GUID",
+      "Default": "EB29D794-4F2E-4785-8B80-A24D8C0FB3E4",
+      "Description": "Compound Discoverer cell renderer for the column (default is the filename/link renderer)."
+    }
+  ]
+}

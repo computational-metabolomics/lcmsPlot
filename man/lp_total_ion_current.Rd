@@ -24,7 +24,10 @@ adding new data or visual components.
 }
 \description{
 The \code{lp_total_ion_current} generates summary data for the
-total ion current (TIC) of the selected samples.
+total ion current (TIC) of the selected samples. It works both with
+XCMS objects (\code{XCMSnExp}, \code{MsExperiment}) and with raw files passed
+directly to \code{lcmsPlot()} (a \code{character} vector of \code{.mzML}, \code{.mzXML},
+\code{.CDF}, or \code{.raw} paths).
 }
 \examples{
 data_obj <- get_XCMSnExp_object_example()

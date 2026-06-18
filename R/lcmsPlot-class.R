@@ -805,7 +805,10 @@ lp_peak_density <- function(
 #' Define the total ion current (TIC)
 #'
 #' The `lp_total_ion_current` generates summary data for the
-#' total ion current (TIC) of the selected samples.
+#' total ion current (TIC) of the selected samples. It works both with
+#' XCMS objects (`XCMSnExp`, `MsExperiment`) and with raw files passed
+#' directly to `lcmsPlot()` (a `character` vector of `.mzML`, `.mzXML`,
+#' `.CDF`, or `.raw` paths).
 #'
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
@@ -828,8 +831,8 @@ lp_peak_density <- function(
 #' p
 lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
     function(obj) {
-        if (!is_xcms_data(obj@data@data_obj)) {
-            stop("total_ion_current: to plot the total ion current the data object should be either of class XCMSnExp or MsExperiment.")
+        if (!is_xcms_data(obj@data@data_obj) && !is.character(obj@data@data_obj)) {
+            stop("total_ion_current: to plot the total ion current the data object should be of class XCMSnExp, MsExperiment, or a character vector of raw file paths.")
         }
 
         if (is.null(sample_ids)) {
@@ -1337,8 +1340,9 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
         name = "lp_compound_discoverer",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_cd_result(obj@data@data_obj)) {
-                stop("lp_compound_discoverer: The data object is not a Compound Discoverer DB connection")
+            if (!is_cd_result(obj@data@data_obj) &&
+                !is_cd_node_source(obj@data@data_obj)) {
+                stop("lp_compound_discoverer: The data object is not a Compound Discoverer results connection or scripting-node source")
             }
 
             obj@options$compound_discoverer <- list(

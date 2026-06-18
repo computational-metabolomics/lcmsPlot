@@ -140,6 +140,145 @@ setMethod(
 #' @rdname create_chromatograms
 setMethod(
     f = "create_chromatograms",
+    signature = c("CompoundDiscovererNodeSource", "data.frame", "list", "NULL"),
+    definition = function(data_obj, metadata, options, features) {
+        cd_opts <- options$compound_discoverer
+        ppm <- options$chromatograms$ppm
+        fill_gaps <- options$chromatograms$fill_gaps
+
+        metadata <- metadata |>
+            filter(.data$sample_id %in% options$chromatograms$sample_ids)
+
+        # Filter the consolidated compound table by the user-supplied query.
+        all_compounds <- data_obj@compounds
+        if (!is.null(cd_opts$compounds_query)) {
+            compounds_query <- rlang::parse_expr(cd_opts$compounds_query)
+            all_compounds <- all_compounds |> filter(!!compounds_query)
+        }
+
+        if (nrow(all_compounds) == 0) {
+            stop("No compounds matched the supplied 'compounds_query'.")
+        }
+
+        # One representative entry per distinct compound (used for labelling).
+        compounds <- all_compounds |>
+            distinct(
+                .data$name, .data$formula, .data$adduct,
+                .keep_all = TRUE
+            ) |>
+            select(all_of(c("name", "formula", "adduct", "mz"))) |>
+            as_tibble()
+
+        raw_data <- io_get_raw_data(metadata$sample_path)
+        n_compounds <- nrow(compounds)
+
+        process_sample <- function(i) {
+            sample_metadata <- metadata[i, ]
+            raw_obj <- raw_data[[sample_metadata$sample_path]]
+
+            chromatograms_list <- list()
+            feature_metadata_list <- list()
+            detected_peaks_list <- list()
+
+            for (j in seq_len(n_compounds)) {
+                compound <- compounds[j, ]
+
+                entry <- all_compounds |>
+                    filter(
+                        .data$sample_index == sample_metadata$sample_index,
+                        .data$name == compound$name
+                    )
+
+                if (nrow(entry) == 0) next
+                entry <- entry[1, ]
+
+                # Can't extract a chromatogram without an m/z and RT window.
+                if (is.na(entry$mz) || is.na(entry$rtmin) || is.na(entry$rtmax)) {
+                    next
+                }
+
+                mzr <- get_mz_range(entry$mz, ppm)
+                rtr <- c(
+                    entry$rtmin - cd_opts$rt_extend,
+                    entry$rtmax + cd_opts$rt_extend
+                )
+
+                data <- create_chromatogram(
+                    raw_obj,
+                    mz_range = mzr,
+                    rt_range = rtr,
+                    fill_gaps = fill_gaps
+                )
+
+                feature_metadata_id <- (i - 1) * n_compounds + j
+
+                chromatograms_list[[j]] <- tibble(
+                    rt = data$chromatograms$rt,
+                    intensity = data$chromatograms$intensity,
+                    metadata_index = sample_metadata$sample_index,
+                    feature_metadata_id = feature_metadata_id
+                )
+
+                feature_metadata_list[[j]] <- tibble(
+                    feature_metadata_id = feature_metadata_id,
+                    metadata_index = sample_metadata$sample_index,
+                    name = entry$name,
+                    formula = entry$formula,
+                    mz = entry$mz,
+                    adduct = entry$adduct
+                )
+
+                detected_peaks_list[[j]] <- entry |>
+                    select(
+                        .data$name, .data$mz, .data$rt,
+                        .data$rtmin, .data$rtmax, .data$into, .data$maxo
+                    ) |>
+                    mutate(
+                        sample_index = sample_metadata$sample_index,
+                        sample_id = sample_metadata$sample_id,
+                        sample_path = sample_metadata$sample_path
+                    )
+            }
+
+            list(
+                chromatograms = do.call(rbind, chromatograms_list),
+                feature_metadata = do.call(rbind, feature_metadata_list),
+                detected_peaks = do.call(rbind, detected_peaks_list)
+            )
+        }
+
+        if (!is.null(options$parallel_param)) {
+            results <- BiocParallel::bplapply(
+                seq_len(nrow(metadata)),
+                process_sample,
+                BPPARAM = options$parallel_param
+            )
+        } else {
+            results <- lapply(seq_len(nrow(metadata)), process_sample)
+        }
+
+        io_close_raw_data(raw_data)
+
+        list(
+            chromatograms = do.call(
+                rbind, lapply(results, `[[`, "chromatograms")),
+            mass_traces = tibble(
+                rt = numeric(),
+                mz = numeric(),
+                metadata_index = numeric(),
+                feature_metadata_id = numeric()
+            ),
+            feature_metadata = do.call(
+                rbind, lapply(results, `[[`, "feature_metadata")),
+            detected_peaks = do.call(
+                rbind, lapply(results, `[[`, "detected_peaks"))
+        )
+    }
+)
+
+#' @rdname create_chromatograms
+setMethod(
+    f = "create_chromatograms",
     signature = c("XcmsRawList", "data.frame", "list", "NULL"),
     definition = function(data_obj, metadata, options, features) {
         metadata <- metadata |>

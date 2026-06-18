@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.3
+Version: 1.1.5
 Authors@R: c(
     person(
         "Ossama",
@@ -44,7 +44,8 @@ Imports:
     scales,
     patchwork,
     DBI,
-    RSQLite
+    RSQLite,
+    jsonlite
 Suggests:
     knitr,
     rmarkdown,
@@ -72,6 +73,7 @@ Collate:
     'data-source-compound-discoverer.R'
     'data-source-mzmine.R'
     'data-source-ms-dial.R'
+    'data-source-compound-discoverer-node.R'
     'creators-purity.R'
     'constructors-chromatograms.R'
     'constructors-spectra.R'

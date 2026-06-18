@@ -230,6 +230,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
         "XChromatogram",
         "XcmsRawList",
         "ExternalDataSource",
+        "CompoundDiscovererNodeSource",
         "DBIConnection",
         "purityA",
         "character")
