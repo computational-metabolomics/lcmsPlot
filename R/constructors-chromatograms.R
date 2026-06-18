@@ -51,6 +51,15 @@ create_chromatogram <- function(
     fill_gaps = FALSE,
     adjusted_rt = NULL
 ) {
+    # Guard against an undefined extraction window (e.g. a compound with no RT or
+    # m/z): an NA range would otherwise corrupt the scan filtering below.
+    if (any(is.na(mz_range)) || any(is.na(rt_range))) {
+        return(list(
+            chromatograms = tibble(rt = numeric(), intensity = numeric()),
+            mass_traces = tibble(rt = numeric(), mz = numeric())
+        ))
+    }
+
     if (is(raw_data, "RawrrReader")) {
         mz <- (mz_range[1] + mz_range[2]) / 2
         ppm <- ((mz_range[2] - mz_range[1]) / mz) * 1e6

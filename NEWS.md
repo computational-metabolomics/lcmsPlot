@@ -1,3 +1,34 @@
+# lcmsPlot 1.1.5
+
+- `lp_total_ion_current()` now works when raw files are passed directly to
+  `lcmsPlot()` (a `character` vector of `.mzML`, `.mzXML`, `.CDF`, or `.raw`
+  paths), in addition to `XCMSnExp` / `MsExperiment` objects. The per-scan TIC
+  is read from the raw file headers via the shared raw-file reader interface.
+
+- Added a runnable worked example for large, multi-sample LC-MS studies. Using
+  a 50-sample mzML study (the published Sacurine dataset, MetaboLights
+  MTBLS404), it demonstrates the batching API (`batch_size` +
+  `iterate_plot_batches()`) together with `patchwork` to build one
+  self-contained composite figure per sample (TIC and BPC, an EIC + mass trace
+  for a shared compound, and a zoomed intensity map), written to a multi-page
+  PDF report. It is distributed as a standalone script rather than a packaged
+  vignette, since it downloads and processes ~50 raw files.
+
+# lcmsPlot 1.1.4
+
+- Added support for using `lcmsPlot` inside a Compound Discoverer custom
+  Scripting Node. The new `CompoundDiscovererNodeSource()` constructor reads
+  the `node_args.json` file passed by Compound Discoverer together with the
+  tab-delimited table exports it references (Compounds, Compounds per File,
+  Features, and their link tables), selects a representative ion per compound
+  and study file (preferring `[M+H]+1` / `[M-H]-1`, otherwise the most
+  abundant feature), and builds a plottable data source. Chromatograms are
+  extracted from the raw (mzML) files supplied via `sample_paths`, which are
+  matched to study files by file basename (falling back to positional
+  matching by study-file ID). Plotting reuses the existing
+  `lp_compound_discoverer(compounds_query, rt_extend)` interface. `jsonlite`
+  was added to `Imports`.
+
 # lcmsPlot 1.1.3
 
 - Redesigned `lcmsPlotApp()` as a Tailwind-based dashboard: sticky topbar,

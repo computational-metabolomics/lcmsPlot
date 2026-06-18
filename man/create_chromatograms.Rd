@@ -3,6 +3,7 @@
 \name{create_chromatograms}
 \alias{create_chromatograms}
 \alias{create_chromatograms,DBIConnection,data.frame,list,NULL-method}
+\alias{create_chromatograms,CompoundDiscovererNodeSource,data.frame,list,NULL-method}
 \alias{create_chromatograms,XcmsRawList,data.frame,list,NULL-method}
 \alias{create_chromatograms,XcmsRawList,data.frame,list,ANY-method}
 \alias{create_chromatograms,MChromatograms,data.frame,list,NULL-method}
@@ -16,6 +17,8 @@
 create_chromatograms(data_obj, metadata, options, features)
 
 \S4method{create_chromatograms}{DBIConnection,data.frame,list,NULL}(data_obj, metadata, options, features)
+
+\S4method{create_chromatograms}{CompoundDiscovererNodeSource,data.frame,list,NULL}(data_obj, metadata, options, features)
 
 \S4method{create_chromatograms}{XcmsRawList,data.frame,list,NULL}(data_obj, metadata, options, features)
 

@@ -10,6 +10,7 @@
 \alias{get_metadata.XChromatogram}
 \alias{get_metadata.XcmsRawList}
 \alias{get_metadata.ExternalDataSource}
+\alias{get_metadata.CompoundDiscovererNodeSource}
 \alias{get_metadata.DBIConnection}
 \alias{get_metadata.purityA}
 \title{Get the metadata associated with the input object}
@@ -31,6 +32,8 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{XcmsRawList}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{ExternalDataSource}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{CompoundDiscovererNodeSource}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{DBIConnection}(obj, sample_id_column, metadata)
 

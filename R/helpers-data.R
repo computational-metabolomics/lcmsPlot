@@ -50,6 +50,16 @@ is_cd_result <- function(obj) {
     inherits(obj, "DBIConnection") && is_cd_results_path(obj@dbname)
 }
 
+#' Check whether an object is a Compound Discoverer scripting-node data source
+#'
+#' @param obj An object to test.
+#' @return A `logical` value indicating whether the object is a
+#' `CompoundDiscovererNodeSource`.
+#' @keywords internal
+is_cd_node_source <- function(obj) {
+    inherits(obj, "CompoundDiscovererNodeSource")
+}
+
 #' Get an `XCMSnExp` example object from the `faahKO` dataset
 #'
 #' @param indices A `numeric` vector of sample indices to select
