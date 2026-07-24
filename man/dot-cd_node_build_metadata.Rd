@@ -21,7 +21,7 @@ A \code{tibble} with \code{study_file_id}, \code{sample_index}, \code{sample_id}
 Builds a sample metadata table from the distinct study files referenced in
 the consolidated compound table and the user-supplied \code{sample_paths}. When a
 study-file table with file names is available, study files are matched to
-\code{sample_paths} by basename (ignoring extension, e.g. \code{.raw} -> \code{.mzML});
+\code{sample_paths} by basename (ignoring extension);
 otherwise study files are matched positionally by sorted study-file ID.
 }
 \keyword{internal}

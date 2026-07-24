@@ -1355,6 +1355,86 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
     )
 }
 
+#' Define the options to use when plotting LC-MS data coming from
+#' a LipidSearch result file.
+#'
+#' @param lipids_query A `character` value indicating the expression used to
+#' select which lipids to plot. The expression is evaluated on the lipid table
+#' and can reference the following columns:
+#' \describe{
+#'   \item{name}{Plot label: the lipid ion, disambiguated with its retention
+#'   time when the same ion is reported more than once.}
+#'   \item{lipid_ion}{Lipid ion as reported by LipidSearch, e.g. `AEA(18:2)+H`
+#'   (4.2 `LipidIon` / 5.2 `LipidID`).}
+#'   \item{lipid_group}{LipidSearch lipid group.}
+#'   \item{class}{Lipid class, e.g. `PC`, `AcCa`.}
+#'   \item{sub_class}{Lipid subclass (5.2 only; `NA` for 4.2).}
+#'   \item{fatty_acid}{Fatty acid composition (4.2 only; `NA` for 5.2).}
+#'   \item{formula}{Ion formula.}
+#'   \item{adduct}{Adduct: the explicit `AdductIon` column for 5.2 (e.g. `M+H`),
+#'   otherwise derived from the ion name for 4.2 (e.g. `+H`).}
+#'   \item{calc_mz}{Theoretical m/z.}
+#'   \item{rej}{LipidSearch rejection flag as a `logical` (`TRUE` if rejected).}
+#'   \item{mz}{m/z used for extraction (observed where available).}
+#'   \item{rt, rtmin, rtmax}{Retention time and peak bounds, in seconds.}
+#'   \item{into}{Integrated peak area; `NA` where nothing was detected.}
+#'   \item{maxo}{Peak height; `NA` where nothing was detected.}
+#'   \item{grade}{LipidSearch identification grade (`A` to `D`).}
+#'   \item{mscore, sn}{LipidSearch m-score / ID score and signal-to-noise
+#'   (`sn` is 4.2 only).}
+#'   \item{detected}{Whether LipidSearch integrated a peak in this sample.}
+#'   \item{lipid_rank}{Dense rank of lipids by descending total area, for
+#'   top-N selection.}
+#' }
+#'
+#' The query selects *lipids*, not lipid/sample rows: a predicate such as
+#' `grade == "A"` keeps the lipids graded A in at least one sample, and each of
+#' them is then extracted from **every** sample - including samples that the
+#' result file does not cover, which use the lipid's consensus m/z and
+#' retention-time window.
+#' @param rt_extend A `numeric` value indicating how much (in seconds) the
+#' retention time window should be extended on each side of the lipid peak when
+#' extracting and plotting chromatograms.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified LipidSearch options stored in
+#' `options$lipid_search`. It is intended for use with the `+` operator,
+#' which incrementally layers new data or visual components onto
+#' the `lcmsPlot` object.
+#' @seealso [LipidSearchSource()]
+#' @export
+#' @examples
+#' \dontrun{
+#' ds <- LipidSearchSource("LIPIDS_POS_5ppm.txt", sample_paths = raw_files)
+#'
+#' lcmsPlot(ds) +
+#'   lp_lipid_search(
+#'     lipids_query = 'class == "AcCa" & grade == "A"',
+#'     rt_extend = 30
+#'   ) +
+#'   lp_chromatogram(highlight_peaks = TRUE) +
+#'   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
+#'   lp_labels(title = "LipidSearch example", legend = "Sample") +
+#'   lp_legend(position = "bottom")
+#' }
+lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
+    make_interface_function(
+        name = "lp_lipid_search",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_lipid_search_source(obj@data@data_obj)) {
+                stop("lp_lipid_search: The data object is not a LipidSearch source")
+            }
+
+            obj@options$lipid_search <- list(
+                lipids_query = lipids_query,
+                rt_extend = rt_extend
+            )
+
+            return(obj)
+        }
+    )
+}
+
 #' Overlay precursor ion purity scores on a chromatogram
 #'
 #' `lp_purity_overlay()` adds a `geom_point` layer to the chromatogram panel

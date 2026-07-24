@@ -11,12 +11,19 @@
 }
 \value{
 A \code{tibble} with one row per compound and study file, containing
+\code{compound_id} (the Compound Discoverer "Compounds ID" primary key),
 \code{study_file_id}, \code{name}, \code{formula}, \code{adduct}, \code{mz}, \code{rt}, \code{rtmin}, \code{rtmax},
-\code{into}, and \code{maxo}.
+\code{into}, \code{maxo}, and \code{compound_rank} (a dense rank of compounds by descending
+total area, for top-N selection).
 }
 \description{
-Reproduces the join used by Compound Discoverer's \code{CompoundsMZ.R} example to
-associate each compound, in each study file, with a representative ion
+Associate each compound, in each study file, with a representative ion
 (preferring the molecular ion, otherwise the most abundant feature).
+}
+\details{
+Dispatches on the export topology: when a per-file \code{features} table
+and its Compounds-per-File link are present the feature-level builder is used;
+otherwise the Compound-centric builder is used (m/z from the compound, per-file
+RT/area from the instance table).
 }
 \keyword{internal}

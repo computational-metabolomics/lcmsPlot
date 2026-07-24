@@ -137,14 +137,160 @@ setMethod(
     }
 )
 
+#' Extract one chromatogram per compound and sample from the raw files
+#'
+#' Shared by the compound-centric data sources (Compound Discoverer scripting
+#' node, LipidSearch). Each row of `all_compounds` describes where to extract a
+#' compound in one sample: an `mz`, an `rtmin`/`rtmax` window, and the
+#' `sample_index` it belongs to.
+#'
+#' Compounds with no `mz` or no RT window are skipped, as are compounds absent
+#' from a given sample. When `all_compounds` carries a `detected` column, a
+#' `detected_peaks` row - the one the `highlight_peaks` layer draws - is emitted
+#' only where it is `TRUE`, so compounds that were looked for but not found are
+#' still plotted without a degenerate highlight.
+#'
+#' @param all_compounds A `tibble` with at least `name`, `formula`, `adduct`,
+#' `mz`, `rt`, `rtmin`, `rtmax`, `into`, `maxo`, and `sample_index` columns.
+#' Optional `class` and `detected` columns are used when present.
+#' @param metadata A `tibble` of sample metadata.
+#' @param options A `list` of plot options.
+#' @param rt_extend A `numeric` value indicating how much (in seconds) to extend
+#' the RT window on each side of the compound peak.
+#' @return A named `list` with elements `chromatograms`, `mass_traces`,
+#' `feature_metadata`, and `detected_peaks`.
+#' @keywords internal
+create_compound_chromatograms <- function(
+    all_compounds,
+    metadata,
+    options,
+    rt_extend
+) {
+    ppm <- options$chromatograms$ppm
+    fill_gaps <- options$chromatograms$fill_gaps
+
+    # One representative entry per distinct compound (used for labelling).
+    annotation_cols <- intersect(
+        c("name", "formula", "adduct", "mz", "class", "sub_class"),
+        colnames(all_compounds))
+
+    compounds <- all_compounds |>
+        distinct(.data$name, .keep_all = TRUE) |>
+        select(all_of(annotation_cols)) |>
+        as_tibble()
+
+    raw_data <- io_get_raw_data(metadata$sample_path)
+    n_compounds <- nrow(compounds)
+
+    process_sample <- function(i) {
+        sample_metadata <- metadata[i, ]
+        raw_obj <- raw_data[[sample_metadata$sample_path]]
+
+        chromatograms_list <- list()
+        feature_metadata_list <- list()
+        detected_peaks_list <- list()
+
+        for (j in seq_len(n_compounds)) {
+            compound <- compounds[j, ]
+
+            entry <- all_compounds |>
+                filter(
+                    .data$sample_index == sample_metadata$sample_index,
+                    .data$name == compound$name
+                )
+
+            if (nrow(entry) == 0) next
+            entry <- entry[1, ]
+
+            # Can't extract a chromatogram without an m/z and RT window.
+            if (is.na(entry$mz) || is.na(entry$rtmin) || is.na(entry$rtmax)) {
+                next
+            }
+
+            mzr <- get_mz_range(entry$mz, ppm)
+            rtr <- c(entry$rtmin - rt_extend, entry$rtmax + rt_extend)
+
+            data <- create_chromatogram(
+                raw_obj,
+                mz_range = mzr,
+                rt_range = rtr,
+                fill_gaps = fill_gaps
+            )
+
+            feature_metadata_id <- (i - 1) * n_compounds + j
+
+            chromatograms_list[[j]] <- tibble(
+                rt = data$chromatograms$rt,
+                intensity = data$chromatograms$intensity,
+                metadata_index = sample_metadata$sample_index,
+                feature_metadata_id = feature_metadata_id
+            )
+
+            feature_metadata_list[[j]] <- entry |>
+                select(all_of(annotation_cols)) |>
+                mutate(
+                    feature_metadata_id = feature_metadata_id,
+                    metadata_index = sample_metadata$sample_index
+                )
+
+            # Sources that look compounds up in samples where they were never
+            # reported flag the difference with a `detected` column; those
+            # entries have no peak to highlight.
+            if (!("detected" %in% colnames(entry)) || isTRUE(entry$detected)) {
+                detected_peaks_list[[j]] <- entry |>
+                    select(
+                        .data$name, .data$mz, .data$rt,
+                        .data$rtmin, .data$rtmax, .data$into, .data$maxo
+                    ) |>
+                    mutate(
+                        sample_index = sample_metadata$sample_index,
+                        sample_id = sample_metadata$sample_id,
+                        sample_path = sample_metadata$sample_path
+                    )
+            }
+        }
+
+        list(
+            chromatograms = do.call(rbind, chromatograms_list),
+            feature_metadata = do.call(rbind, feature_metadata_list),
+            detected_peaks = do.call(rbind, detected_peaks_list)
+        )
+    }
+
+    if (!is.null(options$parallel_param)) {
+        results <- BiocParallel::bplapply(
+            seq_len(nrow(metadata)),
+            process_sample,
+            BPPARAM = options$parallel_param
+        )
+    } else {
+        results <- lapply(seq_len(nrow(metadata)), process_sample)
+    }
+
+    io_close_raw_data(raw_data)
+
+    list(
+        chromatograms = do.call(
+            rbind, lapply(results, `[[`, "chromatograms")),
+        mass_traces = tibble(
+            rt = numeric(),
+            mz = numeric(),
+            metadata_index = numeric(),
+            feature_metadata_id = numeric()
+        ),
+        feature_metadata = do.call(
+            rbind, lapply(results, `[[`, "feature_metadata")),
+        detected_peaks = do.call(
+            rbind, lapply(results, `[[`, "detected_peaks"))
+    )
+}
+
 #' @rdname create_chromatograms
 setMethod(
     f = "create_chromatograms",
     signature = c("CompoundDiscovererNodeSource", "data.frame", "list", "NULL"),
     definition = function(data_obj, metadata, options, features) {
         cd_opts <- options$compound_discoverer
-        ppm <- options$chromatograms$ppm
-        fill_gaps <- options$chromatograms$fill_gaps
 
         metadata <- metadata |>
             filter(.data$sample_id %in% options$chromatograms$sample_ids)
@@ -160,119 +306,40 @@ setMethod(
             stop("No compounds matched the supplied 'compounds_query'.")
         }
 
-        # One representative entry per distinct compound (used for labelling).
-        compounds <- all_compounds |>
-            distinct(
-                .data$name, .data$formula, .data$adduct,
-                .keep_all = TRUE
-            ) |>
-            select(all_of(c("name", "formula", "adduct", "mz"))) |>
-            as_tibble()
+        create_compound_chromatograms(
+            all_compounds, metadata, options, cd_opts$rt_extend)
+    }
+)
 
-        raw_data <- io_get_raw_data(metadata$sample_path)
-        n_compounds <- nrow(compounds)
+#' @rdname create_chromatograms
+setMethod(
+    f = "create_chromatograms",
+    signature = c("LipidSearchSource", "data.frame", "list", "NULL"),
+    definition = function(data_obj, metadata, options, features) {
+        ls_opts <- options$lipid_search
 
-        process_sample <- function(i) {
-            sample_metadata <- metadata[i, ]
-            raw_obj <- raw_data[[sample_metadata$sample_path]]
+        metadata <- metadata |>
+            filter(.data$sample_id %in% options$chromatograms$sample_ids)
 
-            chromatograms_list <- list()
-            feature_metadata_list <- list()
-            detected_peaks_list <- list()
+        all_compounds <- data_obj@compounds
 
-            for (j in seq_len(n_compounds)) {
-                compound <- compounds[j, ]
-
-                entry <- all_compounds |>
-                    filter(
-                        .data$sample_index == sample_metadata$sample_index,
-                        .data$name == compound$name
-                    )
-
-                if (nrow(entry) == 0) next
-                entry <- entry[1, ]
-
-                # Can't extract a chromatogram without an m/z and RT window.
-                if (is.na(entry$mz) || is.na(entry$rtmin) || is.na(entry$rtmax)) {
-                    next
-                }
-
-                mzr <- get_mz_range(entry$mz, ppm)
-                rtr <- c(
-                    entry$rtmin - cd_opts$rt_extend,
-                    entry$rtmax + cd_opts$rt_extend
-                )
-
-                data <- create_chromatogram(
-                    raw_obj,
-                    mz_range = mzr,
-                    rt_range = rtr,
-                    fill_gaps = fill_gaps
-                )
-
-                feature_metadata_id <- (i - 1) * n_compounds + j
-
-                chromatograms_list[[j]] <- tibble(
-                    rt = data$chromatograms$rt,
-                    intensity = data$chromatograms$intensity,
-                    metadata_index = sample_metadata$sample_index,
-                    feature_metadata_id = feature_metadata_id
-                )
-
-                feature_metadata_list[[j]] <- tibble(
-                    feature_metadata_id = feature_metadata_id,
-                    metadata_index = sample_metadata$sample_index,
-                    name = entry$name,
-                    formula = entry$formula,
-                    mz = entry$mz,
-                    adduct = entry$adduct
-                )
-
-                detected_peaks_list[[j]] <- entry |>
-                    select(
-                        .data$name, .data$mz, .data$rt,
-                        .data$rtmin, .data$rtmax, .data$into, .data$maxo
-                    ) |>
-                    mutate(
-                        sample_index = sample_metadata$sample_index,
-                        sample_id = sample_metadata$sample_id,
-                        sample_path = sample_metadata$sample_path
-                    )
-            }
-
-            list(
-                chromatograms = do.call(rbind, chromatograms_list),
-                feature_metadata = do.call(rbind, feature_metadata_list),
-                detected_peaks = do.call(rbind, detected_peaks_list)
-            )
+        # The query selects *lipids*, not lipid/sample rows: a row-level
+        # predicate such as `grade == "A"` picks the lipids that were graded A
+        # somewhere, and every requested sample keeps its extraction row -
+        # including samples the result file does not cover.
+        if (!is.null(ls_opts$lipids_query)) {
+            lipids_query <- rlang::parse_expr(ls_opts$lipids_query)
+            matched <- all_compounds |> filter(!!lipids_query)
+            all_compounds <- all_compounds |>
+                filter(.data$name %in% matched$name)
         }
 
-        if (!is.null(options$parallel_param)) {
-            results <- BiocParallel::bplapply(
-                seq_len(nrow(metadata)),
-                process_sample,
-                BPPARAM = options$parallel_param
-            )
-        } else {
-            results <- lapply(seq_len(nrow(metadata)), process_sample)
+        if (nrow(all_compounds) == 0) {
+            stop("No lipids matched the supplied 'lipids_query'.")
         }
 
-        io_close_raw_data(raw_data)
-
-        list(
-            chromatograms = do.call(
-                rbind, lapply(results, `[[`, "chromatograms")),
-            mass_traces = tibble(
-                rt = numeric(),
-                mz = numeric(),
-                metadata_index = numeric(),
-                feature_metadata_id = numeric()
-            ),
-            feature_metadata = do.call(
-                rbind, lapply(results, `[[`, "feature_metadata")),
-            detected_peaks = do.call(
-                rbind, lapply(results, `[[`, "detected_peaks"))
-        )
+        create_compound_chromatograms(
+            all_compounds, metadata, options, ls_opts$rt_extend)
     }
 )
 

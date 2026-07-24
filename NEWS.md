@@ -1,3 +1,37 @@
+# lcmsPlot 1.1.6
+
+- Added support for LipidSearch result files (both **4.2** and **5.2**; the
+  version is auto-detected). The new `LipidSearchSource()` constructor parses the
+  lipid table, reshapes the per-sample `Area` / `Height` / RT / observed-m/z
+  columns into an xcms-style peak table, and builds a plottable data source.
+  Rejected lipids are dropped unless `keep_rejected = TRUE`, and lipid ions
+  reported at several retention times get distinct plot labels. Plotting uses the
+  new `lp_lipid_search(lipids_query, rt_extend)` layer, whose query can reference
+  the lipid annotations (`class`, `sub_class`, `grade`, `adduct`, `lipid_rank`,
+  ...).
+
+- LipidSearch **5.2** files carry no raw-file names, so their samples are keyed
+  `s1`, `s2`, … (from the `OrgMeanArea[...]` columns). For 5.2, map raw files by
+  naming `sample_paths` with those keys (`c("s1" = "a.mzML", "s2" = "b.mzML")`) —
+  order-independent and covering any subset — or pass an unnamed vector matched
+  positionally. 5.2 exports add a `sub_class` annotation and an explicit adduct,
+  and their per-lipid `BaseRt` provides an extraction window even for lipids
+  detected in no sample. 4.2's basename matching is unchanged. The `rej`
+  annotation is now a `logical` for both versions.
+
+- Samples plotted from a LipidSearch source are **not** limited to the ones
+  declared in the result file: `sample_paths` determines the sample list and is
+  matched to the declarations by file basename without extension (so a result
+  file listing `.raw` files works with converted `.mzML` files). A supplied
+  path that matches no declaration is still a full sample - every queried
+  lipid's chromatogram is extracted there using the lipid's consensus m/z and
+  retention-time window, it simply has no reported peak to highlight.
+
+- The per-compound chromatogram extraction loop is now shared between the
+  Compound Discoverer scripting-node and LipidSearch sources
+  (`create_compound_chromatograms()`), along with the compound ranking and
+  column-resolution helpers.
+
 # lcmsPlot 1.1.5
 
 - `lp_total_ion_current()` now works when raw files are passed directly to

@@ -231,6 +231,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
         "XcmsRawList",
         "ExternalDataSource",
         "CompoundDiscovererNodeSource",
+        "LipidSearchSource",
         "DBIConnection",
         "purityA",
         "character")
