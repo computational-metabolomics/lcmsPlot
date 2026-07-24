@@ -124,3 +124,146 @@ test_that("create_chromatograms with NULL features creates BPCs or TICs from an 
   expect_lte(round(max(data_container@chromatograms$rt)), 4500)
   expect_equal(nrow(data_container@mass_traces), 0)
 })
+
+test_that("create_chromatograms extracts LipidSearch compounds, including from samples absent from the results", {
+  # arrange - two standards, but only the kynurenine run is declared in the
+  # LipidSearch results; the proline run is an extra sample.
+  mzml_dir <- file.path(tempdir(), "lipid-search-standards")
+  utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir
+  )
+  kynurenine <- file.path(mzml_dir, "mzml", "l-kynurenine-MS1.mzML")
+  proline <- file.path(mzml_dir, "mzml", "l-proline-MS1.mzML")
+
+  # Both compounds are reported in the declared sample only. The RT window is
+  # widened enough (via rt_extend) to span both runs.
+  results_path <- .write_lipid_search_results(
+    file_names = "l-kynurenine-MS1.raw",
+    lipids = data.frame(
+      "Rej." = c(0, 0),
+      "LipidIon" = c("KYN(0:0)+H", "PRO(0:0)+H"),
+      "LipidGroup" = c("KYN(0:0)", "PRO(0:0)"),
+      "Class" = c("KYN", "PRO"),
+      "FattyAcid" = c("(0:0)", "(0:0)"),
+      "CalcMz" = c(209.0921, 116.0706),
+      "IonFormula" = c("C10 H13 O3 N2", "C5 H10 O2 N1"),
+      check.names = FALSE
+    ),
+    values = list(
+      "Area" = rbind(24050, 0),
+      "Height" = rbind(24050, 0),
+      "Rt" = rbind(6.08, 6.08),
+      "ObsMz" = rbind("209.0921", ""),
+      "Hwhm(L)" = rbind(0.05, 0),
+      "Hwhm(R)" = rbind(0.05, 0),
+      "Grade" = rbind("A", ""),
+      "mScore" = rbind("9", ""),
+      "S/N" = rbind("30", "")
+    )
+  )
+
+  data_obj <- LipidSearchSource(results_path, c(kynurenine, proline))
+  data_container <- create_data_container_from_obj(
+    data_obj, sample_id_column = "sample_id", metadata = NULL)
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$sample_ids <- data_container@metadata$sample_id
+  opts$chromatograms$ppm <- 20
+  opts$lipid_search$rt_extend <- 120
+
+  # act
+  result <- create_chromatograms(
+    data_container@data_obj,
+    data_container@metadata,
+    opts,
+    NULL
+  )
+
+  # assert - both samples yield chromatograms, including the one that the
+  # results file never mentioned.
+  expect_setequal(unique(result$chromatograms$metadata_index), c(1, 2))
+  expect_setequal(
+    unique(result$feature_metadata$name),
+    c("KYN(0:0)+H", "PRO(0:0)+H")
+  )
+
+  extra_sample_index <- which(!data_container@metadata$in_results)
+  extra <- result$chromatograms[
+    result$chromatograms$metadata_index == extra_sample_index, ]
+  expect_gt(nrow(extra), 0)
+  expect_gt(max(extra$intensity), 0)
+
+  # Only the declared sample's detected compound is a highlightable peak.
+  expect_equal(nrow(result$detected_peaks), 1)
+  expect_equal(result$detected_peaks$name, "KYN(0:0)+H")
+  expect_false(extra_sample_index %in% result$detected_peaks$sample_index)
+})
+
+test_that("create_chromatograms applies the LipidSearch query per lipid, not per lipid/sample row", {
+  # arrange - only the kynurenine compound is graded, and only in the one
+  # sample the results file declares.
+  mzml_dir <- file.path(tempdir(), "lipid-search-standards")
+  utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir
+  )
+  kynurenine <- file.path(mzml_dir, "mzml", "l-kynurenine-MS1.mzML")
+  proline <- file.path(mzml_dir, "mzml", "l-proline-MS1.mzML")
+
+  results_path <- .write_lipid_search_results(
+    file_names = "l-kynurenine-MS1.raw",
+    lipids = data.frame(
+      "Rej." = c(0, 0),
+      "LipidIon" = c("KYN(0:0)+H", "PRO(0:0)+H"),
+      "LipidGroup" = c("KYN(0:0)", "PRO(0:0)"),
+      "Class" = c("KYN", "PRO"),
+      "FattyAcid" = c("(0:0)", "(0:0)"),
+      "CalcMz" = c(209.0921, 116.0706),
+      "IonFormula" = c("C10 H13 O3 N2", "C5 H10 O2 N1"),
+      check.names = FALSE
+    ),
+    values = list(
+      "Area" = rbind(24050, 0),
+      "Height" = rbind(24050, 0),
+      "Rt" = rbind(6.08, 6.08),
+      "ObsMz" = rbind("209.0921", ""),
+      "Hwhm(L)" = rbind(0.05, 0),
+      "Hwhm(R)" = rbind(0.05, 0),
+      "Grade" = rbind("A", ""),
+      "mScore" = rbind("9", ""),
+      "S/N" = rbind("30", "")
+    )
+  )
+
+  data_obj <- LipidSearchSource(results_path, c(kynurenine, proline))
+  data_container <- create_data_container_from_obj(
+    data_obj, sample_id_column = "sample_id", metadata = NULL)
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$sample_ids <- data_container@metadata$sample_id
+  opts$chromatograms$ppm <- 20
+  opts$lipid_search$rt_extend <- 120
+  opts$lipid_search$lipids_query <- 'grade == "A"'
+
+  # act
+  result <- create_chromatograms(
+    data_container@data_obj,
+    data_container@metadata,
+    opts,
+    NULL
+  )
+
+  # assert - the query keeps only the graded lipid, but it is still extracted
+  # from every sample, including the one the results file never mentioned.
+  expect_equal(unique(result$feature_metadata$name), "KYN(0:0)+H")
+  expect_setequal(unique(result$feature_metadata$metadata_index), c(1, 2))
+
+  # A query that matches nothing is an error.
+  opts$lipid_search$lipids_query <- 'class == "does-not-exist"'
+  expect_error(
+    create_chromatograms(
+      data_container@data_obj, data_container@metadata, opts, NULL),
+    "No lipids matched"
+  )
+})

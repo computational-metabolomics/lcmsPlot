@@ -60,6 +60,56 @@ is_cd_node_source <- function(obj) {
     inherits(obj, "CompoundDiscovererNodeSource")
 }
 
+#' Check whether an object is a LipidSearch data source
+#'
+#' @param obj An object to test.
+#' @return A `logical` value indicating whether the object is a
+#' `LipidSearchSource`.
+#' @keywords internal
+is_lipid_search_source <- function(obj) {
+    inherits(obj, "LipidSearchSource")
+}
+
+#' Resolve the first matching column name in a data frame
+#'
+#' Vendor exports name the same logical field differently between versions, so
+#' each field is resolved against a list of candidate column names.
+#'
+#' @param df A `data.frame`.
+#' @param candidates A `character` vector of candidate column names.
+#' @return The first candidate present in `df`, or `NA_character_` if none.
+#' @keywords internal
+first_matching_column <- function(df, candidates) {
+    hit <- intersect(candidates, colnames(df))
+    if (length(hit) > 0) hit[[1]] else NA_character_
+}
+
+#' Add a dense compound rank (by descending total area) for top-N selection
+#'
+#' Shared by the compound-centric data sources (Compound Discoverer scripting
+#' node, LipidSearch). Compounds are ranked by the total area summed across
+#' samples, so `rank == 1` is the most abundant compound.
+#'
+#' @param rows A `data.frame` with `name` and `into` columns.
+#' @param rank_column A `character` value giving the name of the rank column to
+#' add.
+#' @return `rows` with the rank column appended.
+#' @keywords internal
+add_compound_rank <- function(rows, rank_column = "compound_rank") {
+    ranks <- rows |>
+        dplyr::group_by(.data$name) |>
+        dplyr::summarise(
+            total_into = sum(.data$into, na.rm = TRUE), .groups = "drop"
+        ) |>
+        dplyr::mutate(
+            rank = dplyr::dense_rank(dplyr::desc(.data$total_into))
+        ) |>
+        dplyr::select(.data$name, .data$rank)
+
+    names(ranks)[names(ranks) == "rank"] <- rank_column
+    rows |> left_join(ranks, by = "name")
+}
+
 #' Get an `XCMSnExp` example object from the `faahKO` dataset
 #'
 #' @param indices A `numeric` vector of sample indices to select

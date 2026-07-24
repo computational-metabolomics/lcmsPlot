@@ -11,6 +11,7 @@
 \alias{get_metadata.XcmsRawList}
 \alias{get_metadata.ExternalDataSource}
 \alias{get_metadata.CompoundDiscovererNodeSource}
+\alias{get_metadata.LipidSearchSource}
 \alias{get_metadata.DBIConnection}
 \alias{get_metadata.purityA}
 \title{Get the metadata associated with the input object}
@@ -34,6 +35,8 @@ get_metadata(obj, sample_id_column, metadata)
 \method{get_metadata}{ExternalDataSource}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{CompoundDiscovererNodeSource}(obj, sample_id_column, metadata)
+
+\method{get_metadata}{LipidSearchSource}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{DBIConnection}(obj, sample_id_column, metadata)
 
@@ -196,6 +199,20 @@ The returned metadata always includes:
 \itemize{
 \item \code{sample_index}: row number
 \item \code{sample_id}: extracted using \code{sample_id_column}
+}
+}
+
+\section{\code{LipidSearchSource} input}{
+
+Metadata is taken from the \verb{@metadata} slot of the \code{LipidSearchSource}
+object, which already has one row per supplied sample path. The \code{metadata}
+parameter is ignored.
+
+The returned metadata always includes:
+\itemize{
+\item \code{sample_index}: row number
+\item \code{sample_id}: from \code{sample_id_column} if present, otherwise the existing
+\code{sample_id} column
 }
 }
 

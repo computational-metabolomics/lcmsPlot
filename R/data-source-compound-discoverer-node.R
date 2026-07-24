@@ -38,17 +38,6 @@
 # "molecular" ion for a compound, matching the logic in CompoundsMZ.R.
 .cd_node_molecular_ions <- c("[M+H]+1", "[M-H]-1")
 
-#' Resolve the first matching column name in a data frame
-#'
-#' @param df A `data.frame`.
-#' @param candidates A `character` vector of candidate column names.
-#' @return The first candidate present in `df`, or `NA_character_` if none.
-#' @keywords internal
-.cd_node_col <- function(df, candidates) {
-    hit <- intersect(candidates, colnames(df))
-    if (length(hit) > 0) hit[[1]] else NA_character_
-}
-
 #' Read the Compound Discoverer scripting-node tables
 #'
 #' Parses the `node_args.json` file produced by a Compound Discoverer
@@ -107,7 +96,9 @@
 #'   In this topology `features`/`link_cpf_feat` are optional.
 #' @keywords internal
 .cd_node_classify_tables <- function(tables) {
-    has_id <- function(df, field) !is.na(.cd_node_col(df, .cd_node_cols[[field]]))
+    has_id <- function(df, field) {
+        !is.na(first_matching_column(df, .cd_node_cols[[field]]))
+    }
 
     classified <- list(
         compounds = NULL, cpf = NULL, features = NULL,
@@ -202,7 +193,7 @@
     } else {
         .cd_node_build_compounds_compound(tabs)
     }
-    .cd_node_add_compound_rank(rows)
+    add_compound_rank(rows)
 }
 
 #' Synthesize unique, non-empty compound labels
@@ -221,25 +212,10 @@
     ifelse(dup, paste0(base, " [#", ids, "]"), base)
 }
 
-#' Add a dense compound rank (by descending total area) for top-N selection
-#' @keywords internal
-.cd_node_add_compound_rank <- function(rows) {
-    ranks <- rows |>
-        dplyr::group_by(.data$name) |>
-        dplyr::summarise(
-            total_into = sum(.data$into, na.rm = TRUE), .groups = "drop"
-        ) |>
-        dplyr::mutate(
-            compound_rank = dplyr::dense_rank(dplyr::desc(.data$total_into))
-        ) |>
-        dplyr::select(.data$name, .data$compound_rank)
-    rows |> left_join(ranks, by = "name")
-}
-
 #' Feature-level compound builder (per-file feature topology)
 #' @keywords internal
 .cd_node_build_compounds_feature <- function(tabs) {
-    col <- function(df, field) .cd_node_col(df, .cd_node_cols[[field]])
+    col <- function(df, field) first_matching_column(df, .cd_node_cols[[field]])
 
     cmp <- tabs$compounds
     cpf <- tabs$cpf
@@ -351,7 +327,7 @@
 #' `features`/ions via `link_cmp_feat` when available, otherwise `NA`.
 #' @keywords internal
 .cd_node_build_compounds_compound <- function(tabs) {
-    col <- function(df, field) .cd_node_col(df, .cd_node_cols[[field]])
+    col <- function(df, field) first_matching_column(df, .cd_node_cols[[field]])
 
     cmp <- tabs$compounds
     cpf <- tabs$cpf
@@ -498,8 +474,8 @@
     sample_basenames <- tools::file_path_sans_ext(basename(sample_paths))
 
     if (!is.null(study_files)) {
-        sfid_c <- .cd_node_col(study_files, .cd_node_cols$study_file_id)
-        fname_c <- .cd_node_col(study_files, .cd_node_cols$file_name)
+        sfid_c <- first_matching_column(study_files, .cd_node_cols$study_file_id)
+        fname_c <- first_matching_column(study_files, .cd_node_cols$file_name)
 
         matched_path <- vapply(sfids, function(sfid) {
             fname <- study_files[[fname_c]][study_files[[sfid_c]] == sfid]
@@ -732,7 +708,7 @@ CompoundDiscovererNodeSource <- function(
         quote = "\"", comment.char = ""
     )
 
-    id_col <- .cd_node_col(df, .cd_node_cols$compound_id)
+    id_col <- first_matching_column(df, .cd_node_cols$compound_id)
     if (is.na(id_col)) {
         stop("Compounds export has no recognised 'Compounds ID' column.")
     }

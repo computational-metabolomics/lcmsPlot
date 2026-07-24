@@ -11,11 +11,24 @@
 }
 \value{
 A named \code{list} with elements \code{compounds}, \code{cpf}, \code{features},
-\code{link_cmp_cpf}, \code{link_cpf_feat}, and \code{study_files} (may be \code{NULL}).
+\code{link_cmp_cpf}, \code{link_cpf_feat}, \code{link_cmp_feat}, and \code{study_files} (any of
+which may be \code{NULL}).
 }
 \description{
 Identifies the Compounds, Compounds per File, Features, the two link tables,
 and (optionally) a study-file table from a list of exported tables, based on
 their columns rather than their position.
+}
+\details{
+Two export topologies are supported:
+\itemize{
+\item \strong{Per-file feature} (targeted-style): each \code{features} row carries \code{m/z},
+\code{Ion} and RT, joined to \code{cpf} via a Compounds-per-File \eqn{\leftrightarrow}
+Features link (\code{link_cpf_feat}).
+\item \strong{Compound-centric} (CD "Unknown Compounds"): the consolidated \code{compounds}
+table carries \code{m/z} (\code{compound_mz}), features/ions link to the \emph{compound}
+(\code{link_cmp_feat}), and per-file RT/area live on the \code{cpf} instance table.
+In this topology \code{features}/\code{link_cpf_feat} are optional.
+}
 }
 \keyword{internal}

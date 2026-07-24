@@ -8,8 +8,7 @@ CompoundDiscovererNodeSource(node_args, sample_paths, metadata = NULL)
 }
 \arguments{
 \item{node_args}{A \code{character} path to the \code{node_args.json} file passed by
-Compound Discoverer (the 6th \code{commandArgs()} value when running inside a
-Scripting Node), or an already-parsed \code{list}.}
+Compound Discoverer or an already-parsed \code{list}.}
 
 \item{sample_paths}{A \code{character} vector of paths to the raw sample files
 (e.g. mzML) used to extract chromatograms. Study files are matched to these
@@ -33,7 +32,7 @@ extracted from the raw (mzML) files supplied via \code{sample_paths}.
 The Scripting Node must be configured to request the Compounds, Compounds per
 File, and Features tables (with their link tables). For each compound and
 study file a representative ion is selected, preferring a molecular ion
-(\verb{[M+H]+1} or \verb{[M-H]-1}) and otherwise the most abundant feature.
+and otherwise the most abundant feature.
 }
 \examples{
 \dontrun{

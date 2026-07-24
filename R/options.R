@@ -111,6 +111,10 @@ default_options <- function() {
             compounds_query = NULL,
             rt_extend = 10
         ),
+        lipid_search = list(
+            lipids_query = NULL,
+            rt_extend = 30
+        ),
         purity_overlay = list(
             show = FALSE,
             sample_ids = NULL,
