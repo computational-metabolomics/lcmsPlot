@@ -5,6 +5,13 @@ on:
     branches: [devel]
   pull_request:
     branches: [devel]
+  schedule:
+    - cron: '0 3 * * 1'   # Mondays 03:00 UTC - full check including vignettes
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -16,40 +23,108 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # Bump to discard a poisoned package cache.
+      CACHE_VERSION: v1
+      # Vignettes and the test suite are only re-run by R CMD check on
+      # scheduled and manually dispatched runs.
+      FULL_CHECK: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Resolve library path and version key
+        id: rinfo
+        run: |
+          Rscript -e '
+            con <- file(Sys.getenv("GITHUB_OUTPUT"), open = "at")
+            writeLines(c(paste0("lib=", .libPaths()[1]),
+                         paste0("vkey=R", as.character(getRversion()),
+                                "-Bioc", as.character(BiocManager::version()))),
+                       con)
+            close(con)
+            message("Library path: ", .libPaths()[1])
+          '
+
       - name: Cache R packages
         uses: actions/cache@v4
         with:
-          path: /usr/local/lib/R/host-site-library
-          key: ${{ runner.os }}-bioc-${{ hashFiles('DESCRIPTION') }}
+          path: ${{ steps.rinfo.outputs.lib }}
+          key: ${{ runner.os }}-${{ env.CACHE_VERSION }}-${{ steps.rinfo.outputs.vkey }}-${{ hashFiles('DESCRIPTION') }}
           restore-keys: |
-            ${{ runner.os }}-bioc-
+            ${{ runner.os }}-${{ env.CACHE_VERSION }}-${{ steps.rinfo.outputs.vkey }}-
 
       - name: Install system dependencies
         run: |
           apt-get update -y
           apt-get install -y libnetcdf-dev libhdf5-dev
 
-      - name: Install R toolchain packages
+      # A restored cache can hold packages compiled against a different R.
+      # They look installed to remotes::install_deps() but fail to load, which
+      # is how the "packages are required" failure used to surface 40 minutes in.
+      - name: Purge cached packages built under a different R
         run: |
-          Rscript -e "install.packages(c('remotes', 'rcmdcheck', 'devtools'), repos = 'https://cloud.r-project.org')"
+          Rscript -e '
+            lib <- .libPaths()[1]
+            ip  <- installed.packages(lib.loc = lib)
+            if (nrow(ip)) {
+              built <- vapply(strsplit(ip[, "Built"], ";", fixed = TRUE),
+                              function(x) trimws(sub("R ", "", x[1], fixed = TRUE)),
+                              character(1))
+              built <- package_version(built, strict = FALSE)
+              cur   <- getRversion()
+              stale <- rownames(ip)[is.na(built) |
+                                    built$major != cur$major |
+                                    built$minor != cur$minor]
+              if (length(stale)) {
+                message("Removing ", length(stale),
+                        " package(s) not built under R ", as.character(cur), ": ",
+                        paste(stale, collapse = ", "))
+                remove.packages(stale, lib = lib)
+              } else {
+                message("All ", nrow(ip), " cached package(s) match R ",
+                        as.character(cur), ".")
+              }
+            }
+          '
 
       - name: Install R package dependencies
         run: |
-          Rscript -e "
-            BiocManager::install(ask = FALSE, update = TRUE)
-            deps <- remotes::dev_package_deps('.', dependencies = TRUE)
-            BiocManager::install(deps\$package[deps\$diff != 0], ask = FALSE)
-          "
+          Rscript -e '
+            options(Ncpus = max(1L, parallel::detectCores()),
+                    repos  = BiocManager::repositories())
+            install.packages(c("remotes", "rcmdcheck"))
+            remotes::install_deps(".", dependencies = TRUE, upgrade = "never")
+          '
+
+      - name: Verify dependencies load
+        run: |
+          Rscript -e '
+            dcf  <- read.dcf("DESCRIPTION")
+            cols <- intersect(c("Depends", "Imports"), colnames(dcf))
+            pkgs <- unlist(strsplit(paste(dcf[1, cols], collapse = ","), ","))
+            pkgs <- trimws(vapply(strsplit(pkgs, "(", fixed = TRUE),
+                                  function(x) x[1], character(1)))
+            pkgs <- setdiff(pkgs[nzchar(pkgs)], c("R", "NA"))
+            bad  <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+            if (length(bad)) {
+              stop("Missing or unloadable dependencies: ", paste(bad, collapse = ", "),
+                   " -- if these are present on disk the package cache is stale; ",
+                   "bump CACHE_VERSION in this workflow.")
+            }
+            message("All Depends/Imports load cleanly.")
+          '
 
       - name: Run tests
         run: |
-          Rscript -e "devtools::test(reporter = 'summary')"
+          Rscript -e 'testthat::test_local(reporter = "summary", stop_on_failure = TRUE)'
 
       - name: Run R CMD CHECK
         run: |
-          Rscript -e "rcmdcheck::rcmdcheck(args = c('--no-manual', '--no-vignettes'), error_on = 'warning')"
+          Rscript -e '
+            full <- Sys.getenv("FULL_CHECK") == "true"
+            rcmdcheck::rcmdcheck(
+              args       = c("--no-manual", if (!full) c("--no-vignettes", "--no-tests")),
+              build_args = if (full) character() else "--no-build-vignettes",
+              error_on   = "warning")
+          '
