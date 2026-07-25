@@ -123,8 +123,11 @@ jobs:
         run: |
           Rscript -e '
             full <- Sys.getenv("FULL_CHECK") == "true"
+            # --ignore-vignettes (not --no-vignettes) is required alongside
+            # --no-build-vignettes: without inst/doc, the vignette consistency
+            # checks warn, and error_on = "warning" would fail the run.
             rcmdcheck::rcmdcheck(
-              args       = c("--no-manual", if (!full) c("--no-vignettes", "--no-tests")),
+              args       = c("--no-manual", if (!full) c("--ignore-vignettes", "--no-tests")),
               build_args = if (full) character() else "--no-build-vignettes",
               error_on   = "warning")
           '
