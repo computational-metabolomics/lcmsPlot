@@ -49,7 +49,7 @@ or an \strong{unnamed} vector matched positionally (\code{s1}, \code{s2}, ... in
 
 \section{Samples beyond the result file}{
 
-\code{sample_paths} - not the result file - determines which samples are plotted.
+\code{sample_paths} determines which samples are plotted.
 A path that matches no sample (an unnamed extra for 5.2, or an unmatched
 basename for 4.2) is still a full sample: for every queried lipid its
 chromatogram is extracted using the lipid's consensus m/z and retention-time
@@ -59,31 +59,60 @@ peak to highlight.
 }
 
 \examples{
-\dontrun{
-## LipidSearch 4.2 (raw files declared in the header, matched by basename):
-ds <- LipidSearchSource(
-    results_path = "LIPIDS_POS_5ppm.txt",
-    sample_paths = c("path/to/sample1.raw", "path/to/extra_sample.raw")
-)
+## Build a minimal LipidSearch 4.2 export. The raw files are declared in the
+## header block, and every row - including the column header - ends with a
+## tab, as in a real export.
+results_path <- file.path(tempdir(), "lipids_pos.txt")
 
-## LipidSearch 5.2 (no filenames; map by sample key, extra sample unnamed):
-ds <- LipidSearchSource(
-    results_path = "LIPIDS_POS_5ppm_LS5.txt",
-    sample_paths = c(
-        "s1" = "path/to/sample1.mzML",
-        "s2" = "path/to/sample2.mzML",
-        "path/to/extra_sample.mzML"
-    )
-)
+columns <- c(
+    "Rej.", "LipidIon", "LipidGroup", "Class", "FattyAcid", "CalcMz",
+    "IonFormula",
+    "Area[c-1]", "Area[c-2]", "Height[c-1]", "Height[c-2]",
+    "Rt[c-1]", "Rt[c-2]", "ObsMz[c-1]", "ObsMz[c-2]",
+    "Grade[c-1]", "Grade[c-2]")
 
-lcmsPlot(ds) +
-    lp_lipid_search(
-        lipids_query = 'class == "AcCa" & grade == "A"',
-        rt_extend = 30
-    ) +
+## One lipid detected in each of the two samples.
+rows <- list(
+    c(0, "PRO(0:0)+H", "PRO(0:0)", "PRO", "(0:0)", 116.0706,
+      "C5 H10 O2 N1", 24050, 0, 24050, 0, 7.10, 0,
+      "116.0704", "", "A", ""),
+    c(0, "KYN(0:0)+H", "KYN(0:0)", "KYN", "(0:0)", 209.0921,
+      "C10 H13 O3 N2", 0, 18700, 0, 18700, 0, 6.10,
+      "", "209.0918", "", "A"))
+
+writeLines(
+    c("#[c-1]:l-proline-MS1.raw",
+      "#[c-2]:l-kynurenine-MS1.raw",
+      "#mScoreThreshold:5.0",
+      "",
+      vapply(
+          c(list(columns), rows),
+          function(x) paste0(paste(x, collapse = "\t"), "\t"),
+          character(1))),
+    results_path)
+
+## Chromatograms are extracted from the raw files, not from the result file.
+mzml_dir <- file.path(tempdir(), "lipid-search-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+sample_paths <- file.path(
+    mzml_dir, "mzml",
+    c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"))
+
+## 4.2: sample files are matched to the header declarations by basename.
+ds <- LipidSearchSource(
+    results_path = results_path,
+    sample_paths = sample_paths)
+
+ds
+
+p <- lcmsPlot(ds) +
+    lp_lipid_search(rt_extend = 30) +
     lp_chromatogram(highlight_peaks = TRUE) +
     lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
-}
+p
 }
 \seealso{
 \code{\link[=lp_lipid_search]{lp_lipid_search()}}

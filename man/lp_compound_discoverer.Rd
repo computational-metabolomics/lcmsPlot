@@ -40,15 +40,87 @@ Define the options to use when plotting LC-MS data coming from
 Compound Discoverer results.
 }
 \examples{
-\dontrun{
-lcmsPlot("cd_example.cdResult") +
+## A minimal stand-in for a Compound Discoverer Scripting Node export.
+## See [CompoundDiscovererNodeSource()] for the table layout.
+node_dir <- tempfile("cd_node")
+dir.create(node_dir)
+
+write_tab <- function(df, name) {
+    path <- file.path(node_dir, name)
+    utils::write.table(
+        df, path, sep = "\t", row.names = FALSE, quote = FALSE)
+    path
+}
+
+node_args <- list(Tables = list(
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds ID" = c(1, 2),
+            "Name" = c("L-Proline", "L-Kynurenine"),
+            "Formula" = c("C5 H9 N O2", "C10 H12 N2 O3"),
+            check.names = FALSE),
+        "compounds.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds per File ID" = c(1, 2),
+            "StudyFileID" = c(1, 2),
+            "Area" = c(24050, 18700),
+            "Intensity" = c(24050, 18700),
+            check.names = FALSE),
+        "cpf.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Features ID" = c(1, 2),
+            "mz" = c(116.0704, 209.0918),
+            "Ion" = c("[M+H]+1", "[M+H]+1"),
+            "Area" = c(24050, 18700),
+            "RT [min]" = c(7.10, 6.10),
+            "Left RT [min]" = c(6.95, 5.95),
+            "Right RT [min]" = c(7.25, 6.25),
+            check.names = FALSE),
+        "features.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds ID" = c(1, 2),
+            "Compounds per File ID" = c(1, 2),
+            check.names = FALSE),
+        "link_cmp_cpf.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds per File ID" = c(1, 2),
+            "Features ID" = c(1, 2),
+            check.names = FALSE),
+        "link_cpf_feat.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "StudyFileID" = c(1, 2),
+            "File Name" = c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"),
+            check.names = FALSE),
+        "study_files.txt"))))
+
+json_path <- file.path(node_dir, "node_args.json")
+writeLines(jsonlite::toJSON(node_args, auto_unbox = TRUE), json_path)
+
+mzml_dir <- file.path(tempdir(), "cd-node-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ds <- CompoundDiscovererNodeSource(
+    node_args = json_path,
+    sample_paths = file.path(
+        mzml_dir, "mzml",
+        c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML")))
+
+## `compounds_query` is evaluated on the compound table.
+p <- lcmsPlot(ds) +
   lp_compound_discoverer(
-    compounds_query = 'name \%in\% c("Proline", "Betaine")',
-    rt_extend = 5
+    compounds_query = 'name \%in\% c("L-Proline", "L-Kynurenine")',
+    rt_extend = 15
   ) +
   lp_chromatogram(highlight_peaks = TRUE) +
   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
   lp_labels(title = "Compound Discoverer example", legend = "Sample") +
   lp_legend(position = "bottom")
-}
+p
 }

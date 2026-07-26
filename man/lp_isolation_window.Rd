@@ -35,3 +35,26 @@ annotates it with a semi-transparent rectangle spanning the isolation window
 and a dashed line at the precursor m/z. The \code{inPurity} score is shown as a
 plot subtitle.
 }
+\examples{
+\dontshow{if (requireNamespace("msPurity", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+mzml_dir <- file.path(tempdir(), "purity-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ms2_files <- file.path(
+    mzml_dir, "mzml",
+    c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+
+pa <- msPurity::purityA(ms2_files)
+
+## Inspect the fragmentation events available to plot.
+slot(pa, "puritydf")[, c("pid", "precursorMZ", "precursorRT", "inPurity")]
+
+## `pid = 4` is a co-isolated precursor (inPurity ~ 0.51). These files
+## record an isolation width of 0.6 Da on each side of the precursor.
+p <- lcmsPlot(pa) +
+    lp_isolation_window(pid = 4, half_width = 0.6)
+p
+\dontshow{\}) # examplesIf}
+}

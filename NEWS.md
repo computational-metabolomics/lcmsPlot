@@ -1,3 +1,29 @@
+# lcmsPlot 1.1.7
+
+- Every man page documenting an exported object now carries a runnable example.
+  The four `\dontrun{}` blocks that referenced unavailable vendor data
+  (`CompoundDiscovererNodeSource()`, `LipidSearchSource()`,
+  `lp_compound_discoverer()`, `lp_lipid_search()`) have been replaced with
+  self-contained code, and the four precursor-purity layers
+  (`lp_purity_overlay()`, `lp_purity_timeline()`, `lp_purity_distribution()`,
+  `lp_isolation_window()`) have gained examples where they previously had none.
+  This satisfies the Bioconductor requirement that at least 80% of such pages
+  have runnable examples; coverage is now 100% (33 of 33, up from 25 of 33).
+
+- The purity examples use the DDA files already shipped in
+  `inst/extdata/standards-mzml.zip`, whose MS2 scans carry real precursor
+  selection and isolation-window metadata, so `msPurity::purityA()` yields six
+  fragmentation events with informative `inPurity` scores. They are guarded with
+  `@examplesIf requireNamespace("msPurity")` because `msPurity` is a suggested
+  dependency. `lp_isolation_window()` uses `half_width = 0.6` to match the
+  isolation width recorded in those files.
+
+- The Compound Discoverer scripting-node and LipidSearch examples build a
+  minimal vendor export in `tempdir()`, following the existing
+  `MZmineFeatureListsSource()` and `MsDialPeaksSource()` examples, and point
+  `sample_paths` at the shipped mzML files so the documented plots extract real
+  chromatograms rather than only constructing a data source.
+
 # lcmsPlot 1.1.6
 
 - Added support for LipidSearch result files (both **4.2** and **5.2**; the

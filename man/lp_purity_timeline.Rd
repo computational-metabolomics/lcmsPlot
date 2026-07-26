@@ -22,3 +22,22 @@ versus retention time (x-axis), one point per MS/MS acquisition event,
 coloured by sample. An optional horizontal dashed line marks a purity
 threshold. Requires the data object to be a \code{purityA} result.
 }
+\examples{
+\dontshow{if (requireNamespace("msPurity", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+mzml_dir <- file.path(tempdir(), "purity-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ms2_files <- file.path(
+    mzml_dir, "mzml",
+    c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+
+pa <- msPurity::purityA(ms2_files)
+
+## One point per MS/MS event, coloured by sample.
+p <- lcmsPlot(pa) +
+    lp_purity_timeline(threshold = 0.7)
+p
+\dontshow{\}) # examplesIf}
+}

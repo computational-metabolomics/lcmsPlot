@@ -35,24 +35,92 @@ study file a representative ion is selected, preferring a molecular ion
 and otherwise the most abundant feature.
 }
 \examples{
-\dontrun{
-## Inside a Compound Discoverer Scripting Node, the JSON path is the
-## 6th command-line argument:
-node_args <- commandArgs()[6]
+## Inside a real Compound Discoverer Scripting Node the JSON path arrives as
+## the 6th command-line argument, i.e. node_args <- commandArgs()[6]. The
+## export below stands in for one so the example can run standalone.
+node_dir <- tempfile("cd_node")
+dir.create(node_dir)
+
+write_tab <- function(df, name) {
+    path <- file.path(node_dir, name)
+    utils::write.table(
+        df, path, sep = "\t", row.names = FALSE, quote = FALSE)
+    path
+}
+
+## Two compounds, one detected in each study file.
+compounds <- data.frame(
+    "Compounds ID" = c(1, 2),
+    "Name" = c("L-Proline", "L-Kynurenine"),
+    "Formula" = c("C5 H9 N O2", "C10 H12 N2 O3"),
+    check.names = FALSE)
+
+compounds_per_file <- data.frame(
+    "Compounds per File ID" = c(1, 2),
+    "StudyFileID" = c(1, 2),
+    "Area" = c(24050, 18700),
+    "Intensity" = c(24050, 18700),
+    check.names = FALSE)
+
+## Compound Discoverer reports retention times in minutes.
+features <- data.frame(
+    "Features ID" = c(1, 2),
+    "mz" = c(116.0704, 209.0918),
+    "Ion" = c("[M+H]+1", "[M+H]+1"),
+    "Area" = c(24050, 18700),
+    "RT [min]" = c(7.10, 6.10),
+    "Left RT [min]" = c(6.95, 5.95),
+    "Right RT [min]" = c(7.25, 6.25),
+    check.names = FALSE)
+
+## Study files are matched to `sample_paths` by basename.
+study_files <- data.frame(
+    "StudyFileID" = c(1, 2),
+    "File Name" = c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"),
+    check.names = FALSE)
+
+node_args <- list(Tables = list(
+    list(DataFile = write_tab(compounds, "compounds.txt")),
+    list(DataFile = write_tab(compounds_per_file, "cpf.txt")),
+    list(DataFile = write_tab(features, "features.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds ID" = c(1, 2),
+            "Compounds per File ID" = c(1, 2),
+            check.names = FALSE),
+        "link_cmp_cpf.txt")),
+    list(DataFile = write_tab(
+        data.frame(
+            "Compounds per File ID" = c(1, 2),
+            "Features ID" = c(1, 2),
+            check.names = FALSE),
+        "link_cpf_feat.txt")),
+    list(DataFile = write_tab(study_files, "study_files.txt"))))
+
+json_path <- file.path(node_dir, "node_args.json")
+writeLines(jsonlite::toJSON(node_args, auto_unbox = TRUE), json_path)
+
+## Chromatograms are extracted from the raw files, not from the export.
+mzml_dir <- file.path(tempdir(), "cd-node-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+sample_paths <- file.path(
+    mzml_dir, "mzml",
+    c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"))
 
 ds <- CompoundDiscovererNodeSource(
-    node_args = node_args,
-    sample_paths = c("path/to/sample1.mzML", "path/to/sample2.mzML")
-)
+    node_args = json_path,
+    sample_paths = sample_paths)
 
-lcmsPlot(ds) +
-    lp_compound_discoverer(
-        compounds_query = 'name \%in\% c("Betaine", "Creatine")',
-        rt_extend = 5
-    ) +
+ds
+
+p <- lcmsPlot(ds) +
+    lp_compound_discoverer(rt_extend = 15) +
     lp_chromatogram(highlight_peaks = TRUE) +
     lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
-}
+p
 }
 \seealso{
 \code{\link[=lp_compound_discoverer]{lp_compound_discoverer()}}

@@ -45,9 +45,7 @@ retention-time window.}
 
 \item{rt_extend}{A \code{numeric} value indicating how much (in seconds) the
 retention time window should be extended on each side of the lipid peak when
-extracting and plotting chromatograms. The default is larger than for
-Compound Discoverer because LipidSearch usually reports a zero peak
-half-width, which would otherwise collapse the window to a single point.}
+extracting and plotting chromatograms.}
 }
 \value{
 A function that takes an \code{lcmsPlot} object and returns a modified
@@ -61,19 +59,58 @@ Define the options to use when plotting LC-MS data coming from
 a LipidSearch result file.
 }
 \examples{
-\dontrun{
-ds <- LipidSearchSource("LIPIDS_POS_5ppm.txt", sample_paths = raw_files)
+## A minimal LipidSearch 4.2 export; see [LipidSearchSource()] for the
+## format details.
+results_path <- file.path(tempdir(), "lipids_pos.txt")
 
-lcmsPlot(ds) +
+columns <- c(
+    "Rej.", "LipidIon", "LipidGroup", "Class", "FattyAcid", "CalcMz",
+    "IonFormula",
+    "Area[c-1]", "Area[c-2]", "Height[c-1]", "Height[c-2]",
+    "Rt[c-1]", "Rt[c-2]", "ObsMz[c-1]", "ObsMz[c-2]",
+    "Grade[c-1]", "Grade[c-2]")
+
+rows <- list(
+    c(0, "PRO(0:0)+H", "PRO(0:0)", "PRO", "(0:0)", 116.0706,
+      "C5 H10 O2 N1", 24050, 0, 24050, 0, 7.10, 0,
+      "116.0704", "", "A", ""),
+    c(0, "KYN(0:0)+H", "KYN(0:0)", "KYN", "(0:0)", 209.0921,
+      "C10 H13 O3 N2", 0, 18700, 0, 18700, 0, 6.10,
+      "", "209.0918", "", "A"))
+
+writeLines(
+    c("#[c-1]:l-proline-MS1.raw",
+      "#[c-2]:l-kynurenine-MS1.raw",
+      "#mScoreThreshold:5.0",
+      "",
+      vapply(
+          c(list(columns), rows),
+          function(x) paste0(paste(x, collapse = "\t"), "\t"),
+          character(1))),
+    results_path)
+
+mzml_dir <- file.path(tempdir(), "lipid-search-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ds <- LipidSearchSource(
+    results_path = results_path,
+    sample_paths = file.path(
+        mzml_dir, "mzml",
+        c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML")))
+
+## `lipids_query` selects lipids, which are then extracted from every sample.
+p <- lcmsPlot(ds) +
   lp_lipid_search(
-    lipids_query = 'class == "AcCa" & grade == "A"',
+    lipids_query = 'grade == "A"',
     rt_extend = 30
   ) +
   lp_chromatogram(highlight_peaks = TRUE) +
   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
   lp_labels(title = "LipidSearch example", legend = "Sample") +
   lp_legend(position = "bottom")
-}
+p
 }
 \seealso{
 \code{\link[=LipidSearchSource]{LipidSearchSource()}}

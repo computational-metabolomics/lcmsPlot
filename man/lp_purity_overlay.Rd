@@ -25,3 +25,30 @@ coloured by the interpolated precursor ion purity (\code{inPurity}). Requires th
 data object to be a \code{purityA} result from the msPurity package and
 \code{lp_chromatogram()} to be called first.
 }
+\examples{
+\dontshow{if (requireNamespace("msPurity", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+## lcmsPlot ships two DDA files carrying real precursor isolation metadata.
+mzml_dir <- file.path(tempdir(), "purity-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ms2_files <- file.path(
+    mzml_dir, "mzml",
+    c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+
+pa <- msPurity::purityA(ms2_files)
+
+## The overlay annotates an existing chromatogram, so the retention time
+## window has to span the fragmentation events to show anything.
+features <- data.frame(
+    sample_id = c("l-proline-MS2", "l-kynurenine-MS2"),
+    mz = c(116.0703793, 209.091824),
+    rt = c(425.74, 365.72))
+
+p <- lcmsPlot(pa) +
+    lp_chromatogram(features = features, ppm = 10, rt_tol = 60) +
+    lp_purity_overlay(threshold = 0.7)
+p
+\dontshow{\}) # examplesIf}
+}

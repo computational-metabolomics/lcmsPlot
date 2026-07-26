@@ -18,7 +18,7 @@ A named \code{list} with elements \code{version} (\code{"4.2"} or \code{"5.2"}),
 Reads a LipidSearch result file and detects its version. LipidSearch 4.2 files
 begin with a block of \verb{#[key]:file} sample declarations and \verb{#key:value}
 settings, followed by the tab-delimited lipid table. LipidSearch 5.2 files
-carry no declarations - the table starts on the first line and the samples are
+carry no declarations; the table starts on the first line and the samples are
 discovered from the \code{OrgMeanArea[...]} columns.
 }
 \keyword{internal}

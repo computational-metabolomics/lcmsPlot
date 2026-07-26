@@ -1324,17 +1324,89 @@ lp_layout <- function(design = NULL) {
 #' the `lcmsPlot` object.
 #' @export
 #' @examples
-#' \dontrun{
-#' lcmsPlot("cd_example.cdResult") +
+#' ## A minimal stand-in for a Compound Discoverer Scripting Node export.
+#' ## See [CompoundDiscovererNodeSource()] for the table layout.
+#' node_dir <- tempfile("cd_node")
+#' dir.create(node_dir)
+#'
+#' write_tab <- function(df, name) {
+#'     path <- file.path(node_dir, name)
+#'     utils::write.table(
+#'         df, path, sep = "\t", row.names = FALSE, quote = FALSE)
+#'     path
+#' }
+#'
+#' node_args <- list(Tables = list(
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "Compounds ID" = c(1, 2),
+#'             "Name" = c("L-Proline", "L-Kynurenine"),
+#'             "Formula" = c("C5 H9 N O2", "C10 H12 N2 O3"),
+#'             check.names = FALSE),
+#'         "compounds.txt")),
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "Compounds per File ID" = c(1, 2),
+#'             "StudyFileID" = c(1, 2),
+#'             "Area" = c(24050, 18700),
+#'             "Intensity" = c(24050, 18700),
+#'             check.names = FALSE),
+#'         "cpf.txt")),
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "Features ID" = c(1, 2),
+#'             "mz" = c(116.0704, 209.0918),
+#'             "Ion" = c("[M+H]+1", "[M+H]+1"),
+#'             "Area" = c(24050, 18700),
+#'             "RT [min]" = c(7.10, 6.10),
+#'             "Left RT [min]" = c(6.95, 5.95),
+#'             "Right RT [min]" = c(7.25, 6.25),
+#'             check.names = FALSE),
+#'         "features.txt")),
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "Compounds ID" = c(1, 2),
+#'             "Compounds per File ID" = c(1, 2),
+#'             check.names = FALSE),
+#'         "link_cmp_cpf.txt")),
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "Compounds per File ID" = c(1, 2),
+#'             "Features ID" = c(1, 2),
+#'             check.names = FALSE),
+#'         "link_cpf_feat.txt")),
+#'     list(DataFile = write_tab(
+#'         data.frame(
+#'             "StudyFileID" = c(1, 2),
+#'             "File Name" = c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"),
+#'             check.names = FALSE),
+#'         "study_files.txt"))))
+#'
+#' json_path <- file.path(node_dir, "node_args.json")
+#' writeLines(jsonlite::toJSON(node_args, auto_unbox = TRUE), json_path)
+#'
+#' mzml_dir <- file.path(tempdir(), "cd-node-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ds <- CompoundDiscovererNodeSource(
+#'     node_args = json_path,
+#'     sample_paths = file.path(
+#'         mzml_dir, "mzml",
+#'         c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML")))
+#'
+#' ## `compounds_query` is evaluated on the compound table.
+#' p <- lcmsPlot(ds) +
 #'   lp_compound_discoverer(
-#'     compounds_query = 'name %in% c("Proline", "Betaine")',
-#'     rt_extend = 5
+#'     compounds_query = 'name %in% c("L-Proline", "L-Kynurenine")',
+#'     rt_extend = 15
 #'   ) +
 #'   lp_chromatogram(highlight_peaks = TRUE) +
 #'   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
 #'   lp_labels(title = "Compound Discoverer example", legend = "Sample") +
 #'   lp_legend(position = "bottom")
-#' }
+#' p
 lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
     make_interface_function(
         name = "lp_compound_discoverer",
@@ -1403,19 +1475,58 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #' @seealso [LipidSearchSource()]
 #' @export
 #' @examples
-#' \dontrun{
-#' ds <- LipidSearchSource("LIPIDS_POS_5ppm.txt", sample_paths = raw_files)
+#' ## A minimal LipidSearch 4.2 export; see [LipidSearchSource()] for the
+#' ## format details.
+#' results_path <- file.path(tempdir(), "lipids_pos.txt")
 #'
-#' lcmsPlot(ds) +
+#' columns <- c(
+#'     "Rej.", "LipidIon", "LipidGroup", "Class", "FattyAcid", "CalcMz",
+#'     "IonFormula",
+#'     "Area[c-1]", "Area[c-2]", "Height[c-1]", "Height[c-2]",
+#'     "Rt[c-1]", "Rt[c-2]", "ObsMz[c-1]", "ObsMz[c-2]",
+#'     "Grade[c-1]", "Grade[c-2]")
+#'
+#' rows <- list(
+#'     c(0, "PRO(0:0)+H", "PRO(0:0)", "PRO", "(0:0)", 116.0706,
+#'       "C5 H10 O2 N1", 24050, 0, 24050, 0, 7.10, 0,
+#'       "116.0704", "", "A", ""),
+#'     c(0, "KYN(0:0)+H", "KYN(0:0)", "KYN", "(0:0)", 209.0921,
+#'       "C10 H13 O3 N2", 0, 18700, 0, 18700, 0, 6.10,
+#'       "", "209.0918", "", "A"))
+#'
+#' writeLines(
+#'     c("#[c-1]:l-proline-MS1.raw",
+#'       "#[c-2]:l-kynurenine-MS1.raw",
+#'       "#mScoreThreshold:5.0",
+#'       "",
+#'       vapply(
+#'           c(list(columns), rows),
+#'           function(x) paste0(paste(x, collapse = "\t"), "\t"),
+#'           character(1))),
+#'     results_path)
+#'
+#' mzml_dir <- file.path(tempdir(), "lipid-search-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ds <- LipidSearchSource(
+#'     results_path = results_path,
+#'     sample_paths = file.path(
+#'         mzml_dir, "mzml",
+#'         c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML")))
+#'
+#' ## `lipids_query` selects lipids, which are then extracted from every sample.
+#' p <- lcmsPlot(ds) +
 #'   lp_lipid_search(
-#'     lipids_query = 'class == "AcCa" & grade == "A"',
+#'     lipids_query = 'grade == "A"',
 #'     rt_extend = 30
 #'   ) +
 #'   lp_chromatogram(highlight_peaks = TRUE) +
 #'   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
 #'   lp_labels(title = "LipidSearch example", legend = "Sample") +
 #'   lp_legend(position = "bottom")
-#' }
+#' p
 lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
     make_interface_function(
         name = "lp_lipid_search",
@@ -1450,6 +1561,30 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
 #' @param point_size A `numeric` value controlling the point size.
 #' @return A layer function for use with the `+` operator.
 #' @export
+#' @examplesIf requireNamespace("msPurity", quietly = TRUE)
+#' ## lcmsPlot ships two DDA files carrying real precursor isolation metadata.
+#' mzml_dir <- file.path(tempdir(), "purity-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ms2_files <- file.path(
+#'     mzml_dir, "mzml",
+#'     c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+#'
+#' pa <- msPurity::purityA(ms2_files)
+#'
+#' ## The overlay annotates an existing chromatogram, so the retention time
+#' ## window has to span the fragmentation events to show anything.
+#' features <- data.frame(
+#'     sample_id = c("l-proline-MS2", "l-kynurenine-MS2"),
+#'     mz = c(116.0703793, 209.091824),
+#'     rt = c(425.74, 365.72))
+#'
+#' p <- lcmsPlot(pa) +
+#'     lp_chromatogram(features = features, ppm = 10, rt_tol = 60) +
+#'     lp_purity_overlay(threshold = 0.7)
+#' p
 lp_purity_overlay <- function(
         sample_ids = NULL,
         threshold = NULL,
@@ -1500,6 +1635,26 @@ lp_purity_overlay <- function(
 #' `precursor_mz ± zoom_factor * half_width`. Default is `3`.
 #' @return A layer function for use with the `+` operator.
 #' @export
+#' @examplesIf requireNamespace("msPurity", quietly = TRUE)
+#' mzml_dir <- file.path(tempdir(), "purity-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ms2_files <- file.path(
+#'     mzml_dir, "mzml",
+#'     c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+#'
+#' pa <- msPurity::purityA(ms2_files)
+#'
+#' ## Inspect the fragmentation events available to plot.
+#' slot(pa, "puritydf")[, c("pid", "precursorMZ", "precursorRT", "inPurity")]
+#'
+#' ## `pid = 4` is a co-isolated precursor (inPurity ~ 0.51). These files
+#' ## record an isolation width of 0.6 Da on each side of the precursor.
+#' p <- lcmsPlot(pa) +
+#'     lp_isolation_window(pid = 4, half_width = 0.6)
+#' p
 lp_isolation_window <- function(
         pid = NULL,
         sample_id = NULL,
@@ -1541,6 +1696,22 @@ lp_isolation_window <- function(
 #' reference line. `NULL` suppresses the line.
 #' @return A layer function for use with the `+` operator.
 #' @export
+#' @examplesIf requireNamespace("msPurity", quietly = TRUE)
+#' mzml_dir <- file.path(tempdir(), "purity-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ms2_files <- file.path(
+#'     mzml_dir, "mzml",
+#'     c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+#'
+#' pa <- msPurity::purityA(ms2_files)
+#'
+#' ## One point per MS/MS event, coloured by sample.
+#' p <- lcmsPlot(pa) +
+#'     lp_purity_timeline(threshold = 0.7)
+#' p
 lp_purity_timeline <- function(
         sample_ids = NULL,
         threshold = NULL
@@ -1581,6 +1752,22 @@ lp_purity_timeline <- function(
 #' or `"jitter"`. Defaults to `"violin"`.
 #' @return A layer function for use with the `+` operator.
 #' @export
+#' @examplesIf requireNamespace("msPurity", quietly = TRUE)
+#' mzml_dir <- file.path(tempdir(), "purity-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ms2_files <- file.path(
+#'     mzml_dir, "mzml",
+#'     c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+#'
+#' pa <- msPurity::purityA(ms2_files)
+#'
+#' ## Compare the spread of purity scores between samples.
+#' p <- lcmsPlot(pa) +
+#'     lp_purity_distribution(threshold = 0.7, type = "boxplot")
+#' p
 lp_purity_distribution <- function(
         sample_ids = NULL,
         threshold = NULL,
