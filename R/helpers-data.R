@@ -189,6 +189,25 @@ remove_null_elements <- function(lst) {
     return(Filter(Negate(is.null), lst))
 }
 
+#' Snap a coordinate onto a grid of the given bin width
+#'
+#' Widths that are a negative power of ten are handled with `round(x, digits)`,
+#' which is more accurate than scaling by hand and is what the previously
+#' hard-coded 0.1 binning used, so default output is unchanged.
+#'
+#' @param x A `numeric` vector of coordinates.
+#' @param width A `numeric` value giving the bin width.
+#' @return A `numeric` vector of bin centres.
+#' @keywords internal
+bin_coordinate <- function(x, width) {
+    digits <- -log10(width)
+    if (width <= 1 && isTRUE(all.equal(digits, round(digits)))) {
+        round(x, round(digits))
+    } else {
+        round(x / width) * width
+    }
+}
+
 #' Compute an m/z range given a ppm tolerance
 #'
 #' @param mz A `numeric` value indicating the m/z value

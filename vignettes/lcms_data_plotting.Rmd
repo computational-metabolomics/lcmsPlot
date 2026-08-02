@@ -175,6 +175,20 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_facets(facets = "sample_name", ncol = 4)
 ```
 
+## Plot averaged ion chromatogram (AIC)
+
+The third summary chromatogram averages the intensities of each scan rather than
+summing them or taking the most intense signal.
+Because the average is far less sensitive to a single dominant ion than the base
+peak chromatogram, it produces a smoother baseline and makes gradual changes in
+overall signal easier to see.
+
+```{r aic, fig.height=6, fig.width=10}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_chromatogram(aggregation_fun = "mean") +
+    lp_facets(facets = "sample_name", ncol = 4)
+```
+
 ## Total ion current
 
 The Total Ion Current (TIC) reflects the overall amount of ion signal entering
@@ -202,6 +216,9 @@ They are a fast and intuitive way to explore global structure in the
 data and to detect systematic patterns that may not be obvious from
 chromatograms or summary statistics alone.
 
+How the map is drawn is chosen with the `geom` parameter, which takes `"tile"`
+(the default), `"density"`, or `"point"`.
+
 In the example below, intensity density maps are generated for two samples
 (`ko15` and `wt15`) to enable a direct visual comparison.
 The plot is restricted to an m/z range of 200-600 and a retention time window
@@ -215,8 +232,47 @@ lcmsPlot(faahko, sample_id_column = "sample_name", BPPARAM = pparam) +
         sample_ids = c("ko15", "wt15"),
         mz_range = c(200, 600),
         rt_range = c(4200, 4500),
-        density = TRUE) +
+        geom = "density") +
     lp_facets(facets = "sample_id", ncol = 2)
+```
+
+The default `"tile"` bins the measurements onto a grid and fills each cell with
+the summed intensity, while `"density"`, used above, smooths them into a kernel
+density estimate.
+Both convey continuous coverage, which is a useful simplification at low zoom but
+a misleading one when looking closely at individual mass traces: the instrument
+samples each trace at discrete points, and the gaps between those points are
+real.
+
+Setting `geom = "point"` skips the binning entirely and draws one point per
+measured centroid, coloured by intensity.
+This is the view produced by `xcms::plotRaw()`, and at this zoom the horizontal
+bands are individual mass traces whose interruptions reflect scans in which the
+ion was not detected.
+
+```{r intensity-map-points, fig.height=5, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_intensity_map(
+        sample_ids = "ko15",
+        mz_range = c(300, 320),
+        rt_range = c(2500, 3500),
+        geom = "point",
+        point_size = 0.4)
+```
+
+When the binned view is the one you want, `bin_rt` and `bin_mz` control the grid.
+Both default to 0.1, which is finer than the scan rate of most runs and coarser
+than the mass accuracy of a high-resolution instrument, so they are worth setting
+to match the acquisition.
+
+```{r intensity-map-bins, fig.height=5, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_intensity_map(
+        sample_ids = "ko15",
+        mz_range = c(300, 320),
+        rt_range = c(2500, 3500),
+        bin_rt = 5,
+        bin_mz = 1)
 ```
 
 # Plot chromatograms
@@ -343,6 +399,38 @@ lcmsPlot(chrs) +
     lp_grid(rows = "feature_id", cols = "sample_id")
 ```
 
+Rather than giving each EIC its own panel, the chromatograms of one sample can be
+overlaid and distinguished by colour.
+
+The `transform` parameter applies a function to the intensities before plotting.
+Using `log10` compresses the dynamic range so that a weak trace remains visible
+next to a strong one.
+The transform is applied to the peak highlighting as well, so shaded peaks stay
+attached to their traces:
+
+```{r overlay-transform, fig.height=5, fig.width=10}
+lcmsPlot(chrs) +
+    lp_chromatogram(na.rm = TRUE, transform = log10) +
+    lp_arrange(group_by = "feature_id") +
+    lp_facets(facets = "sample_id", ncol = 4) +
+    lp_labels(legend = "Feature")
+```
+
+The `stacked` parameter takes a different approach: instead of rescaling the
+intensities it offsets each trace vertically, in m/z order, by the given fraction
+of the intensity range.
+Co-eluting traces then stop occluding one another.
+The y axis is suppressed because, once each series sits at its own baseline, a
+single intensity scale no longer describes the panel.
+
+```{r overlay-stacked, fig.height=5, fig.width=10}
+lcmsPlot(chrs) +
+    lp_chromatogram(na.rm = TRUE, stacked = 0.6) +
+    lp_arrange(group_by = "feature_id") +
+    lp_facets(facets = "sample_id", ncol = 4) +
+    lp_labels(legend = "Feature")
+```
+
 `lcmsPlot` also supports `xcmsRaw` objects, the legacy xcms format for
 in-memory raw MS data.
 The `XcmsRawList` container wraps one or more `xcmsRaw` objects
@@ -366,6 +454,67 @@ lcmsPlot(xl) +
         )
     ) +
     lp_grid(rows = "feature_id", cols = "sample_id", free_y = TRUE)
+```
+
+# Quality control of peak detection
+
+Once peaks have been detected it is worth asking how well the detection went
+before moving on to alignment and grouping.
+Two layers answer that question directly from the detected peaks, without
+requiring the peaks to have been grouped into features first.
+
+## Chromatographic peak counts across the run
+
+`lp_peak_count_image()` bins the retention-time axis and shows how many
+chromatographic peaks each sample yielded in each bin, with samples on the y axis
+and one tile per sample and bin.
+It is the counterpart of `xcms::plotChromPeakImage()` and is read as a
+quality-control view: a sample that stopped producing peaks part-way through a
+run appears as a dark stretch, and a retention-time region where detection
+collapsed across every sample appears as a dark column.
+
+Samples are ordered by injection order rather than alphabetically, so drift over
+the course of a batch stays readable.
+
+```{r peak-count-image, fig.height=4, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_peak_count_image(bin_size = 30) +
+    lp_labels(title = "Chromatographic peaks per 30 s bin")
+```
+
+Counts are often skewed, with a few dense regions compressing the rest of the
+colour scale. Setting `log = TRUE` puts them on a `log2` scale, which is the
+usual way to read this plot. Empty bins are left blank rather than drawn as
+negative infinity:
+
+```{r peak-count-image-log, fig.height=4, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_peak_count_image(bin_size = 60, log = TRUE) +
+    lp_labels(title = "log2 peak counts per 60 s bin")
+```
+
+## Peak boundaries in the m/z and retention time plane
+
+`lp_chrom_peak_rects()` draws one rectangle per detected peak, spanning its
+retention-time limits by its m/z limits.
+It is the overlay behind `xcms::plotChromPeaks()` and `xcms::plot(type = "XIC")`,
+and shows where in the m/z / retention-time plane the peak detection actually
+placed its boundaries.
+
+The layer decorates an existing panel rather than owning one, so it requires
+either `lp_intensity_map()` or `lp_mass_trace()` to be called first, and by
+default it follows whichever samples that host panel draws.
+On a panel of intensity against retention time the equivalent is
+`lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")`.
+
+```{r chrom-peak-rects, fig.height=6, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_intensity_map(
+        sample_ids = c("ko15", "ko16", "wt16", "wt21"),
+        mz_range = c(334.9, 335.1),
+        rt_range = c(2700, 2900)) +
+    lp_chrom_peak_rects() +
+    lp_facets(facets = "sample_id", ncol = 2)
 ```
 
 # Plot retention time alignment effect
@@ -489,6 +638,40 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
         bw = 30,
         min_fraction = 0.5
     ) +
+    lp_labels(legend = "Sample ID")
+```
+
+`lp_peak_density()` also accepts the `XChromatograms` objects produced by
+`xcms::chromatogram()`.
+For those objects `features` can be omitted altogether: each extracted ion
+chromatogram already carries its own m/z and retention-time window.
+
+The `simulate` parameter then chooses what the rectangles represent.
+By default the density curve is descended to derive the feature groups the
+supplied parameters *would* produce, which is what makes the plot a check on
+those parameters.
+This feature was detected in five of the eight samples, so simulating with a
+`min_fraction` of 0.75 rejects it and no rectangle is drawn:
+
+```{r peak-density-xchromatograms, fig.height=4, fig.width=9}
+feature_chrs <- chromatogram(
+    faahko,
+    mz = rbind(c(334.9, 335.1)),
+    rt = rbind(c(2700, 2900)))
+
+lcmsPlot(feature_chrs) +
+    lp_peak_density(bw = 30, min_fraction = 0.75) +
+    lp_labels(legend = "Sample ID")
+```
+
+Setting `simulate = FALSE` instead draws the feature definitions already stored
+on the object.
+Correspondence was run earlier in this vignette with `minFraction = 0.4`, so the
+feature *was* defined, and the rectangle reappears:
+
+```{r peak-density-stored-features, fig.height=4, fig.width=9}
+lcmsPlot(feature_chrs) +
+    lp_peak_density(bw = 30, simulate = FALSE) +
     lp_labels(legend = "Sample ID")
 ```
 

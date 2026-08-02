@@ -66,6 +66,14 @@
             field("feature_metadata_id", is.numeric)
         ))
     },
+    peak_count_image = function(df) {
+        validate_data_frame(df, list(
+            field("rt", is.numeric),
+            field("n_peaks", is.numeric),
+            field("metadata_index", is.numeric),
+            field("feature_metadata_id", is.numeric)
+        ), exact = TRUE)
+    },
     rt_diff = function(df) {
         validate_data_frame(df, list(
             field("rt_raw", is.numeric),
@@ -102,6 +110,7 @@ DATASET_TYPES <- c(
     "mass_traces",
     "spectra",
     "peak_density",
+    "peak_count_image",
     "intensity_maps",
     "total_ion_current",
     "rt_diff"
@@ -149,6 +158,7 @@ create_data_container_from_obj <- function(
         mass_traces = tibble(),
         spectra = tibble(),
         peak_density = tibble(),
+        peak_count_image = tibble(),
         total_ion_current = tibble(),
         intensity_maps = tibble(),
         rt_diff = tibble(),
@@ -176,6 +186,9 @@ create_data_container_from_obj <- function(
 #' @slot spectra A `data.frame` containing the spectra.
 #' @slot peak_density A `data.frame` containing peak density curve data and
 #' optional feature-group rectangles, as produced by `lp_peak_density()`.
+#' @slot peak_count_image A `data.frame` containing the number of
+#' chromatographic peaks per sample per retention-time bin, as produced by
+#' `lp_peak_count_image()`.
 #' @slot total_ion_current A `data.frame` containing the total ion current.
 #' @slot intensity_maps A `data.frame` containing the 2D intensity maps
 #' representing the distribution of detected peaks across m/z and RT.
@@ -196,6 +209,7 @@ setClass(
         mass_traces = "data.frame",
         spectra = "data.frame",
         peak_density = "data.frame",
+        peak_count_image = "data.frame",
         total_ion_current = "data.frame",
         intensity_maps = "data.frame",
         rt_diff = "data.frame",
@@ -210,6 +224,7 @@ setClass(
         mass_traces = NULL,
         spectra = NULL,
         peak_density = NULL,
+        peak_count_image = NULL,
         total_ion_current = NULL,
         intensity_maps = NULL,
         rt_diff = NULL,
@@ -266,6 +281,7 @@ setValidity("lcmsPlotDataContainer", function(object) {
 #'     mass_traces = tibble::tibble(),
 #'     spectra = tibble::tibble(),
 #'     peak_density = tibble::tibble(),
+#'     peak_count_image = tibble::tibble(),
 #'     total_ion_current = tibble::tibble(),
 #'     intensity_maps = tibble::tibble(),
 #'     rt_diff = tibble::tibble(),
@@ -296,6 +312,7 @@ setMethod(
         print_df_dim(object@mass_traces, "mass_traces")
         print_df_dim(object@spectra, "spectra")
         print_df_dim(object@peak_density, "peak_density")
+        print_df_dim(object@peak_count_image, "peak_count_image")
         print_df_dim(object@total_ion_current, "total_ion_current")
         print_df_dim(object@intensity_maps, "intensity_maps")
         print_df_dim(object@rt_diff, "rt_diff")

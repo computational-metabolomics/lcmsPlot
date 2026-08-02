@@ -20,7 +20,16 @@ ms_header(reader)
 }
 \value{
 A \code{tibble} with at least the columns \code{seqNum},
-\code{retentionTime}, \code{msLevel}, \code{basePeakIntensity}, and \code{totIonCurrent}.
+\code{retentionTime}, \code{msLevel}, \code{basePeakIntensity}, \code{totIonCurrent},
+\code{peaksCount}, and \code{meanIntensity}.
+
+\code{meanIntensity} is the per-scan average intensity backing
+\code{aggregation_fun = "mean"}. Each backend defines it in the way that is
+faithful to its own data model: \code{XcmsRawReader} takes the profile-matrix
+column mean when a profile matrix is available, matching
+\code{xcms::plotChrom(base = FALSE)} exactly, while the file-based backends
+average over the measured peaks of each scan. Backends that cannot supply
+it return \code{NA_real_}.
 }
 \description{
 Get scan header information from a raw MS file reader

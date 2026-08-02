@@ -9,8 +9,9 @@ create_bpc_tic(raw_data, aggregation_fun, rt_adjusted = NULL)
 \arguments{
 \item{raw_data}{An instance of class \code{MsRawReader}.}
 
-\item{aggregation_fun}{A \code{function} indicating the aggregation method.
-One of \code{"sum"} or \code{"max"}.}
+\item{aggregation_fun}{A \code{character} value indicating the aggregation method.
+One of \code{"max"} (base peak chromatogram), \code{"sum"} (total ion current), or
+\code{"mean"} (averaged ion chromatogram).}
 
 \item{rt_adjusted}{A \code{numeric} vector representing the adjusted RT values.
 If \code{NULL} it will use the raw RT values.}

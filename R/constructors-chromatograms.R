@@ -1,8 +1,9 @@
 #' Create a base peak or total ion current chromatogram
 #'
 #' @param raw_data An instance of class `MsRawReader`.
-#' @param aggregation_fun A `function` indicating the aggregation method.
-#' One of `"sum"` or `"max"`.
+#' @param aggregation_fun A `character` value indicating the aggregation method.
+#' One of `"max"` (base peak chromatogram), `"sum"` (total ion current), or
+#' `"mean"` (averaged ion chromatogram).
 #' @param rt_adjusted A `numeric` vector representing the adjusted RT values.
 #' If `NULL` it will use the raw RT values.
 #' @return A `list` with one `tibble` containing the chromatograms with
@@ -18,14 +19,29 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
         rt <- rt_adjusted
     }
 
-    if (aggregation_fun == "max") {
-        bpi <- ms1_header$basePeakIntensity
-    } else {
-        bpi <- ms1_header$totIonCurrent
-    }
+    intensity <- switch(
+        aggregation_fun,
+        max = ms1_header$basePeakIntensity,
+        sum = ms1_header$totIonCurrent,
+        mean = {
+            mean_int <- ms1_header$meanIntensity
+            if (is.null(mean_int) || all(is.na(mean_int))) {
+                stop(
+                    "aggregation_fun = \"mean\" is not available for ",
+                    class(raw_data), ": the backend does not report a ",
+                    "per-scan peak count. Use \"max\" or \"sum\" instead."
+                )
+            }
+            mean_int
+        },
+        stop(
+            "Unknown aggregation_fun: '", aggregation_fun, "'. ",
+            "Expected 'max', 'sum', or 'mean'."
+        )
+    )
 
     return(list(
-        chromatograms = tibble(rt = rt, intensity = bpi)
+        chromatograms = tibble(rt = rt, intensity = intensity)
     ))
 }
 

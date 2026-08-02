@@ -34,7 +34,9 @@ default_options <- function() {
             highlight_apices = list(
                 column = NULL,
                 top_n = NULL
-            )
+            ),
+            stacked = 0,
+            transform = identity
         ),
         mass_traces = list(
             show = FALSE
@@ -61,7 +63,16 @@ default_options <- function() {
             min_samples = 1L,
             sample_groups = NULL,
             max_features = 50L,
-            rt_unit = "second"
+            rt_unit = "second",
+            simulate = NULL
+        ),
+        peak_count_image = list(
+            show = FALSE,
+            sample_ids = NULL,
+            bin_size = 30,
+            log = FALSE,
+            rt_range = NULL,
+            fill_scale = NULL
         ),
         total_ion_current = list(
             show = FALSE,
@@ -73,10 +84,14 @@ default_options <- function() {
             sample_ids = NULL,
             mz_range = NULL,
             rt_range = NULL,
-            density = FALSE,
             x_dim = "rt",
             y_dim = "mz",
-            fill_scale = NULL
+            fill_scale = NULL,
+            geom = "tile", # One of: tile, point, density
+            point_size = 0.5,
+            bin_rt = 0.1,
+            bin_mz = 0.1,
+            colour_scale = NULL
         ),
         rt_diff = list(
             show = FALSE
@@ -114,6 +129,14 @@ default_options <- function() {
         lipid_search = list(
             lipids_query = NULL,
             rt_extend = 30
+        ),
+        chrom_peak_rects = list(
+            show = FALSE,
+            sample_ids = NULL,
+            border = "#c0392b",
+            fill = NA,
+            alpha = 0.25,
+            linewidth = 0.3
         ),
         purity_overlay = list(
             show = FALSE,

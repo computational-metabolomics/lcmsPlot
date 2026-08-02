@@ -20,7 +20,9 @@ lp_chromatogram(
   intensity_unit = "absolute",
   fill_gaps = FALSE,
   na.rm = FALSE,
-  highlight_apices = list(column = NULL, top_n = NULL)
+  highlight_apices = list(column = NULL, top_n = NULL),
+  stacked = 0,
+  transform = identity
 )
 }
 \arguments{
@@ -67,8 +69,15 @@ or \code{"point"} (marks the peak apex with a point). Defaults to \code{"polygon
 the metadata that determines the color. By default it colors by \code{sample_id}.}
 
 \item{aggregation_fun}{A \code{character} value indicating which aggregation
-function to use for the spectra intensities; one of \code{max} or \code{sum}.
-Only applicable to summary chromatograms.}
+function to use for the spectra intensities; one of \code{max} (base peak
+chromatogram), \code{sum} (total ion current), or \code{mean} (averaged ion
+chromatogram). Only applicable to summary chromatograms.
+\code{mean} mirrors \code{xcms::plotChrom(base = FALSE)}: for \code{XcmsRawList} inputs
+carrying a profile matrix it is the profile-matrix column mean, so scans with
+no signal in a mass bin contribute zeros. For file-based inputs it is the
+mean over the measured peaks of each scan, which sits higher than the
+profile-matrix average. It is unavailable for ThermoFisher \code{.raw} files,
+whose backend reports no per-scan peak count.}
 
 \item{rt_type}{A \code{chracter} value indicating what type of RT to use for the
 chromatograms. One of \code{uncorrected} (default), \code{corrected}, or \code{both};
@@ -91,6 +100,20 @@ is \code{NA} are removed before plotting. Defaults to \code{FALSE}.}
 
 \item{highlight_apices}{A \code{logical} value indicating whether to
 highlight apices with the corresponding RT values in a chromatogram.}
+
+\item{stacked}{A \code{numeric} value in \verb{[0, 1]}. When non-zero, each series in a
+panel is offset up the y axis in m/z order by that fraction of the intensity
+range, so co-eluting traces stop occluding each other. Mirrors the \code{stacked}
+argument of \code{xcms::plotChromatogramsOverlay()}. The y axis is suppressed
+because it no longer means one thing. Defaults to \code{0} (no stacking).
+Which series get offset follows \code{lp_arrange(group_by = )}; without it,
+samples are stacked.}
+
+\item{transform}{A \code{function} applied to the intensities before plotting,
+such as \code{log10}, to compress the dynamic range. It is applied to the peak
+highlight geometry as well, so shaded peaks stay attached to their traces.
+Defaults to \code{identity}. Note that \code{log10} maps the exact zeros injected by
+\code{fill_gaps = TRUE} to \code{-Inf}.}
 }
 \value{
 This function returns another function that takes an \code{lcmsPlot}
@@ -106,13 +129,12 @@ chromatograms.
 \section{Summary chromatograms}{
 
 In this type of chromatogram, the intensities of the spectra from each scan
-in an LC–MS dataset are either summed to produce the total ion current (TIC)
-chromatogram or the most intense peak is selected to produce the
-base peak chromatogram (BPC).
+in an LC–MS dataset are aggregated into a single value per scan.
 To create such chromatograms do not specify the \code{features} parameter as
 that will create the chromatograms for the selected features.
-In this context, the main parameter if \code{aggregation_fun} which can take
-either \code{sum} (TIC) or \code{max} (BPC).
+In this context, the main parameter is \code{aggregation_fun}, which can take
+\code{max} (base peak chromatogram, BPC), \code{sum} (total ion current, TIC), or
+\code{mean} (averaged ion chromatogram).
 }
 
 \section{Feature chromatograms}{

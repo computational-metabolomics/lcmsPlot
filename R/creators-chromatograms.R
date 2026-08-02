@@ -584,6 +584,10 @@ setMethod(
 
         n_features <- nrow(data_obj)
 
+        # mz(<XChromatograms>) is an mzmin/mzmax matrix, one row per EIC, which
+        # is what orders the series when lp_chromatogram(stacked = ) is used.
+        mz_windows <- MSnbase::mz(data_obj)
+
         # Pre-compute feature_id per row: mz and RT range are the same across
         # all samples for a given row, so derive them from column 1.
         row_feature_info <- lapply(seq_len(n_features), function(i) {
@@ -596,7 +600,10 @@ setMethod(
             } else {
                 sprintf("M%d", round(mz_center))
             }
-            list(feature_id = feature_id)
+            list(
+                feature_id = feature_id,
+                feature_mz = mean(as.numeric(mz_windows[i, ]))
+            )
         })
 
         chromatograms_list <- list()
@@ -621,7 +628,8 @@ setMethod(
                 feature_metadata_list[[counter]] <- tibble(
                     feature_metadata_id = counter,
                     metadata_index = sample_metadata$sample_index,
-                    feature_id = row_feature_info[[i]]$feature_id
+                    feature_id = row_feature_info[[i]]$feature_id,
+                    feature_mz = row_feature_info[[i]]$feature_mz
                 )
             }
         }
@@ -636,7 +644,8 @@ setMethod(
             feature_metadata <- tibble(
                 feature_metadata_id = numeric(),
                 metadata_index = numeric(),
-                feature_id = character()
+                feature_id = character(),
+                feature_mz = numeric()
             )
         } else {
             chromatograms <- do.call(rbind, chromatograms_list)

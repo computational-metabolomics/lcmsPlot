@@ -143,6 +143,7 @@ setClass(
         "intensity_maps",
         "rt_diff",
         "peak_density",
+        "peak_count_image",
         "purity_scores"
     )
 
@@ -385,13 +386,12 @@ make_interface_function <- function(name, args_list, fn) {
 #'
 #' @section Summary chromatograms:
 #' In this type of chromatogram, the intensities of the spectra from each scan
-#' in an LC–MS dataset are either summed to produce the total ion current (TIC)
-#' chromatogram or the most intense peak is selected to produce the
-#' base peak chromatogram (BPC).
+#' in an LC–MS dataset are aggregated into a single value per scan.
 #' To create such chromatograms do not specify the `features` parameter as
 #' that will create the chromatograms for the selected features.
-#' In this context, the main parameter if `aggregation_fun` which can take
-#' either `sum` (TIC) or `max` (BPC).
+#' In this context, the main parameter is `aggregation_fun`, which can take
+#' `max` (base peak chromatogram, BPC), `sum` (total ion current, TIC), or
+#' `mean` (averaged ion chromatogram).
 #'
 #' @section Feature chromatograms:
 #' A feature is a combination of retention time (RT) and m/z. Feature
@@ -431,8 +431,9 @@ make_interface_function <- function(name, args_list, fn) {
 #' @param highlight_peaks_factor A `character` value indicating the factor from
 #' the metadata that determines the color. By default it colors by `sample_id`.
 #' @param aggregation_fun A `character` value indicating which aggregation
-#' function to use for the spectra intensities; one of `max` or `sum`.
-#' Only applicable to summary chromatograms.
+#' function to use for the spectra intensities; one of `max` (base peak
+#' chromatogram), `sum` (total ion current), or `mean` (averaged ion
+#' chromatogram). Only applicable to summary chromatograms.
 #' @param rt_type A `chracter` value indicating what type of RT to use for the
 #' chromatograms. One of `uncorrected` (default), `corrected`, or `both`;
 #' the input data must be an `XCMSnExp` or `MsExperiment` object.
@@ -449,6 +450,17 @@ make_interface_function <- function(name, args_list, fn) {
 #' is `NA` are removed before plotting. Defaults to `FALSE`.
 #' @param highlight_apices A `logical` value indicating whether to
 #' highlight apices with the corresponding RT values in a chromatogram.
+#' @param stacked A `numeric` value in `[0, 1]`. When non-zero, each series in a
+#' panel is offset up the y axis in m/z order by that fraction of the intensity
+#' range, so co-eluting traces stop occluding each other.
+#' Defaults to `0` (no stacking).
+#' Which series get offset follows `lp_arrange(group_by = )`; without it,
+#' samples are stacked.
+#' @param transform A `function` applied to the intensities before plotting,
+#' such as `log10`, to compress the dynamic range. It is applied to the peak
+#' highlight geometry as well, so shaded peaks stay attached to their traces.
+#' Defaults to `identity`. Note that `log10` maps the exact zeros injected by
+#' `fill_gaps = TRUE` to `-Inf`.
 #' @return This function returns another function that takes an `lcmsPlot`
 #' object and produces a modified version containing the generated chromatograms
 #' in its `data` slot. It is designed to be used with the `+` operator,
@@ -482,8 +494,19 @@ lp_chromatogram <- function(
     intensity_unit = "absolute",
     fill_gaps = FALSE,
     na.rm = FALSE,
-    highlight_apices = list(column = NULL, top_n = NULL)
+    highlight_apices = list(column = NULL, top_n = NULL),
+    stacked = 0,
+    transform = identity
 ) {
+    aggregation_fun <- match.arg(aggregation_fun, c("max", "sum", "mean"))
+
+    if (!is.function(transform)) {
+        stop("lp_chromatogram: 'transform' must be a function.")
+    }
+    if (!is.numeric(stacked) || length(stacked) != 1L) {
+        stop("lp_chromatogram: 'stacked' must be a single numeric value.")
+    }
+
     make_interface_function(
         name = "lp_chromatogram",
         args_list = as.list(environment()),
@@ -518,7 +541,9 @@ lp_chromatogram <- function(
                 rt_unit = rt_unit,
                 intensity_unit = intensity_unit,
                 fill_gaps = fill_gaps,
-                highlight_apices = highlight_apices
+                highlight_apices = highlight_apices,
+                stacked = stacked,
+                transform = transform
             )
 
             result <- create_chromatograms(
@@ -662,6 +687,8 @@ lp_spectra <- function(
     intensity_breaks_by = 20,
     auto_facet = TRUE
 ) {
+    mode <- match.arg(mode, c("closest_apex", "closest", "across_peak"))
+
     make_interface_function(
         name = "lp_spectra",
         args_list = as.list(environment()),
@@ -713,7 +740,9 @@ lp_spectra <- function(
 #' @param features A `matrix` or `data.frame` with columns `mzmin` and `mzmax`
 #' (required) and `rtmin`, `rtmax` (optional). Each row defines one m/z bin.
 #' When omitted, the features are taken from `lp_chromatogram` if it has
-#' already been called on the same object.
+#' already been called on the same object. For `XChromatograms` and
+#' `XChromatogram` objects it is redundant: each extracted ion chromatogram
+#' already carries its own m/z and retention-time window, which is used instead.
 #' @param bw A `numeric` value specifying the kernel density bandwidth in
 #' seconds. Passed to [stats::density()]. Defaults to `30`.
 #' @param min_fraction A `numeric` value in `[0, 1]`. When supplied, simulates
@@ -730,6 +759,12 @@ lp_spectra <- function(
 #' group rectangles to draw per m/z bin. Defaults to `50L`.
 #' @param rt_unit A `character` value indicating the unit for the RT axis;
 #' one of `"second"` (default) or `"minute"`.
+#' @param simulate A `logical` value mirroring `xcms::plotChromPeakDensity()`.
+#' `TRUE` descends the density curve to derive the feature groups the supplied
+#' parameters *would* produce, using `min_fraction` (defaulting to `0.5` when
+#' unset). `FALSE` instead draws the feature definitions the object already
+#' stores, ignoring `min_fraction` and `min_samples`. Defaults to `NULL`, which
+#' simulates whenever `min_fraction` is given.
 #' @return This function returns another function that takes an `lcmsPlot`
 #' object and produces a modified version containing the generated peak density
 #' data in its `data` slot. It is designed to be used with the `+` operator,
@@ -753,28 +788,36 @@ lp_peak_density <- function(
     min_samples = 1L,
     sample_groups = NULL,
     max_features = 50L,
-    rt_unit = "second"
+    rt_unit = "second",
+    simulate = NULL
 ) {
     make_interface_function(
         name = "lp_peak_density",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_xcms_data(obj@data@data_obj)) {
+            if (is.null(get_detected_peaks(obj@data@data_obj))) {
                 stop(
-                    "lp_peak_density: the data object must be an XCMSnExp ",
-                    "or MsExperiment with detected peaks."
+                    "lp_peak_density: the data object reports no ",
+                    "chromatographic peaks. Provide an XCMSnExp, ",
+                    "MsExperiment, XChromatograms, or XChromatogram object ",
+                    "with detected peaks."
                 )
             }
 
             if (is.null(features)) {
                 features <- obj@options$chromatograms$features
-                if (is.null(features)) {
-                    stop(
-                        "lp_peak_density: 'features' is missing and no ",
-                        "chromatogram features are set. Either provide ",
-                        "'features' or call lp_chromatogram() first."
-                    )
-                }
+            }
+            if (is.null(features)) {
+                # Chromatogram objects already define one m/z window per EIC,
+                # which makes `features` redundant for them.
+                features <- get_feature_windows(obj@data@data_obj)
+            }
+            if (is.null(features)) {
+                stop(
+                    "lp_peak_density: 'features' is missing and no ",
+                    "chromatogram features are set. Either provide ",
+                    "'features' or call lp_chromatogram() first."
+                )
             }
 
             features <- as.data.frame(features)
@@ -792,10 +835,85 @@ lp_peak_density <- function(
                 min_samples = min_samples,
                 sample_groups = sample_groups,
                 max_features = max_features,
-                rt_unit = rt_unit
+                rt_unit = rt_unit,
+                simulate = simulate
             )
 
             obj@data <- create_peak_density(obj@data, obj@options)
+
+            return(obj)
+        }
+    )
+}
+
+#' Plot chromatographic peak counts per retention-time bin
+#'
+#' `lp_peak_count_image()` produces a common quality-control view:
+#' retention-time bins on the x axis, samples on
+#' the y axis, and fill showing how many chromatographic peaks each sample
+#' yielded in each bin.
+#'
+#' Samples are ordered by injection order, and bins
+#' containing no peaks are drawn as zero rather than dropped.
+#'
+#' @param bin_size A `numeric` value giving the retention-time bin width in
+#' seconds. Defaults to `30`.
+#' @param log A `logical` value. When `TRUE`, counts are shown on a `log2`
+#' scale, which is the usual way to read the plot when counts are skewed. Empty
+#' bins are left blank rather than being drawn as `-Inf`.
+#' @param sample_ids A `character` vector of sample IDs to include.
+#' `NULL` uses all samples.
+#' @param rt_range An optional length-2 `numeric` limiting the binned
+#' retention-time range. When `NULL` (default) the full acquisition range of the
+#' data object is used, so a short run shows as empty bins at the edge.
+#' @param fill_scale A ggplot2 scale object to use for the fill aesthetic. When
+#' `NULL` (default), uses `scale_fill_viridis_c`.
+#' @return This function returns another function that takes an `lcmsPlot`
+#' object and produces a modified version containing the generated peak counts
+#' in its `data` slot. It is designed to be used with the `+` operator,
+#' which serves as a layering mechanism.
+#' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(
+#'   indices = 1:3,
+#'   should_group_peaks = TRUE)
+#'
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+#'   lp_peak_count_image(bin_size = 30)
+#' p
+lp_peak_count_image <- function(
+    bin_size = 30,
+    log = FALSE,
+    sample_ids = NULL,
+    rt_range = NULL,
+    fill_scale = NULL
+) {
+    if (!is.numeric(bin_size) || length(bin_size) != 1L || bin_size <= 0) {
+        stop("lp_peak_count_image: 'bin_size' must be a positive number.")
+    }
+
+    make_interface_function(
+        name = "lp_peak_count_image",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (is.null(get_detected_peaks(obj@data@data_obj))) {
+                stop(
+                    "lp_peak_count_image: the data object reports no ",
+                    "chromatographic peaks. Provide an XCMSnExp or ",
+                    "MsExperiment object with detected peaks."
+                )
+            }
+
+            obj@options$peak_count_image <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                bin_size = bin_size,
+                log = log,
+                rt_range = rt_range,
+                fill_scale = fill_scale
+            )
+
+            obj@data <- create_peak_count_image(obj@data, obj@options)
 
             return(obj)
         }
@@ -861,7 +979,6 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object.
-#' @param density A `logical` value indicating whether to show a density plot.
 #' @param x_dim A `character` value indicating which dimension to place on the
 #' x-axis. One of `"rt"` (default) or `"mz"`.
 #' @param y_dim A `character` value indicating which dimension to place on the
@@ -869,7 +986,22 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #' @param fill_scale A ggplot2 scale object to use for the fill aesthetic
 #' (e.g. `scale_fill_gradient(low = "white", high = "red")`). When `NULL`
 #' (default), uses `scale_fill_viridis_c` for intensity and
-#' `scale_fill_viridis_d` for density plots.
+#' `scale_fill_viridis_d` for density plots. Applies to `geom = "tile"` and
+#' `geom = "density"`.
+#' @param geom A `character` value selecting how the map is drawn. One of
+#' `"tile"` (default) for a binned heatmap, `"point"` for a scatter of the
+#' individual centroids, or `"density"` for a
+#' 2D kernel density estimate. `"point"` skips the binning entirely, so gaps in
+#' the mass traces stay visible rather than being implied away.
+#' @param point_size A `numeric` value controlling the point size when
+#' `geom = "point"`.
+#' @param bin_rt A `numeric` value giving the retention-time bin width in
+#' seconds used when `geom = "tile"`. Defaults to `0.1`, which is too fine for
+#' slow-scanning data and too coarse for fast-scanning data.
+#' @param bin_mz A `numeric` value giving the m/z bin width used when
+#' `geom = "tile"`. Defaults to `0.1`; high-resolution data usually wants less.
+#' @param colour_scale A ggplot2 scale object to use for the colour aesthetic
+#' when `geom = "point"`. When `NULL` (default), uses `scale_colour_viridis_c`.
 #' @return This function returns another function that takes an
 #' `lcmsPlot` object and produces a modified version containing the generated
 #' 2D intensity map in its `data` slot. It is designed to be used with the
@@ -887,17 +1019,22 @@ lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
 #'   lp_intensity_map(
 #'     mz_range = c(200, 600),
 #'     rt_range = c(4200, 4500),
-#'     density = TRUE)
+#'     geom = "density")
 #' p
 lp_intensity_map <- function(
     mz_range,
     rt_range,
     sample_ids = NULL,
-    density = FALSE,
     x_dim = "rt",
     y_dim = "mz",
-    fill_scale = NULL
+    fill_scale = NULL,
+    geom = "tile",
+    point_size = 0.5,
+    bin_rt = 0.1,
+    bin_mz = 0.1,
+    colour_scale = NULL
 ) {
+    geom <- match.arg(geom, c("tile", "point", "density"))
     x_dim <- match.arg(x_dim, c("rt", "mz"))
     y_dim <- match.arg(y_dim, c("mz", "rt"))
 
@@ -911,10 +1048,14 @@ lp_intensity_map <- function(
             sample_ids = sample_ids,
             mz_range = mz_range,
             rt_range = rt_range,
-            density = density,
             x_dim = x_dim,
             y_dim = y_dim,
-            fill_scale = fill_scale
+            fill_scale = fill_scale,
+            geom = geom,
+            point_size = point_size,
+            bin_rt = bin_rt,
+            bin_mz = bin_mz,
+            colour_scale = colour_scale
         )
 
         obj@data <- create_intensity_map(obj@data, obj@options)
@@ -1539,6 +1680,130 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
             obj@options$lipid_search <- list(
                 lipids_query = lipids_query,
                 rt_extend = rt_extend
+            )
+
+            return(obj)
+        }
+    )
+}
+
+#' Overlay chromatographic peak boundaries on an rt / m/z panel
+#'
+#' `lp_chrom_peak_rects()` draws one rectangle per detected chromatographic
+#' peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`. It decorates an
+#' existing rt / m/z panel, so it requires either
+#' `lp_mass_trace()` or `lp_intensity_map()` to be called first. On an
+#' intensity-versus-rt panel the equivalent is
+#' `lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")`.
+#'
+#' The peak boundaries come from the detected peaks already extracted by the
+#' host layer, so the data object has to report chromatographic peaks.
+#'
+#' @param sample_ids A `character` vector of sample IDs to include. `NULL`
+#' (default) follows the host layer, so the overlay never introduces panels the
+#' host panel does not draw.
+#' @param border A `character` colour for the rectangle outline.
+#' @param fill A `character` colour for the rectangle interior, or `NA`
+#' (default) for unfilled boxes.
+#' @param alpha A `numeric` value in `[0, 1]` controlling opacity.
+#' @param linewidth A `numeric` value controlling the outline width.
+#' @return A layer function for use with the `+` operator.
+#' @export
+#' @examples
+#' data_obj <- get_XCMSnExp_object_example(
+#'   indices = 1:2,
+#'   should_group_peaks = TRUE)
+#'
+#' ## The rectangles decorate the ion map, marking where peaks were detected.
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+#'   lp_intensity_map(mz_range = c(300, 320), rt_range = c(2500, 3500)) +
+#'   lp_chrom_peak_rects()
+#' p
+lp_chrom_peak_rects <- function(
+        sample_ids = NULL,
+        border = "#c0392b",
+        fill = NA,
+        alpha = 0.25,
+        linewidth = 0.3
+) {
+    make_interface_function(
+        name = "lp_chrom_peak_rects",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            has_map <- isTRUE(obj@options$intensity_maps$show)
+            has_trace <- isTRUE(obj@options$mass_traces$show)
+
+            if (!has_map && !has_trace) {
+                stop(
+                    "lp_chrom_peak_rects must be called after ",
+                    "lp_mass_trace() or lp_intensity_map(): the rectangles ",
+                    "need an rt / m/z panel to sit on. On an ",
+                    "intensity-versus-rt panel use lp_chromatogram(",
+                    "highlight_peaks = TRUE, highlight_peaks_mode = ",
+                    "\"rectangle\") instead."
+                )
+            }
+
+            if (has_trace && !has_map && nrow(obj@data@mass_traces) == 0) {
+                stop(
+                    "lp_chrom_peak_rects: the mass trace panel is empty, so ",
+                    "there is nothing to overlay. Mass traces are built from ",
+                    "the raw files, which XChromatograms and XChromatogram ",
+                    "objects do not carry; use lp_intensity_map() as the host ",
+                    "panel instead."
+                )
+            }
+
+            # lp_intensity_map() does not extract peaks, so unlike the
+            # chromatogram layers this overlay may have to populate them.
+            if (nrow(obj@data@detected_peaks) == 0) {
+                peaks <- get_detected_peaks(obj@data@data_obj)
+
+                if (is.null(peaks) || nrow(peaks) == 0) {
+                    stop(
+                        "lp_chrom_peak_rects: the data object has no detected ",
+                        "peaks. Provide an XCMSnExp or MsExperiment object ",
+                        "with chromatographic peaks."
+                    )
+                }
+
+                obj@data@detected_peaks <- peaks |>
+                    left_join(obj@data@metadata, by = "sample_index")
+                validObject(obj@data)
+            }
+
+            # Fail here rather than drawing nothing: an empty host panel is
+            # dropped before the renderer runs, so a missing boundary column
+            # would otherwise surface as a silently absent overlay.
+            missing_cols <- setdiff(
+                c("rtmin", "rtmax", "mzmin", "mzmax"),
+                names(obj@data@detected_peaks))
+            if (length(missing_cols) > 0) {
+                stop(
+                    "lp_chrom_peak_rects: the detected peaks are missing the ",
+                    "column(s) ", paste(missing_cols, collapse = ", "),
+                    ", so the peak boundaries cannot be drawn."
+                )
+            }
+
+            # Follow the host panel's samples by default, or the overlay would
+            # contribute peaks for samples the host does not draw and faceting
+            # would invent empty panels for them.
+            if (is.null(sample_ids)) {
+                sample_ids <- if (has_map) {
+                    obj@options$intensity_maps$sample_ids
+                } else {
+                    obj@options$chromatograms$sample_ids
+                }
+            }
+
+            obj@options$chrom_peak_rects <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                border = border,
+                fill = fill,
+                alpha = alpha,
+                linewidth = linewidth
             )
 
             return(obj)

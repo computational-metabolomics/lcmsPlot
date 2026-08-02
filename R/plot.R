@@ -63,6 +63,7 @@ run_matching_plot_variant <- function(datasets, obj) {
         mass_traces = plot_mass_trace,
         spectra = spectra_fn,
         peak_density = plot_peak_density,
+        peak_count_image = plot_peak_count_image,
         total_ion_current = plot_total_ion_current,
         intensity_maps = plot_intensity_map,
         rt_diff = plot_rt_diff,

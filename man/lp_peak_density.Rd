@@ -11,14 +11,17 @@ lp_peak_density(
   min_samples = 1L,
   sample_groups = NULL,
   max_features = 50L,
-  rt_unit = "second"
+  rt_unit = "second",
+  simulate = NULL
 )
 }
 \arguments{
 \item{features}{A \code{matrix} or \code{data.frame} with columns \code{mzmin} and \code{mzmax}
 (required) and \code{rtmin}, \code{rtmax} (optional). Each row defines one m/z bin.
 When omitted, the features are taken from \code{lp_chromatogram} if it has
-already been called on the same object.}
+already been called on the same object. For \code{XChromatograms} and
+\code{XChromatogram} objects it is redundant: each extracted ion chromatogram
+already carries its own m/z and retention-time window, which is used instead.}
 
 \item{bw}{A \code{numeric} value specifying the kernel density bandwidth in
 seconds. Passed to \code{\link[stats:density]{stats::density()}}. Defaults to \code{30}.}
@@ -41,6 +44,13 @@ group rectangles to draw per m/z bin. Defaults to \code{50L}.}
 
 \item{rt_unit}{A \code{character} value indicating the unit for the RT axis;
 one of \code{"second"} (default) or \code{"minute"}.}
+
+\item{simulate}{A \code{logical} value mirroring \code{xcms::plotChromPeakDensity()}.
+\code{TRUE} descends the density curve to derive the feature groups the supplied
+parameters \emph{would} produce, using \code{min_fraction} (defaulting to \code{0.5} when
+unset). \code{FALSE} instead draws the feature definitions the object already
+stores, ignoring \code{min_fraction} and \code{min_samples}. Defaults to \code{NULL}, which
+simulates whenever \code{min_fraction} is given.}
 }
 \value{
 This function returns another function that takes an \code{lcmsPlot}

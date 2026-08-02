@@ -36,5 +36,10 @@ plot_mass_trace <- function(
         theme_minimal() +
         extra_layers
 
+    if (isTRUE(options$chrom_peak_rects$show)) {
+        p <- chrom_peak_rects_layer(
+            p, supporting_datasets$detected_peaks, options)
+    }
+
     return(p)
 }
