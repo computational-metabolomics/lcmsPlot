@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.7
+Version: 1.1.8
 Authors@R: c(
     person(
         "Ossama",
@@ -81,12 +81,14 @@ Collate:
     'data-validation.R'
     'data-adapters.R'
     'plot-units.R'
+    'plot-chrom-peak-rects.R'
     'plot-chromatogram.R'
     'plot-mass-trace.R'
     'plot-spectrum.R'
     'plot-total-ion-current.R'
     'plot-intensity-map.R'
     'plot-peak-density.R'
+    'plot-peak-count-image.R'
     'plot-rt-diff.R'
     'plot-purity.R'
     'plot-variants.R'
@@ -95,6 +97,7 @@ Collate:
     'creators-chromatograms.R'
     'creators-intensity-map.R'
     'creators-peak-density.R'
+    'creators-peak-count-image.R'
     'creators-rt-diff.R'
     'creators-spectra.R'
     'creators-total-ion-current.R'

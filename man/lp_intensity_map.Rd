@@ -8,10 +8,14 @@ lp_intensity_map(
   mz_range,
   rt_range,
   sample_ids = NULL,
-  density = FALSE,
   x_dim = "rt",
   y_dim = "mz",
-  fill_scale = NULL
+  fill_scale = NULL,
+  geom = "tile",
+  point_size = 0.5,
+  bin_rt = 0.1,
+  bin_mz = 0.1,
+  colour_scale = NULL
 )
 }
 \arguments{
@@ -23,8 +27,6 @@ lp_intensity_map(
 to include in the plot. If \code{NULL}, the function uses the sample IDs
 specified in the \code{lcmsPlot} object.}
 
-\item{density}{A \code{logical} value indicating whether to show a density plot.}
-
 \item{x_dim}{A \code{character} value indicating which dimension to place on the
 x-axis. One of \code{"rt"} (default) or \code{"mz"}.}
 
@@ -34,7 +36,27 @@ y-axis. One of \code{"mz"} (default) or \code{"rt"}.}
 \item{fill_scale}{A ggplot2 scale object to use for the fill aesthetic
 (e.g. \code{scale_fill_gradient(low = "white", high = "red")}). When \code{NULL}
 (default), uses \code{scale_fill_viridis_c} for intensity and
-\code{scale_fill_viridis_d} for density plots.}
+\code{scale_fill_viridis_d} for density plots. Applies to \code{geom = "tile"} and
+\code{geom = "density"}.}
+
+\item{geom}{A \code{character} value selecting how the map is drawn. One of
+\code{"tile"} (default) for a binned heatmap, \code{"point"} for a scatter of the
+individual centroids as drawn by \code{xcms::plotRaw()}, or \code{"density"} for a
+2D kernel density estimate. \code{"point"} skips the binning entirely, so gaps in
+the mass traces stay visible rather than being implied away.}
+
+\item{point_size}{A \code{numeric} value controlling the point size when
+\code{geom = "point"}.}
+
+\item{bin_rt}{A \code{numeric} value giving the retention-time bin width in
+seconds used when \code{geom = "tile"}. Defaults to \code{0.1}, which is too fine for
+slow-scanning data and too coarse for fast-scanning data.}
+
+\item{bin_mz}{A \code{numeric} value giving the m/z bin width used when
+\code{geom = "tile"}. Defaults to \code{0.1}; high-resolution data usually wants less.}
+
+\item{colour_scale}{A ggplot2 scale object to use for the colour aesthetic
+when \code{geom = "point"}. When \code{NULL} (default), uses \code{scale_colour_viridis_c}.}
 }
 \value{
 This function returns another function that takes an
@@ -58,6 +80,6 @@ p <- lcmsPlot(raw_files) +
   lp_intensity_map(
     mz_range = c(200, 600),
     rt_range = c(4200, 4500),
-    density = TRUE)
+    geom = "density")
 p
 }

@@ -22,7 +22,8 @@
                 shiny::radioButtons(
                     inputId  = ns("agg"),
                     label    = NULL,
-                    choices  = c("BPC (max)" = "max", "TIC (sum)" = "sum"),
+                    choices  = c("BPC (max)" = "max", "TIC (sum)" = "sum",
+                                 "AIC (mean)" = "mean"),
                     selected = "max",
                     inline   = TRUE)),
             shiny::plotOutput(ns("plot"), height = "520px")),

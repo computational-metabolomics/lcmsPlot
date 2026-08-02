@@ -679,3 +679,129 @@ get_grouped_peaks.purityA <- function(obj) {
         NULL
     }
 }
+
+#' Get the m/z windows a data object already defines
+#'
+#' `get_feature_windows()` returns the m/z (and, where known, retention time)
+#' windows that the object itself defines, so a layer does not have to ask the
+#' caller for `features` that the data already carries. Chromatogram objects
+#' define one window per extracted ion chromatogram.
+#'
+#' @param obj A data object containing or representing samples.
+#' @return A `tibble` with columns `row`, `mzmin`, `mzmax`, `rtmin` and `rtmax`,
+#' `row` identifying the originating EIC; or `NULL` when the object defines no
+#' windows.
+#' @keywords internal
+get_feature_windows <- function(obj) {
+    UseMethod("get_feature_windows")
+}
+
+#' @rdname get_feature_windows
+#' @keywords internal
+#' @exportS3Method
+get_feature_windows.default <- function(obj) {
+    NULL
+}
+
+#' @rdname get_feature_windows
+#' @keywords internal
+#' @exportS3Method
+get_feature_windows.XChromatograms <- function(obj) {
+    # mz() on the whole object is an (mzmin, mzmax) matrix, one row per EIC.
+    mz_windows <- MSnbase::mz(obj)
+
+    rt_bounds <- lapply(seq_len(nrow(obj)), function(i) {
+        rts <- MSnbase::rtime(obj[i, 1L])
+        if (length(rts) > 0L) range(rts) else c(NA_real_, NA_real_)
+    })
+
+    tibble(
+        row = seq_len(nrow(obj)),
+        mzmin = as.numeric(mz_windows[, 1L]),
+        mzmax = as.numeric(mz_windows[, 2L]),
+        rtmin = vapply(rt_bounds, `[`, numeric(1), 1L),
+        rtmax = vapply(rt_bounds, `[`, numeric(1), 2L)
+    )
+}
+
+#' @rdname get_feature_windows
+#' @keywords internal
+#' @exportS3Method
+get_feature_windows.XChromatogram <- function(obj) {
+    mz_window <- as.numeric(MSnbase::mz(obj))
+    rts <- MSnbase::rtime(obj)
+    rt_window <- if (length(rts) > 0L) range(rts) else c(NA_real_, NA_real_)
+
+    tibble(
+        row = 1L,
+        mzmin = mz_window[1L],
+        mzmax = mz_window[2L],
+        rtmin = rt_window[1L],
+        rtmax = rt_window[2L]
+    )
+}
+
+#' Get the stored feature definitions from the data object
+#'
+#' `get_feature_definitions()` retrieves the correspondence results already
+#' stored on an object, as opposed to `get_grouped_peaks()` which reshapes them
+#' for feature labelling. Used by `lp_peak_density()` when `simulate = FALSE` to
+#' draw the feature groups the object actually holds rather than re-deriving
+#' candidates from the density curve.
+#'
+#' @param obj A data object containing or representing samples.
+#' @return A `tibble` of feature definitions with at least `rtmin` and `rtmax`,
+#' plus `mzmin`/`mzmax` and `row` where the object provides them; or `NULL` when
+#' no correspondence results are stored.
+#' @keywords internal
+get_feature_definitions <- function(obj) {
+    UseMethod("get_feature_definitions")
+}
+
+.get_feature_definitions_xcms <- function(obj) {
+    if (!isTRUE(any(xcms::hasFeatures(obj)))) {
+        return(NULL)
+    }
+
+    defs <- as.data.frame(xcms::featureDefinitions(obj))
+    keep <- intersect(
+        c("mzmin", "mzmax", "rtmin", "rtmax", "npeaks", "row"),
+        colnames(defs))
+
+    as_tibble(defs[, keep, drop = FALSE])
+}
+
+#' @rdname get_feature_definitions
+#' @keywords internal
+#' @exportS3Method
+get_feature_definitions.default <- function(obj) {
+    NULL
+}
+
+#' @rdname get_feature_definitions
+#' @keywords internal
+#' @exportS3Method
+get_feature_definitions.XCMSnExp <- function(obj) {
+    .get_feature_definitions_xcms(obj)
+}
+
+#' @rdname get_feature_definitions
+#' @keywords internal
+#' @exportS3Method
+get_feature_definitions.XcmsExperiment <- function(obj) {
+    .get_feature_definitions_xcms(obj)
+}
+
+#' @rdname get_feature_definitions
+#' @keywords internal
+#' @exportS3Method
+get_feature_definitions.MsExperiment <- function(obj) {
+    .get_feature_definitions_xcms(obj)
+}
+
+#' @rdname get_feature_definitions
+#' @keywords internal
+#' @exportS3Method
+get_feature_definitions.XChromatograms <- function(obj) {
+    .get_feature_definitions_xcms(obj)
+}

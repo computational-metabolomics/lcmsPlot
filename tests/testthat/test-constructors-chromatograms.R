@@ -16,6 +16,53 @@ test_that("create_bpc_tic creates a correct base peak chromatogram", {
   expect_lt(rt_range[2], 4500)
 })
 
+test_that("create_bpc_tic supports mean alongside max and sum", {
+  # arrange
+  raw_data <- get_raw_data()
+  hdr <- ms_header(raw_data)
+  ms1 <- hdr[hdr$msLevel == 1, ]
+
+  # act
+  bpc <- create_bpc_tic(raw_data, aggregation_fun = "max")
+  tic <- create_bpc_tic(raw_data, aggregation_fun = "sum")
+  aic <- create_bpc_tic(raw_data, aggregation_fun = "mean")
+  close_raw_data(raw_data)
+
+  # assert
+  expect_equal(bpc$chromatograms$intensity, ms1$basePeakIntensity)
+  expect_equal(tic$chromatograms$intensity, ms1$totIonCurrent)
+  expect_equal(aic$chromatograms$intensity, ms1$totIonCurrent / ms1$peaksCount)
+})
+
+test_that("create_bpc_tic rejects an unknown aggregation function", {
+  # arrange
+  raw_data <- get_raw_data()
+
+  # act / assert
+  expect_error(
+    create_bpc_tic(raw_data, aggregation_fun = "median"),
+    "Unknown aggregation_fun")
+  close_raw_data(raw_data)
+})
+
+test_that("ms_header reports a peak count and a mean intensity", {
+  # arrange
+  raw_data <- get_raw_data()
+
+  # act
+  hdr <- ms_header(raw_data)
+  close_raw_data(raw_data)
+
+  # assert
+  expect_contains(colnames(hdr), c("peaksCount", "meanIntensity"))
+  expect_true(all(hdr$meanIntensity >= 0))
+})
+
+test_that("lp_chromatogram validates the aggregation function", {
+  # act / assert
+  expect_error(lp_chromatogram(aggregation_fun = "median"), "should be one of")
+})
+
 test_that("create_chromatogram creates a chromatogram within the specified ranges", {
   # arrange
   raw_data <- get_raw_data()

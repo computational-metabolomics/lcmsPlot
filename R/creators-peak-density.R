@@ -34,8 +34,25 @@ setMethod(
     f = "create_peak_density",
     signature = c("lcmsPlotDataContainer", "list"),
     definition = function(obj, options) {
-        all_peaks <- as_tibble(as.data.frame(xcms::chromPeaks(obj@data_obj))) |>
-            dplyr::rename(sample_index = sample)
+        all_peaks <- get_detected_peaks(obj@data_obj)
+
+        if (is.null(all_peaks) || nrow(all_peaks) == 0) {
+            stop(
+                "create_peak_density: the data object reports no ",
+                "chromatographic peaks."
+            )
+        }
+
+        all_peaks <- as_tibble(all_peaks)
+
+        # XChromatogram reports sample_index as @fromFile, which need not line up
+        # with its single metadata row; collapse to a dense index so the
+        # renderer's ypos[sample_index] lookup stays in range.
+        if (!all(all_peaks$sample_index %in% obj@metadata$sample_index)) {
+            all_peaks$sample_index <- match(
+                all_peaks$sample_index,
+                sort(unique(all_peaks$sample_index)))
+        }
 
         # Populate detected_peaks from data_obj if not already done
         if (nrow(obj@detected_peaks) == 0) {
@@ -66,16 +83,37 @@ setMethod(
         densN <- max(512L,
                      2L * 2L^ceiling(log2(diff(full_rt_range) / (bw / 2))))
 
-        simulate <- !is.null(min_fraction)
+        simulate <- opts$simulate
+        if (is.null(simulate)) {
+            simulate <- !is.null(min_fraction)
+        }
+        if (simulate && is.null(min_fraction)) {
+            # PeakDensityParam's own default.
+            min_fraction <- 0.5
+        }
+
+        feature_definitions <- if (!simulate) {
+            get_feature_definitions(obj@data_obj)
+        } else {
+            NULL
+        }
+
+        # Matching on `row` is exact for chromatogram objects, where each EIC row
+        # owns its peaks. The m/z window is the fallback for experiment objects.
+        match_by_row <- "row" %in% names(features) && "row" %in% names(all_peaks)
 
         results <- lapply(seq_len(nrow(features)), function(i) {
             feat <- features[i, ]
 
-            peaks_in <- all_peaks |>
-                filter(
-                    .data$mz >= feat[["mzmin"]],
-                    .data$mz <= feat[["mzmax"]]
-                )
+            peaks_in <- if (match_by_row) {
+                all_peaks |> filter(.data$row == feat[["row"]])
+            } else {
+                all_peaks |>
+                    filter(
+                        .data$mz >= feat[["mzmin"]],
+                        .data$mz <= feat[["mzmax"]]
+                    )
+            }
 
             has_rt <- !is.na(feat[["rtmin"]]) && !is.na(feat[["rtmax"]])
             if (has_rt) {
@@ -158,6 +196,43 @@ setMethod(
                 }
 
                 bind_rows(rects)
+            } else if (!is.null(feature_definitions) &&
+                       nrow(feature_definitions) > 0) {
+                # simulate = FALSE: draw the feature groups the object stores
+                # rather than re-deriving candidates from the density curve.
+                defs <- feature_definitions
+
+                defs <- if (match_by_row && "row" %in% names(defs)) {
+                    defs[defs$row == feat[["row"]], , drop = FALSE]
+                } else if (all(c("mzmin", "mzmax") %in% names(defs))) {
+                    defs[
+                        defs$mzmax >= feat[["mzmin"]] &
+                            defs$mzmin <= feat[["mzmax"]], , drop = FALSE]
+                } else {
+                    defs
+                }
+
+                if (has_rt) {
+                    defs <- defs[
+                        defs$rtmax >= feat[["rtmin"]] &
+                            defs$rtmin <= feat[["rtmax"]], , drop = FALSE]
+                }
+
+                if (nrow(defs) == 0) {
+                    tibble()
+                } else {
+                    tibble(
+                        rt = NA_real_,
+                        density = NA_real_,
+                        rtmin = defs$rtmin,
+                        rtmax = defs$rtmax,
+                        data_type = "rect",
+                        mzmin = feat[["mzmin"]],
+                        mzmax = feat[["mzmax"]],
+                        metadata_index = NA_real_,
+                        feature_metadata_id = as.integer(i)
+                    )
+                }
             } else {
                 tibble()
             }

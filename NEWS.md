@@ -1,3 +1,86 @@
+# lcmsPlot 1.1.8
+
+- Closed six gaps between lcmsPlot and the plotting methods of *xcms*, so the
+  `backend = "lcmsPlot"` variants of those methods have an equivalent to call.
+
+- The *Easy-to-use, intuitive, and efficient LC-MS data plotting with lcmsPlot*
+  vignette now covers all of this. A new *Quality control of peak detection*
+  section documents the two new layers, and the four extended arguments are
+  documented in the sections that already covered those layers.
+
+- **New layer `lp_chrom_peak_rects()`** draws one rectangle per detected
+  chromatographic peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`, over an
+  existing `lp_mass_trace()` or `lp_intensity_map()` panel. This is the overlay
+  behind `xcms::plotChromPeaks()` and `xcms::plot(type = "XIC")`. It follows the
+  host panel's `x_dim` and its `sample_ids`, clamps itself to the host's window
+  so the axes are not widened, and gives every box a minimum height so that peaks
+  on m/z-binned data (where `mzmin == mzmax`) read as segments instead of
+  vanishing.
+
+- **New layer `lp_peak_count_image()`** reproduces
+  `xcms::plotChromPeakImage()`: retention-time bins on x, samples on y, filled by
+  the number of chromatographic peaks per bin. Samples are ordered by injection
+  order, and bins with no peaks are kept at zero, so a sample that stopped
+  producing peaks half-way through a run reads as an empty stretch rather than
+  disappearing. Counts match the xcms method's binning exactly.
+
+- **`lp_peak_density()` now accepts `XChromatograms` and `XChromatogram`
+  objects**, which is what `xcms::plotChromPeakDensity()` takes. The type gate is
+  now a capability check through `get_detected_peaks()` rather than a class
+  check, the creator goes through that adapter instead of calling
+  `xcms::chromPeaks()` directly (the sample column is named `column`, not
+  `sample`, on chromatogram objects), and `features` is redundant for these
+  inputs because each extracted ion chromatogram already carries its own m/z
+  window. A new `simulate` argument mirrors the xcms method: `TRUE` descends the
+  density curve for candidate features, `FALSE` draws the feature definitions the
+  object already stores.
+
+- **`lp_chromatogram()` gains `stacked` and `transform`**, matching
+  `xcms::plotChromatogramsOverlay()`. `stacked` offsets each series up the y axis
+  in m/z order by a fraction of the intensity range so co-eluting traces stop
+  occluding each other, using the same offset formula as xcms, and suppresses the
+  y axis because a stacked axis has no single meaning; the offsets are returned
+  on the plot as a `stacked_offsets` attribute. `transform` (for example
+  `log10`) is applied to the intensities and to the peak-highlight geometry
+  alike, so shaded peaks stay attached to their traces.
+
+- **`lp_chromatogram(aggregation_fun = "mean")`** produces the averaged ion
+  chromatogram of `xcms::plotChrom(base = FALSE)`. The `ms_header()` contract has
+  gained `peaksCount` and `meanIntensity`, letting each backend define the mean
+  faithfully: `XcmsRawList` inputs carrying a profile matrix use the
+  profile-matrix column mean and so reproduce the xcms trace exactly, while
+  file-based inputs average over the measured peaks of each scan. Unknown
+  aggregation functions now raise an error rather than silently returning a TIC.
+
+- **`lp_intensity_map()` gains `geom`, `point_size`, `bin_rt`, `bin_mz` and
+  `colour_scale`.** `geom = "point"` draws the individual centroids as
+  `xcms::plotRaw()` does, skipping the binning so gaps in the mass traces stay
+  visible instead of being implied away by a tile grid. The retention-time and
+  m/z bin widths, previously hard-coded at 0.1, are now arguments.
+
+## Breaking changes
+
+- The `density` argument of `lp_intensity_map()` has been **removed**. It is
+  replaced by `geom = "density"`, which selects the same rendering. Two separate
+  switches could contradict each other, so there is now a single one. Replace
+  `lp_intensity_map(..., density = TRUE)` with
+  `lp_intensity_map(..., geom = "density")`; `density = FALSE` was the default
+  and can simply be dropped.
+
+## Bug fixes
+
+- `lp_intensity_map()` no longer errors with *"argument is of length zero"* on
+  narrow m/z windows. The peak matrix was subset without `drop = FALSE`, so any
+  scan with exactly one peak in range collapsed to a vector and the following
+  `nrow()` check failed. A narrow window is precisely what an XIC plot passes.
+
+- `plot_chromatogram()` no longer joins every series in a facet into a single
+  zig-zagging line when the colour aesthetic is something other than
+  `sample_id`. The ggplot `group` was pinned to `sample_id` while `lp_arrange()`
+  set only the colour; it is now a composite of the sample and the arrangement
+  column, so colouring by `feature_id` splits the lines while coarser factors
+  such as `sample_group` keep one line per sample as before.
+
 # lcmsPlot 1.1.7
 
 - Every man page documenting an exported object now carries a runnable example.

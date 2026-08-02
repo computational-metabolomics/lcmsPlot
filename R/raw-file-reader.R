@@ -36,7 +36,16 @@ setClass(
 #'
 #' @param reader An instance of `MsRawReader`.
 #' @return A `tibble` with at least the columns `seqNum`,
-#' `retentionTime`, `msLevel`, `basePeakIntensity`, and `totIonCurrent`.
+#' `retentionTime`, `msLevel`, `basePeakIntensity`, `totIonCurrent`,
+#' `peaksCount`, and `meanIntensity`.
+#'
+#' `meanIntensity` is the per-scan average intensity backing
+#' `aggregation_fun = "mean"`. Each backend defines it in the way that is
+#' faithful to its own data model: `XcmsRawReader` takes the profile-matrix
+#' column mean when a profile matrix is available, matching
+#' `xcms::plotChrom(base = FALSE)` exactly, while the file-based backends
+#' average over the measured peaks of each scan. Backends that cannot supply
+#' it return `NA_real_`.
 #' @keywords internal
 setGeneric("ms_header", function(reader) standardGeneric("ms_header"))
 
@@ -90,6 +99,7 @@ setMethod("ms_header", "MzrReader", function(reader) {
 
         bpi <- numeric(num_scans)
         tic_vals <- numeric(num_scans)
+        n_peaks <- numeric(num_scans)
 
         batch_size <- 100
         batch_starts <- seq(1, num_scans, by = batch_size)
@@ -104,15 +114,28 @@ setMethod("ms_header", "MzrReader", function(reader) {
                 has_data <- length(pk) > 0 && nrow(pk) > 0
                 bpi[start + i - 1] <- if (has_data) max(pk[, 2]) else 0
                 tic_vals[start + i - 1] <- if (has_data) sum(pk[, 2]) else 0
+                n_peaks[start + i - 1] <- if (has_data) nrow(pk) else 0
             }
         }
 
         hdr$basePeakIntensity[ms1_idx] <- bpi
         hdr$totIonCurrent[ms1_idx] <- tic_vals
+        hdr$peaksCount[ms1_idx] <- n_peaks
     }
+
+    hdr$meanIntensity <- .mean_from_counts(hdr$totIonCurrent, hdr$peaksCount)
 
     hdr
 })
+
+# Per-scan average intensity over the measured peaks. Scans with no peaks
+# average to zero rather than NaN.
+.mean_from_counts <- function(total, count) {
+    if (is.null(count)) {
+        return(rep(NA_real_, length(total)))
+    }
+    ifelse(count > 0, total / count, 0)
+}
 
 #' @rdname ms_peaks
 setMethod("ms_peaks", "MzrReader", function(reader, scans) {
@@ -143,12 +166,16 @@ setMethod("ms_header", "RawrrReader", function(reader) {
     idx <- rawrr::readIndex(reader@path)
     bpc <- rawrr::readChromatogram(rawfile = reader@path, type = "bpc")
     tic <- rawrr::readChromatogram(rawfile = reader@path, type = "tic")
+    # rawrr::readIndex() exposes no per-scan peak count, and deriving one would
+    # mean reading every spectrum, so "mean" is unavailable for this backend.
     tibble(
         seqNum = idx$scan,
         retentionTime = idx$StartTime * 60,
         msLevel = .rawrr_ms_order_to_level(idx$MSOrder),
         basePeakIntensity = bpc$intensities,
-        totIonCurrent = tic$intensities
+        totIonCurrent = tic$intensities,
+        peaksCount = NA_real_,
+        meanIntensity = NA_real_
     )
 })
 
@@ -198,10 +225,22 @@ setMethod("ms_header", "XcmsRawReader", function(reader) {
     nscans <- length(scanidx)
 
     bpi <- numeric(nscans)
+    n_peaks <- numeric(nscans)
     for (i in seq_len(nscans)) {
         start <- scanidx[i] + 1L
         end <- if (i < nscans) scanidx[i + 1L] else length(ints)
         bpi[i] <- if (start <= end && length(ints) > 0) max(ints[start:end]) else 0
+        n_peaks[i] <- if (start <= end) end - start + 1L else 0L
+    }
+
+    # With a profile matrix (profstep > 0) the column mean is exactly what
+    # xcms::plotChrom(base = FALSE) draws: empty mass bins contribute zeros and
+    # pull the average down. Without one, fall back to the centroid mean.
+    profile <- obj@env$profile
+    mean_int <- if (!is.null(profile) && ncol(profile) == nscans) {
+        colMeans(profile)
+    } else {
+        .mean_from_counts(obj@tic, n_peaks)
     }
 
     tibble(
@@ -209,7 +248,9 @@ setMethod("ms_header", "XcmsRawReader", function(reader) {
         retentionTime = obj@scantime,
         msLevel = 1L,
         basePeakIntensity = bpi,
-        totIonCurrent = obj@tic
+        totIonCurrent = obj@tic,
+        peaksCount = n_peaks,
+        meanIntensity = mean_int
     )
 })
 

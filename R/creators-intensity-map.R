@@ -36,7 +36,9 @@ setMethod(
             scans <- lapply(idx, function(j) {
                 pk <- ms_peaks(ms, j)[[1]]
                 if (nrow(pk) > 0) {
-                    pk <- pk[pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ]
+                    pk <- pk[
+                        pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ,
+                        drop = FALSE]
                     if (nrow(pk) > 0) {
                         tibble(
                             rt = rep(hdr$retentionTime[j], nrow(pk)),
@@ -56,16 +58,27 @@ setMethod(
             df <- do.call(rbind, scans)
 
             if (!is.null(df) && nrow(df) > 0) {
-                df |>
-                    mutate(
-                        rt = round(.data$rt, 1),
-                        mz = round(.data$mz, 1)
-                    ) |>
-                    group_by(.data$rt, .data$mz) |>
-                    summarize(
-                        intensity = sum(.data$intensity),
-                        .groups = "drop"
-                    ) |>
+                if (identical(options$intensity_maps$geom, "point")) {
+                    # A scatter of the raw centroids, as xcms::plotRaw() draws:
+                    # binning here would imply continuous coverage that the
+                    # instrument never measured.
+                    binned <- df
+                } else {
+                    binned <- df |>
+                        mutate(
+                            rt = bin_coordinate(
+                                .data$rt, options$intensity_maps$bin_rt),
+                            mz = bin_coordinate(
+                                .data$mz, options$intensity_maps$bin_mz)
+                        ) |>
+                        group_by(.data$rt, .data$mz) |>
+                        summarize(
+                            intensity = sum(.data$intensity),
+                            .groups = "drop"
+                        )
+                }
+
+                binned |>
                     mutate(
                         metadata_index = sample_metadata$sample_index,
                         feature_metadata_id = sample_metadata$sample_index
