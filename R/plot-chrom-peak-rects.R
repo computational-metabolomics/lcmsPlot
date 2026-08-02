@@ -1,12 +1,12 @@
-#' Overlay chromatographic peak boundaries on an rt / m/z panel
+#' Draw chromatographic peak boundaries on an rt / m/z panel
 #'
 #' Draws one rectangle per detected chromatographic peak, spanning
-#' `rtmin`-`rtmax` by `mzmin`-`mzmax`. This is the primitive behind
-#' `xcms::plotChromPeaks()` and `xcms::plot(type = "XIC")`: the former draws the
-#' rectangles on an empty frame, the latter over the ion map.
+#' `rtmin`-`rtmax` by `mzmin`-`mzmax`.
 #'
-#' The host renderer passes its own axis assignment, so the overlay follows when
-#' the map is flipped to m/z on x.
+#' The caller passes its own axis assignment, so the rectangles follow when the
+#' host map is flipped to m/z on x. Used both by [plot_chrom_peak_rects()] for
+#' the standalone panel and by the mass trace and intensity map renderers when
+#' the layer decorates them.
 #'
 #' @param p A `ggplot` object whose axes are retention time and m/z.
 #' @param detected_peaks A `data.frame` of detected peaks, requiring columns
@@ -108,4 +108,60 @@ chrom_peak_rects_layer <- function(
         linewidth = opts$linewidth,
         inherit.aes = FALSE
     )
+}
+
+#' Plot chromatographic peak boundaries on their own panel
+#'
+#' It is used when `lp_chrom_peak_rects()` is called without a host layer; with
+#' `lp_mass_trace()` or `lp_intensity_map()` present the rectangles are drawn as
+#' an overlay by those renderers instead.
+#'
+#' @param datasets A named `list` of data frames containing the primary datasets
+#' to plot. The used key is `chrom_peak_rects`.
+#' @param supporting_datasets A `list` of supporting data frames. Unused;
+#' present for API consistency.
+#' @param options A list of plot options, controlling units, faceting,
+#' highlighting, and other visual parameters.
+#' @param single A `logical` value that indicates whether it should treat
+#' the plot as a single dataset variant, which can affect faceting
+#' and layout behavior. Default is `FALSE`.
+#' @return A `ggplot` object representing the peak boundary panel.
+#' @keywords internal
+plot_chrom_peak_rects <- function(
+    datasets,
+    supporting_datasets,
+    options,
+    single = FALSE
+) {
+    dataset <- datasets$chrom_peak_rects
+    opts <- options$chrom_peak_rects
+
+    if (!is.null(opts$sample_ids) && "sample_id" %in% names(dataset)) {
+        dataset <- dataset[dataset$sample_id %in% opts$sample_ids, , drop = FALSE]
+    }
+
+    extra_layers <- list(
+        legend_title(options),
+        faceting(options, single),
+        grid_layout(options, single)
+    )
+    extra_layers <- remove_null_elements(extra_layers)
+
+    p <- ggplot(dataset, aes(x = .data$rt, y = .data$mz)) +
+        labs(x = "RT (sec)", y = "m/z") +
+        theme_minimal() +
+        extra_layers
+
+    if (is.null(options$facets$facets) &&
+        "sample_id" %in% names(dataset) &&
+        length(unique(dataset$sample_id)) > 1) {
+        p <- p + facet_wrap(~ sample_id)
+    }
+
+    chrom_peak_rects_layer(
+        p,
+        dataset,
+        options,
+        rt_range = opts$rt_range,
+        mz_range = opts$mz_range)
 }

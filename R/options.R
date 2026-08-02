@@ -136,7 +136,9 @@ default_options <- function() {
             border = "#c0392b",
             fill = NA,
             alpha = 0.25,
-            linewidth = 0.3
+            linewidth = 0.3,
+            rt_range = NULL,
+            mz_range = NULL
         ),
         purity_overlay = list(
             show = FALSE,

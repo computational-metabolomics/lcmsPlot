@@ -64,6 +64,7 @@ run_matching_plot_variant <- function(datasets, obj) {
         spectra = spectra_fn,
         peak_density = plot_peak_density,
         peak_count_image = plot_peak_count_image,
+        chrom_peak_rects = plot_chrom_peak_rects,
         total_ion_current = plot_total_ion_current,
         intensity_maps = plot_intensity_map,
         rt_diff = plot_rt_diff,

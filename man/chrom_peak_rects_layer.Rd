@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-chrom-peak-rects.R
 \name{chrom_peak_rects_layer}
 \alias{chrom_peak_rects_layer}
-\title{Overlay chromatographic peak boundaries on an rt / m/z panel}
+\title{Draw chromatographic peak boundaries on an rt / m/z panel}
 \usage{
 chrom_peak_rects_layer(
   p,
@@ -40,7 +40,9 @@ Draws one rectangle per detected chromatographic peak, spanning
 rectangles on an empty frame, the latter over the ion map.
 }
 \details{
-The host renderer passes its own axis assignment, so the overlay follows when
-the map is flipped to m/z on x.
+The caller passes its own axis assignment, so the rectangles follow when the
+host map is flipped to m/z on x. Used both by \code{\link[=plot_chrom_peak_rects]{plot_chrom_peak_rects()}} for
+the standalone panel and by the mass trace and intensity map renderers when
+the layer decorates them.
 }
 \keyword{internal}

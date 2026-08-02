@@ -144,15 +144,94 @@ test_that("chrom_peak_rects_layer errors when the m/z bounds are missing", {
     "missing the column")
 })
 
-test_that("lp_chrom_peak_rects requires an rt / m/z host panel", {
+rect_count <- function(p) {
+  total <- 0
+  for (pane in seq_along(p)) {
+    b <- ggplot2::ggplot_build(p[[pane]])
+    for (k in seq_along(p[[pane]]$layers)) {
+      if (inherits(p[[pane]]$layers[[k]]$geom, "GeomRect")) {
+        total <- total + nrow(b$data[[k]])
+      }
+    }
+  }
+  total
+}
+
+test_that("lp_chrom_peak_rects owns a panel when there is no host layer", {
+  # arrange
+  data_obj <- get_XCMSnExp_object_example(indices = 1:2)
+  n_peaks <- nrow(xcms::chromPeaks(data_obj))
+
+  # act
+  p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects() +
+    lp_get_plot()
+
+  # assert: one panel drawing every detected peak, as plotChromPeaks does
+  expect_length(p, 1L)
+  expect_true(any(vapply(
+    p[[1]]$layers, function(l) inherits(l$geom, "GeomRect"), logical(1))))
+  expect_equal(rect_count(p), n_peaks)
+  expect_equal(p[[1]]$labels$x, "RT (sec)")
+  expect_equal(p[[1]]$labels$y, "m/z")
+})
+
+test_that("the standalone panel auto-facets by sample", {
   # arrange
   data_obj <- get_XCMSnExp_object_example(indices = 1:2)
 
+  # act
+  auto <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects() + lp_get_plot()
+  explicit <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects() + lp_facets(facets = "sample_group") + lp_get_plot()
+
+  # assert
+  expect_equal(names(auto[[1]]$facet$params$facets), "sample_id")
+  # an explicit lp_facets() wins over the automatic one
+  expect_equal(names(explicit[[1]]$facet$params$facets), "sample_group")
+})
+
+test_that("the standalone panel honours rt_range and mz_range", {
+  # arrange
+  data_obj <- get_XCMSnExp_object_example(indices = 1:2)
+
+  # act
+  p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects(rt_range = c(2700, 3200), mz_range = c(300, 400)) +
+    lp_get_plot()
+  rects <- ggplot2::ggplot_build(p[[1]])$data[[1]]
+
+  # assert
+  expect_gt(nrow(rects), 0)
+  expect_gte(min(rects$xmin), 2700)
+  expect_lte(max(rects$xmax), 3200)
+})
+
+test_that("a host layer turns the rectangles back into an overlay", {
+  # arrange
+  data_obj <- get_XCMSnExp_object_example(indices = 1:2)
+
+  # act: the host is added after the rectangles, so the mode cannot depend on
+  # the order the layers were composed in
+  p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects() +
+    lp_intensity_map(mz_range = c(300, 320), rt_range = c(2500, 3500)) +
+    lp_get_plot()
+
+  # assert: a single decorated panel, not a panel each
+  expect_length(p, 1L)
+  expect_true(any(vapply(
+    p[[1]]$layers, function(l) inherits(l$geom, "GeomTile"), logical(1))))
+  expect_true(any(vapply(
+    p[[1]]$layers, function(l) inherits(l$geom, "GeomRect"), logical(1))))
+})
+
+test_that("lp_chrom_peak_rects rejects objects without detected peaks", {
   # act / assert
   expect_error(
-    lcmsPlot(data_obj, sample_id_column = "sample_name") +
-      lp_chrom_peak_rects(),
-    "must be called after")
+    lcmsPlot(get_test_sample_paths()) + lp_chrom_peak_rects(),
+    "no detected")
 })
 
 test_that("lp_chrom_peak_rects follows the host panel's samples", {

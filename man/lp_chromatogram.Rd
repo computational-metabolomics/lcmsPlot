@@ -71,13 +71,7 @@ the metadata that determines the color. By default it colors by \code{sample_id}
 \item{aggregation_fun}{A \code{character} value indicating which aggregation
 function to use for the spectra intensities; one of \code{max} (base peak
 chromatogram), \code{sum} (total ion current), or \code{mean} (averaged ion
-chromatogram). Only applicable to summary chromatograms.
-\code{mean} mirrors \code{xcms::plotChrom(base = FALSE)}: for \code{XcmsRawList} inputs
-carrying a profile matrix it is the profile-matrix column mean, so scans with
-no signal in a mass bin contribute zeros. For file-based inputs it is the
-mean over the measured peaks of each scan, which sits higher than the
-profile-matrix average. It is unavailable for ThermoFisher \code{.raw} files,
-whose backend reports no per-scan peak count.}
+chromatogram). Only applicable to summary chromatograms.}
 
 \item{rt_type}{A \code{chracter} value indicating what type of RT to use for the
 chromatograms. One of \code{uncorrected} (default), \code{corrected}, or \code{both};
@@ -103,9 +97,8 @@ highlight apices with the corresponding RT values in a chromatogram.}
 
 \item{stacked}{A \code{numeric} value in \verb{[0, 1]}. When non-zero, each series in a
 panel is offset up the y axis in m/z order by that fraction of the intensity
-range, so co-eluting traces stop occluding each other. Mirrors the \code{stacked}
-argument of \code{xcms::plotChromatogramsOverlay()}. The y axis is suppressed
-because it no longer means one thing. Defaults to \code{0} (no stacking).
+range, so co-eluting traces stop occluding each other.
+Defaults to \code{0} (no stacking).
 Which series get offset follows \code{lp_arrange(group_by = )}; without it,
 samples are stacked.}
 

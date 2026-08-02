@@ -37,16 +37,14 @@ in its \code{data} slot. It is designed to be used with the \code{+} operator,
 which serves as a layering mechanism.
 }
 \description{
-\code{lp_peak_count_image()} produces the quality-control view drawn by
-\code{xcms::plotChromPeakImage()}: retention-time bins on the x axis, samples on
+\code{lp_peak_count_image()} produces a common quality-control view:
+retention-time bins on the x axis, samples on
 the y axis, and fill showing how many chromatographic peaks each sample
-yielded in each bin. It is how you spot a sample that stopped producing peaks
-half-way through a run, or a retention-time region where detection collapsed.
+yielded in each bin.
 }
 \details{
-Samples are ordered by injection order rather than alphabetically, and bins
-containing no peaks are drawn as zero rather than dropped, so a failing
-sample reads as an empty stretch instead of vanishing from the plot.
+Samples are ordered by injection order, and bins
+containing no peaks are drawn as zero rather than dropped.
 }
 \examples{
 data_obj <- get_XCMSnExp_object_example(

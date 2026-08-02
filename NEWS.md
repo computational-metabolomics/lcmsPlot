@@ -9,13 +9,17 @@
   documented in the sections that already covered those layers.
 
 - **New layer `lp_chrom_peak_rects()`** draws one rectangle per detected
-  chromatographic peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`, over an
-  existing `lp_mass_trace()` or `lp_intensity_map()` panel. This is the overlay
-  behind `xcms::plotChromPeaks()` and `xcms::plot(type = "XIC")`. It follows the
-  host panel's `x_dim` and its `sample_ids`, clamps itself to the host's window
-  so the axes are not widened, and gives every box a minimum height so that peaks
-  on m/z-binned data (where `mzmin == mzmax`) read as segments instead of
-  vanishing.
+  chromatographic peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`. It covers
+  both xcms methods that draw that primitive. Called on its own it owns a panel,
+  drawing the rectangles on an otherwise empty rt / m/z frame with one facet per
+  sample, as `xcms::plotChromPeaks()` does; `rt_range` and `mz_range` restrict it
+  the way that method's `xlim` and `ylim` do. Called after `lp_mass_trace()` or
+  `lp_intensity_map()` it decorates that panel instead, as
+  `xcms::plot(type = "XIC")` does, following the host's `x_dim`, window and
+  `sample_ids` so the axes are not widened and no extra facets appear. Which mode
+  applies is decided from the finished plot, so it does not depend on the order
+  the layers were added in. Every box is given a minimum height so that peaks on
+  m/z-binned data (where `mzmin == mzmax`) read as segments instead of vanishing.
 
 - **New layer `lp_peak_count_image()`** reproduces
   `xcms::plotChromPeakImage()`: retention-time bins on x, samples on y, filled by
