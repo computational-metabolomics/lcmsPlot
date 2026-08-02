@@ -1,10 +1,7 @@
 #' Plot chromatographic peak counts per retention-time bin
 #'
 #' `plot_peak_count_image()` draws retention-time bins on x and samples on y,
-#' filled by how many chromatographic peaks each sample yielded in each bin. It
-#' is the ggplot2 counterpart of `xcms::plotChromPeakImage()`, and is read as a
-#' quality-control view: an empty stretch marks a sample that stopped producing
-#' peaks, a pale column a retention-time region where detection collapsed.
+#' filled by how many chromatographic peaks each sample yielded in each bin.
 #'
 #' @param datasets A named `list` of data frames containing the primary datasets
 #' to plot. The used key is `peak_count_image`.
@@ -33,8 +30,6 @@ plot_peak_count_image <- function(
     )
     extra_layers <- remove_null_elements(extra_layers)
 
-    # Injection order, not alphabetical: a run drifting over time is only
-    # readable when the samples stay in the order they were acquired.
     if (all(c("sample_id", "sample_index") %in% names(dataset))) {
         levels_in_order <- dataset |>
             distinct(.data$sample_id, .data$sample_index) |>
@@ -48,8 +43,6 @@ plot_peak_count_image <- function(
     }
 
     if (isTRUE(opts$log)) {
-        # log2(0) is -Inf, which would swallow the whole colour scale; leave
-        # empty bins blank instead. xcms passes the -Inf straight to image().
         fill_values <- log2(dataset$n_peaks)
         fill_values[!is.finite(fill_values)] <- NA_real_
         fill_label <- "log2(peaks)"

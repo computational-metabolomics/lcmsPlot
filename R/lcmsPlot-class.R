@@ -147,15 +147,26 @@ setClass(
         "purity_scores"
     )
 
-    any(vapply(
+    has_slot_data <- any(vapply(
         data_slots,
         function(s) nrow(slot(object@data, s)),
         integer(1)
     ) > 0)
+
+    # A standalone peak-boundary panel is drawn from @detected_peaks, which is
+    # not a dataset slot of its own. Detected peaks alone are not a plot
+    # request, so the option has to be on as well.
+    has_slot_data ||
+        (isTRUE(object@options$chrom_peak_rects$show) &&
+            nrow(object@data@detected_peaks) > 0)
 }
 
-.purity_additional_datasets <- function(object) {
+# Datasets that are derived from a slot at render time rather than living in one
+# of their own. `.render_plot()` appends these to DATASET_TYPES, so each name
+# needs a matching options entry carrying a logical `show`.
+.additional_datasets <- function(object) {
     additional <- list()
+
     if (nrow(object@data@purity_scores) > 0) {
         if (isTRUE(object@options$purity_timeline$show)) {
             additional$purity_timeline <- object@data@purity_scores
@@ -164,6 +175,32 @@ setClass(
             additional$purity_distribution <- object@data@purity_scores
         }
     }
+
+    # The peak rectangles own a panel only when there is no host layer to
+    # decorate. Deriving that here rather than at `+` time keeps it independent
+    # of the order the layers were added in.
+    has_host <- isTRUE(object@options$intensity_maps$show) ||
+        isTRUE(object@options$mass_traces$show)
+
+    if (isTRUE(object@options$chrom_peak_rects$show) && !has_host &&
+        nrow(object@data@detected_peaks) > 0) {
+        # Project down to the peak geometry plus the join keys. @detected_peaks
+        # already carries the metadata columns, and .render_plot() re-joins
+        # metadata unconditionally, so anything else here would come back
+        # suffixed .x/.y and break faceting and the sample filter.
+        additional$chrom_peak_rects <- object@data@detected_peaks |>
+            dplyr::transmute(
+                mz = .data$mz,
+                mzmin = .data$mzmin,
+                mzmax = .data$mzmax,
+                rt = .data$rt,
+                rtmin = .data$rtmin,
+                rtmax = .data$rtmax,
+                metadata_index = .data$sample_index,
+                feature_metadata_id = NA_real_
+            )
+    }
+
     additional
 }
 
@@ -344,7 +381,7 @@ setMethod(
             if (!object@options$bypass_plot_generation) {
                 object <- .render_plot(
                     object,
-                    additional_datasets = .purity_additional_datasets(object))
+                    additional_datasets = .additional_datasets(object))
             }
             object@options$bypass_plot_generation <- FALSE
             print(object@plot)
@@ -1687,26 +1724,38 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
     )
 }
 
-#' Overlay chromatographic peak boundaries on an rt / m/z panel
+#' Plot chromatographic peak boundaries in the rt / m/z plane
 #'
 #' `lp_chrom_peak_rects()` draws one rectangle per detected chromatographic
-#' peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`. It decorates an
-#' existing rt / m/z panel, so it requires either
-#' `lp_mass_trace()` or `lp_intensity_map()` to be called first. On an
-#' intensity-versus-rt panel the equivalent is
+#' peak, spanning `rtmin`-`rtmax` by `mzmin`-`mzmax`. It works in two ways,
+#' matching the two xcms methods that draw the same primitive.
+#'
+#' Called on its own it owns a panel, drawing the rectangles on an otherwise
+#' empty retention time / m/z frame as `xcms::plotChromPeaks()` does, with one
+#' facet per sample. Called after `lp_mass_trace()` or `lp_intensity_map()` it
+#' instead decorates that panel, as `xcms::plot(type = "XIC")` does, and follows
+#' the host's axes, window and samples. On an intensity-versus-rt panel the
+#' equivalent is
 #' `lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")`.
 #'
-#' The peak boundaries come from the detected peaks already extracted by the
-#' host layer, so the data object has to report chromatographic peaks.
+#' The data object has to report chromatographic peaks. On m/z-binned data
+#' `mzmin` equals `mzmax`, so each box is given a minimum height and reads as a
+#' horizontal segment rather than vanishing.
 #'
 #' @param sample_ids A `character` vector of sample IDs to include. `NULL`
-#' (default) follows the host layer, so the overlay never introduces panels the
-#' host panel does not draw.
+#' (default) follows the host layer when there is one, so the overlay never
+#' introduces panels the host does not draw, and otherwise uses every sample.
 #' @param border A `character` colour for the rectangle outline.
 #' @param fill A `character` colour for the rectangle interior, or `NA`
 #' (default) for unfilled boxes.
 #' @param alpha A `numeric` value in `[0, 1]` controlling opacity.
 #' @param linewidth A `numeric` value controlling the outline width.
+#' @param rt_range An optional length-2 `numeric` restricting the retention-time
+#' range, equivalent to `xlim` in `xcms::plotChromPeaks()`. Ignored when the
+#' layer decorates an `lp_intensity_map()` panel, which supplies its own window.
+#' @param mz_range An optional length-2 `numeric` restricting the m/z range,
+#' equivalent to `ylim` in `xcms::plotChromPeaks()`. Ignored when the layer
+#' decorates an `lp_intensity_map()` panel.
 #' @return A layer function for use with the `+` operator.
 #' @export
 #' @examples
@@ -1714,7 +1763,12 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
 #'   indices = 1:2,
 #'   should_group_peaks = TRUE)
 #'
-#' ## The rectangles decorate the ion map, marking where peaks were detected.
+#' ## On its own the layer owns the panel, one facet per sample.
+#' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+#'   lp_chrom_peak_rects(rt_range = c(2500, 3500), mz_range = c(300, 320))
+#' p
+#'
+#' ## After a host layer it decorates that panel instead.
 #' p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
 #'   lp_intensity_map(mz_range = c(300, 320), rt_range = c(2500, 3500)) +
 #'   lp_chrom_peak_rects()
@@ -1724,7 +1778,9 @@ lp_chrom_peak_rects <- function(
         border = "#c0392b",
         fill = NA,
         alpha = 0.25,
-        linewidth = 0.3
+        linewidth = 0.3,
+        rt_range = NULL,
+        mz_range = NULL
 ) {
     make_interface_function(
         name = "lp_chrom_peak_rects",
@@ -1732,17 +1788,6 @@ lp_chrom_peak_rects <- function(
         fn = function(obj) {
             has_map <- isTRUE(obj@options$intensity_maps$show)
             has_trace <- isTRUE(obj@options$mass_traces$show)
-
-            if (!has_map && !has_trace) {
-                stop(
-                    "lp_chrom_peak_rects must be called after ",
-                    "lp_mass_trace() or lp_intensity_map(): the rectangles ",
-                    "need an rt / m/z panel to sit on. On an ",
-                    "intensity-versus-rt panel use lp_chromatogram(",
-                    "highlight_peaks = TRUE, highlight_peaks_mode = ",
-                    "\"rectangle\") instead."
-                )
-            }
 
             if (has_trace && !has_map && nrow(obj@data@mass_traces) == 0) {
                 stop(
@@ -1788,12 +1833,15 @@ lp_chrom_peak_rects <- function(
 
             # Follow the host panel's samples by default, or the overlay would
             # contribute peaks for samples the host does not draw and faceting
-            # would invent empty panels for them.
+            # would invent empty panels for them. Standalone there is no host to
+            # follow, so every sample is drawn.
             if (is.null(sample_ids)) {
                 sample_ids <- if (has_map) {
                     obj@options$intensity_maps$sample_ids
-                } else {
+                } else if (has_trace) {
                     obj@options$chromatograms$sample_ids
+                } else {
+                    NULL
                 }
             }
 
@@ -1803,7 +1851,9 @@ lp_chrom_peak_rects <- function(
                 border = border,
                 fill = fill,
                 alpha = alpha,
-                linewidth = linewidth
+                linewidth = linewidth,
+                rt_range = rt_range,
+                mz_range = mz_range
             )
 
             return(obj)
@@ -2093,7 +2143,7 @@ lp_get_plot <- function() {
     function(obj) {
         obj <- .render_plot(
             obj,
-            additional_datasets = .purity_additional_datasets(obj))
+            additional_datasets = .additional_datasets(obj))
         return(obj@plot)
     }
 }

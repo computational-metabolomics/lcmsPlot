@@ -53,14 +53,16 @@ plot_chromatogram <- function(
         ungroup()
 
     transform_fun <- options$chromatograms$transform
-    if (!is.function(transform_fun)) transform_fun <- identity
+    if (!is.function(transform_fun)) {
+        transform_fun <- identity
+    }
 
     stacked <- options$chromatograms$stacked
-    if (!is.numeric(stacked) || length(stacked) == 0L) stacked <- 0
+    if (!is.numeric(stacked) || length(stacked) == 0L) {
+        stacked <- 0
+    }
     stacked <- stacked[1L]
 
-    # xcms derives the stacking band from transform(range(c(intensity, 0))) and
-    # collapses the -Inf that log-like transforms produce at zero.
     y_limits <- transform_fun(c(0, max(dataset$intensity_plot, na.rm = TRUE)))
     y_limits[!is.finite(y_limits)] <- 0
 

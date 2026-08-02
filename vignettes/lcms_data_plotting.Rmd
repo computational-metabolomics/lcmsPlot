@@ -496,14 +496,28 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
 ## Peak boundaries in the m/z and retention time plane
 
 `lp_chrom_peak_rects()` draws one rectangle per detected peak, spanning its
-retention-time limits by its m/z limits.
-It is the overlay behind `xcms::plotChromPeaks()` and `xcms::plot(type = "XIC")`,
-and shows where in the m/z / retention-time plane the peak detection actually
-placed its boundaries.
+retention-time limits by its m/z limits, and shows where in the m/z /
+retention-time plane the peak detection actually placed its boundaries.
+It works in two ways, matching the two xcms methods that draw the same
+primitive.
 
-The layer decorates an existing panel rather than owning one, so it requires
-either `lp_intensity_map()` or `lp_mass_trace()` to be called first, and by
-default it follows whichever samples that host panel draws.
+Called on its own the layer owns a panel, drawing the rectangles on an otherwise
+empty frame with one facet per sample.
+This is the view `xcms::plotChromPeaks()` produces, and `rt_range` and
+`mz_range` restrict it in the way that method's `xlim` and `ylim` do.
+
+```{r chrom-peak-rects-standalone, fig.height=5, fig.width=9}
+lcmsPlot(faahko, sample_id_column = "sample_name") +
+    lp_chrom_peak_rects(
+        sample_ids = c("ko15", "wt15"),
+        rt_range = c(3200, 3700),
+        mz_range = c(480, 540),
+        fill = "#c0392b60")
+```
+
+Called after `lp_intensity_map()` or `lp_mass_trace()` it decorates that panel
+instead, following the host's axes, window and samples — the view
+`xcms::plot(type = "XIC")` produces.
 On a panel of intensity against retention time the equivalent is
 `lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")`.
 

@@ -2,20 +2,22 @@
 % Please edit documentation in R/lcmsPlot-class.R
 \name{lp_chrom_peak_rects}
 \alias{lp_chrom_peak_rects}
-\title{Overlay chromatographic peak boundaries on an rt / m/z panel}
+\title{Plot chromatographic peak boundaries in the rt / m/z plane}
 \usage{
 lp_chrom_peak_rects(
   sample_ids = NULL,
   border = "#c0392b",
   fill = NA,
   alpha = 0.25,
-  linewidth = 0.3
+  linewidth = 0.3,
+  rt_range = NULL,
+  mz_range = NULL
 )
 }
 \arguments{
 \item{sample_ids}{A \code{character} vector of sample IDs to include. \code{NULL}
-(default) follows the host layer, so the overlay never introduces panels the
-host panel does not draw.}
+(default) follows the host layer when there is one, so the overlay never
+introduces panels the host does not draw, and otherwise uses every sample.}
 
 \item{border}{A \code{character} colour for the rectangle outline.}
 
@@ -25,32 +27,47 @@ host panel does not draw.}
 \item{alpha}{A \code{numeric} value in \verb{[0, 1]} controlling opacity.}
 
 \item{linewidth}{A \code{numeric} value controlling the outline width.}
+
+\item{rt_range}{An optional length-2 \code{numeric} restricting the retention-time
+range, equivalent to \code{xlim} in \code{xcms::plotChromPeaks()}. Ignored when the
+layer decorates an \code{lp_intensity_map()} panel, which supplies its own window.}
+
+\item{mz_range}{An optional length-2 \code{numeric} restricting the m/z range,
+equivalent to \code{ylim} in \code{xcms::plotChromPeaks()}. Ignored when the layer
+decorates an \code{lp_intensity_map()} panel.}
 }
 \value{
 A layer function for use with the \code{+} operator.
 }
 \description{
 \code{lp_chrom_peak_rects()} draws one rectangle per detected chromatographic
-peak, spanning \code{rtmin}-\code{rtmax} by \code{mzmin}-\code{mzmax}. It is the overlay behind
-\code{xcms::plotChromPeaks()} and \code{xcms::plot(type = "XIC")}, and decorates an
-existing rt / m/z panel rather than owning one, so it requires either
-\code{lp_mass_trace()} or \code{lp_intensity_map()} to be called first. On an
-intensity-versus-rt panel the equivalent is
-\code{lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")}.
+peak, spanning \code{rtmin}-\code{rtmax} by \code{mzmin}-\code{mzmax}. It works in two ways,
+matching the two xcms methods that draw the same primitive.
 }
 \details{
-The peak boundaries come from the detected peaks already extracted by the
-host layer, so the data object has to report chromatographic peaks. On
-m/z-binned data such as the faahKO CDFs \code{mzmin == mzmax}, so each box is
-given a minimum height and reads as a horizontal segment rather than
-vanishing.
+Called on its own it owns a panel, drawing the rectangles on an otherwise
+empty retention time / m/z frame as \code{xcms::plotChromPeaks()} does, with one
+facet per sample. Called after \code{lp_mass_trace()} or \code{lp_intensity_map()} it
+instead decorates that panel, as \code{xcms::plot(type = "XIC")} does, and follows
+the host's axes, window and samples. On an intensity-versus-rt panel the
+equivalent is
+\code{lp_chromatogram(highlight_peaks = TRUE, highlight_peaks_mode = "rectangle")}.
+
+The data object has to report chromatographic peaks. On m/z-binned data
+\code{mzmin} equals \code{mzmax}, so each box is given a minimum height and reads as a
+horizontal segment rather than vanishing.
 }
 \examples{
 data_obj <- get_XCMSnExp_object_example(
   indices = 1:2,
   should_group_peaks = TRUE)
 
-## The rectangles decorate the ion map, marking where peaks were detected.
+## On its own the layer owns the panel, one facet per sample.
+p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+  lp_chrom_peak_rects(rt_range = c(2500, 3500), mz_range = c(300, 320))
+p
+
+## After a host layer it decorates that panel instead.
 p <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
   lp_intensity_map(mz_range = c(300, 320), rt_range = c(2500, 3500)) +
   lp_chrom_peak_rects()

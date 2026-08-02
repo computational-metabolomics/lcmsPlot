@@ -42,8 +42,7 @@ setClass(
 #' `meanIntensity` is the per-scan average intensity backing
 #' `aggregation_fun = "mean"`. Each backend defines it in the way that is
 #' faithful to its own data model: `XcmsRawReader` takes the profile-matrix
-#' column mean when a profile matrix is available, matching
-#' `xcms::plotChrom(base = FALSE)` exactly, while the file-based backends
+#' column mean when a profile matrix is available, while the file-based backends
 #' average over the measured peaks of each scan. Backends that cannot supply
 #' it return `NA_real_`.
 #' @keywords internal

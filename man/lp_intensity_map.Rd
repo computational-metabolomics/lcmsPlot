@@ -41,7 +41,7 @@ y-axis. One of \code{"mz"} (default) or \code{"rt"}.}
 
 \item{geom}{A \code{character} value selecting how the map is drawn. One of
 \code{"tile"} (default) for a binned heatmap, \code{"point"} for a scatter of the
-individual centroids as drawn by \code{xcms::plotRaw()}, or \code{"density"} for a
+individual centroids, or \code{"density"} for a
 2D kernel density estimate. \code{"point"} skips the binning entirely, so gaps in
 the mass traces stay visible rather than being implied away.}
 
