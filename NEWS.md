@@ -85,6 +85,16 @@
   column, so colouring by `feature_id` splits the lines while coarser factors
   such as `sample_group` keep one line per sample as before.
 
+- `lp_peak_density(simulate = TRUE)` no longer draws overlapping feature
+  rectangles that all start at the same retention time. The internal descent
+  used to find each feature's boundaries compared neighbouring density values
+  with `<=`, so once the previous feature's range had been zeroed it walked
+  straight across that plateau and re-collected the peaks already assigned. Each
+  later rectangle therefore reached back to the first feature's leftmost peak,
+  and passed the `min_fraction` test on the strength of those peaks. The
+  comparison is now strict, matching the `DescendMin` routine of *xcms*, and the
+  rectangles agree with `xcms::plotChromPeakDensity()`.
+
 # lcmsPlot 1.1.7
 
 - Every man page documenting an exported object now carries a runnable example.

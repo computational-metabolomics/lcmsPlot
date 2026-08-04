@@ -95,3 +95,53 @@ test_that("lp_peak_density rejects objects without chromatographic peaks", {
       lp_peak_density(features = data.frame(mzmin = 300, mzmax = 320)),
     "no chromatographic peaks")
 })
+
+test_that(".descend_min stops at a plateau left by a previous feature", {
+  # arrange: two humps, the first already zeroed as the simulate loop does
+  y <- c(0.1, 0.5, 1.0, 0.5, 0.2, 0.4, 0.9, 0.3, 0.05)
+  y_zeroed <- y
+  y_zeroed[1:5] <- 0
+
+  # act
+  clean <- lcmsPlot:::.descend_min(y, 7L)
+  plateau <- lcmsPlot:::.descend_min(y_zeroed, 7L)
+
+  # assert: the descent must not walk back across the zeros, otherwise the
+  # next feature re-collects the peaks of the previous one
+  expect_equal(clean, c(5L, 9L))
+  expect_equal(plateau, c(5L, 9L))
+})
+
+test_that(".descend_min matches the descendMin routine of xcms", {
+  # arrange
+  skip_if_not_installed("xcms")
+  set.seed(42)
+
+  for (trial in seq_len(50)) {
+    n <- sample(8:60, 1)
+    y <- abs(sin(seq(0, runif(1, 2, 8), length.out = n))) * runif(n, 0.5, 1)
+    if (runif(1) < 0.5) y[seq_len(sample(seq_len(n), 1))] <- 0
+    idx <- which.max(y)
+
+    # act / assert
+    expect_equal(
+      as.integer(lcmsPlot:::.descend_min(y, idx)),
+      as.integer(xcms:::descendMin(as.double(y), idx)))
+  }
+})
+
+test_that("simulate = TRUE yields one rectangle per supported feature group", {
+  # arrange
+  fixture <- get_xchromatograms_example()
+
+  # act
+  obj <- lcmsPlot(fixture$chromatograms) +
+    lp_peak_density(bw = 30, min_fraction = 0.5, simulate = TRUE)
+  rects <- obj@data@peak_density
+  rects <- rects[rects$data_type == "rect", ]
+
+  # assert: rectangles must not share a left edge, which is what happened when
+  # each window reached back over the peaks of the previous one
+  expect_false(anyDuplicated(rects$rtmin) > 0 && nrow(rects) > 1)
+  expect_true(all(rects$rtmax >= rects$rtmin))
+})

@@ -21,11 +21,15 @@ setGeneric(
 # Descend from the local maximum to find feature boundaries.
 # Mirrors xcms::descendMin used in the peak density grouping algorithm.
 .descend_min <- function(y, idx) {
+    # Strict '<', matching xcms's C routine DescendMin. The caller zeroes each
+    # accepted feature's range before looking for the next maximum, so a
+    # non-strict comparison would walk across that plateau of zeros and pull
+    # already-consumed peaks into the next feature.
     n <- length(y)
     left <- idx
-    while (left > 1L && y[left - 1L] <= y[left]) left <- left - 1L
+    while (left > 1L && y[left - 1L] < y[left]) left <- left - 1L
     right <- idx
-    while (right < n && y[right + 1L] <= y[right]) right <- right + 1L
+    while (right < n && y[right + 1L] < y[right]) right <- right + 1L
     c(left, right)
 }
 
