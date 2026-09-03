@@ -688,6 +688,9 @@ lp_mass_trace <- function() {
 #' m/z labels annotated on spectral peaks. Defaults to `3`.
 #' @param intensity_breaks_by A `numeric` value specifying the step size
 #' (in percent) between y-axis intensity breaks. Defaults to `20`.
+#' @param mz_breaks_n A `numeric` value specifying the approximate number of
+#' m/z axis breaks, passed to `scales::pretty_breaks(n = ...)`.
+#' Defaults to `6`.
 #' @param auto_facet A `logical` value. When `TRUE` (default), a facet is
 #' automatically added to separate spectra from different samples or scans.
 #' Set to `FALSE` to suppress automatic faceting.
@@ -722,6 +725,7 @@ lp_spectra <- function(
     match_target_index = NULL,
     peak_label_size = 3,
     intensity_breaks_by = 20,
+    mz_breaks_n = 6,
     auto_facet = TRUE
 ) {
     mode <- match.arg(mode, c("closest_apex", "closest", "across_peak"))
@@ -752,6 +756,7 @@ lp_spectra <- function(
                 match_target_index = match_target_index,
                 peak_label_size = peak_label_size,
                 intensity_breaks_by = intensity_breaks_by,
+                mz_breaks_n = mz_breaks_n,
                 auto_facet = auto_facet
             )
 

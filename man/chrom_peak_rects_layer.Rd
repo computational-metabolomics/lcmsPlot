@@ -35,9 +35,7 @@ The modified \code{ggplot} object.
 }
 \description{
 Draws one rectangle per detected chromatographic peak, spanning
-\code{rtmin}-\code{rtmax} by \code{mzmin}-\code{mzmax}. This is the primitive behind
-\code{xcms::plotChromPeaks()} and \code{xcms::plot(type = "XIC")}: the former draws the
-rectangles on an empty frame, the latter over the ion map.
+\code{rtmin}-\code{rtmax} by \code{mzmin}-\code{mzmax}.
 }
 \details{
 The caller passes its own axis assignment, so the rectangles follow when the

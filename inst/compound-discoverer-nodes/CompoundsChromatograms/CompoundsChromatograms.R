@@ -379,7 +379,7 @@ build_sample_paths <- function(node_args) {
         )
     }
 
-    fname_col <- lcmsPlot:::.cd_node_col(
+    fname_col <- lcmsPlot:::first_matching_column(
         study_files, lcmsPlot:::.cd_node_cols$file_name)
     if (is.na(fname_col)) {
         stop(

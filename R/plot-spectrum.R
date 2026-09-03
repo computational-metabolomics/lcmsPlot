@@ -72,7 +72,8 @@ plot_spectrum <- function(
             color = "red"
         ) +
         labs(x = "m/z", y = "Relative intensity (%)") +
-        scale_x_continuous(breaks = scales::pretty_breaks(n = 20)) +
+        scale_x_continuous(
+            breaks = scales::pretty_breaks(n = options$spectra$mz_breaks_n)) +
         scale_y_continuous(
             limits = c(y_min * 1.1, y_max * 1.1),
             breaks = seq(y_min, y_max, by = options$spectra$intensity_breaks_by),

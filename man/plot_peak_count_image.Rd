@@ -25,9 +25,6 @@ A \code{ggplot} object representing the peak count image.
 }
 \description{
 \code{plot_peak_count_image()} draws retention-time bins on x and samples on y,
-filled by how many chromatographic peaks each sample yielded in each bin. It
-is the ggplot2 counterpart of \code{xcms::plotChromPeakImage()}, and is read as a
-quality-control view: an empty stretch marks a sample that stopped producing
-peaks, a pale column a retention-time region where detection collapsed.
+filled by how many chromatographic peaks each sample yielded in each bin.
 }
 \keyword{internal}

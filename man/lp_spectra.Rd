@@ -15,6 +15,7 @@ lp_spectra(
   match_target_index = NULL,
   peak_label_size = 3,
   intensity_breaks_by = 20,
+  mz_breaks_n = 6,
   auto_facet = TRUE
 )
 }
@@ -50,6 +51,10 @@ m/z labels annotated on spectral peaks. Defaults to \code{3}.}
 
 \item{intensity_breaks_by}{A \code{numeric} value specifying the step size
 (in percent) between y-axis intensity breaks. Defaults to \code{20}.}
+
+\item{mz_breaks_n}{A \code{numeric} value specifying the approximate number of
+m/z axis breaks, passed to \code{scales::pretty_breaks(n = ...)}.
+Defaults to \code{6}.}
 
 \item{auto_facet}{A \code{logical} value. When \code{TRUE} (default), a facet is
 automatically added to separate spectra from different samples or scans.

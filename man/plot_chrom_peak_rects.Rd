@@ -24,8 +24,6 @@ and layout behavior. Default is \code{FALSE}.}
 A \code{ggplot} object representing the peak boundary panel.
 }
 \description{
-\code{plot_chrom_peak_rects()} draws the peak rectangles on an otherwise empty
-retention time / m/z frame, which is what \code{xcms::plotChromPeaks()} produces.
 It is used when \code{lp_chrom_peak_rects()} is called without a host layer; with
 \code{lp_mass_trace()} or \code{lp_intensity_map()} present the rectangles are drawn as
 an overlay by those renderers instead.

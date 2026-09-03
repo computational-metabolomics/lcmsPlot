@@ -53,6 +53,7 @@ default_options <- function() {
             match_target_index = 1,
             peak_label_size = 3,
             intensity_breaks_by = 20,
+            mz_breaks_n = 6,
             auto_facet = TRUE
         ),
         peak_density = list(
