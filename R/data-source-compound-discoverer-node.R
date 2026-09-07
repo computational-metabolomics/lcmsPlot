@@ -31,8 +31,45 @@
     # Left/Right RT bounds are not exported (CD 3.5 "Unknown Compounds").
     fwhm = c("FWHM in min", "FWHM [min]", "FWHM"),
     file_name = c("File Name", "FileName", "Physical File Name",
-                  "Spectrum File Name", "Study File")
+                  "Spectrum File Name", "Study File"),
+    # Per-compound check state, as set by hand in the Compound Discoverer
+    # Compounds table. Present only when the export carries the column.
+    checked = c("Checked")
 )
+
+# Coerce an exported "Checked" column to logical. Compound Discoverer writes it
+# as the text "True"/"False", which is what `as.logical()` expects; the other
+# spellings are accepted defensively so that a differently-encoded export does
+# not silently turn every compound into NA.
+.cd_node_parse_checked <- function(x) {
+    if (is.logical(x)) {
+        return(x)
+    }
+    if (is.numeric(x)) {
+        return(x != 0)
+    }
+
+    v <- trimws(as.character(x))
+    out <- rep(NA, length(v))
+    out[v %in% c("True", "TRUE", "true", "T", "Yes", "yes", "Y", "1")] <- TRUE
+    out[v %in% c("False", "FALSE", "false", "F", "No", "no", "N", "0", "")] <-
+        FALSE
+    out
+}
+
+# Attach the compound check state to the built compound rows, keyed by compound
+# ID. A no-op when the export carries no "Checked" column, so that a query
+# referencing `checked` fails loudly rather than matching nothing.
+.cd_node_add_checked <- function(rows, cmp, cmp_id_c) {
+    checked_c <- first_matching_column(cmp, .cd_node_cols$checked)
+    if (is.na(checked_c)) {
+        return(rows)
+    }
+
+    checked <- .cd_node_parse_checked(cmp[[checked_c]])
+    rows$checked <- checked[match(rows$compound_id, cmp[[cmp_id_c]])]
+    rows
+}
 
 # Adduct strings (in priority order) used to select a representative
 # "molecular" ion for a compound, matching the logic in CompoundsMZ.R.
@@ -316,7 +353,7 @@
         stop("No compound/feature associations were found in the export.")
     }
 
-    do.call(rbind, rows)
+    .cd_node_add_checked(do.call(rbind, rows), cmp, cmp_id_c)
 }
 
 #' Compound-centric compound builder (CD "Unknown Compounds" topology)
@@ -452,7 +489,7 @@
         stop("No compound/instance associations were found in the export.")
     }
 
-    do.call(rbind, rows)
+    .cd_node_add_checked(do.call(rbind, rows), cmp, cmp_id_c)
 }
 
 #' Map study files to sample paths

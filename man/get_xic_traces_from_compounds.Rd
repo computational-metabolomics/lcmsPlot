@@ -11,7 +11,8 @@ get_xic_traces_from_compounds(conn, compounds_query_str)
 
 \item{compounds_query_str}{A \code{character} value giving a filtering expression
 evaluated on the resulting compound table (e.g. using compound name,
-formula, retention time, or m/z).}
+formula, retention time, m/z, or \code{checked}). If \code{NULL}, no filter is
+applied.}
 }
 \value{
 A \code{tibble} containing XIC trace metadata and binary trace data

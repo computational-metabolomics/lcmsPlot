@@ -1,3 +1,43 @@
+# lcmsPlot 1.1.10
+
+- `lp_compound_discoverer(compounds_query = ...)` can now filter on the
+  **`checked`** column of the Compound Discoverer Compounds table, so a result
+  set curated by hand in Compound Discoverer can be plotted directly with
+  `compounds_query = "checked"`. This works for both Compound Discoverer
+  sources:
+
+  - For `.cdResult` files it is read from
+    `ConsolidatedUnknownCompoundItems.Checked`. Compound Discoverer only
+    materialises that column once compounds have been checked and the result
+    saved in the application, so its presence is probed per file: referencing
+    `checked` on a file that has none raises an explanatory error instead of
+    failing with a raw SQL error.
+
+  - For the scripting-node source it is read from the `Checked` column of the
+    exported Compounds table, and parsed from Compound Discoverer's `True` /
+    `False` text (other spellings are accepted defensively, so a differently
+    encoded export does not silently read as all-NA).
+
+- **The Compounds Chromatograms scripting node follows Compound Discoverer's
+  checked-compounds convention**: if any compound is
+  checked in the Compounds table, only the checked ones are plotted; if none is
+  checked, all of them are. Checking compounds in Compound Discoverer is
+  therefore enough to pick exactly what gets plotted, and the `Compounds Query`
+  parameter is ignored while any box is ticked. A query that references `checked`
+  itself (for example `checked & compound_rank <= 5`) is used as written and is
+  never overridden, so the two can still be combined. The node logs which of
+  these applied on every run.
+
+- `compounds_query = NULL` (the default) no longer errors on the `.cdResult`
+  path, and now means "no filter", matching the scripting-node behaviour.
+
+# lcmsPlot 1.1.9
+
+- **`lp_spectra()` gains `mz_breaks_n`**, the approximate number of m/z axis
+  breaks, passed through to `scales::pretty_breaks(n = ...)`. The break count was
+  previously hard-coded at 20, which crowded the axis on narrow m/z windows. It
+  defaults to `6`.
+
 # lcmsPlot 1.1.8
 
 - Closed six gaps between lcmsPlot and the plotting methods of *xcms*, so the

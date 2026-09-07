@@ -15,7 +15,7 @@
 
   "ScriptProcessorArguments": {
 
-    "ExecutableCommandLineArguments": "\"C:\\Program Files\\Thermo\\Compound Discoverer 3.5\\Tools\\Scripts\\CompoundsChromatograms\\CompoundsChromatograms.R\" %NODEARGS% %PARAMETERS%",
+    "ExecutableCommandLineArguments": "\"C:\\Program Files\\Thermo\\Compound Discoverer 3.5\\Tools\\Scripts\\CompoundsChromatograms\\CompoundsChromatograms.R\" %NODEARGS%",
     "ExecutablePath": "C:\\Program Files\\R\\R-4.3.0\\bin\\Rscript.exe",
     "ExpectResponse": true,
     "UseRFriendlyNames": true,
@@ -28,7 +28,7 @@
       "DataType": "String",
       "Name": "Compounds Query",
       "Default": "compound_rank <= 20",
-      "Description": "Filter selecting which compounds to plot (evaluated on the compound table; compound_rank 1 = most abundant by area). Empty or NULL plots all compounds."
+      "Description": "Filter selecting which compounds to plot (evaluated on the compound table; compound_rank 1 = most abundant by area). Empty or NULL plots all compounds. If any compounds are checked in the Compounds table, only those are plotted and this query is ignored - unless the query itself references 'checked' (for example 'checked & compound_rank <= 5'), which is then used as written."
     },
     {
       "Category": "General",

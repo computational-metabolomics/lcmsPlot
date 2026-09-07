@@ -5,7 +5,8 @@
     dir = tempfile("cd_node"),
     study_file_ids = c(1, 2),
     file_names = c("ko15.mzML", "wt15.mzML"),
-    include_study_files = TRUE
+    include_study_files = TRUE,
+    checked = NULL
 ) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -23,6 +24,12 @@
         "Formula" = c("C5 H11 N O2", "C4 H9 N3 O2"),
         check.names = FALSE
     )
+
+    # Compound Discoverer only exports "Checked" once compounds have been
+    # checked in the Compounds table, and writes it as the text True/False.
+    if (!is.null(checked)) {
+        compounds$Checked <- checked
+    }
 
     # Compounds per File: each compound detected in each study file.
     cpf <- data.frame(
@@ -559,4 +566,57 @@ test_that(".cd_node_write_plot_column returns NULL without ExpectedResponsePath"
     out <- lcmsPlot:::.cd_node_write_plot_column(
         p, data.frame(compound_id = 1, value = "a.png"))
     expect_null(out)
+})
+
+test_that(".cd_node_parse_checked() handles the encodings CD may export", {
+    expect_equal(
+        .cd_node_parse_checked(c("True", "False")), c(TRUE, FALSE))
+    expect_equal(
+        .cd_node_parse_checked(c("TRUE", "false", "")), c(TRUE, FALSE, FALSE))
+    expect_equal(.cd_node_parse_checked(c("1", "0")), c(TRUE, FALSE))
+    expect_equal(.cd_node_parse_checked(c("Yes", "No")), c(TRUE, FALSE))
+    expect_equal(.cd_node_parse_checked(c(1L, 0L)), c(TRUE, FALSE))
+    expect_equal(.cd_node_parse_checked(c(TRUE, FALSE)), c(TRUE, FALSE))
+    # Anything unrecognised stays NA rather than being read as unchecked.
+    expect_true(is.na(.cd_node_parse_checked("???")))
+})
+
+test_that("the node source exposes the exported Checked column", {
+    json_path <- .write_cd_node_export(checked = c("True", "False"))
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    expect_true("checked" %in% colnames(res@compounds))
+    expect_type(res@compounds$checked, "logical")
+
+    # Betaine is compound 1 (checked), Creatine compound 2 (unchecked); each is
+    # detected in both study files.
+    expect_true(all(res@compounds$checked[res@compounds$name == "Betaine"]))
+    expect_false(any(res@compounds$checked[res@compounds$name == "Creatine"]))
+
+    # The check state is compound metadata, not peak data.
+    expect_false("checked" %in% colnames(res@peaks))
+})
+
+test_that("the node source omits checked when the export has no such column", {
+    json_path <- .write_cd_node_export()
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    expect_false("checked" %in% colnames(res@compounds))
+})
+
+test_that("compounds can be filtered on checked in the node source", {
+    json_path <- .write_cd_node_export(checked = c("True", "False"))
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    kept <- dplyr::filter(res@compounds, .data$checked)
+    expect_equal(unique(kept$name), "Betaine")
+
+    dropped <- dplyr::filter(res@compounds, !.data$checked)
+    expect_equal(unique(dropped$name), "Creatine")
 })

@@ -1,4 +1,4 @@
-# Compounds Chromatograms — lcmsPlot Compound Discoverer Scripting Node
+# Compounds Chromatograms - lcmsPlot Compound Discoverer Scripting Node
 
 Renders one chromatogram plot per compound from a Compound Discoverer (CD) result
 and adds a clickable **Plot** column to the Compounds table. Powered by
@@ -7,9 +7,9 @@ and adds a clickable **Plot** column to the Compounds table. Powered by
 Files in this folder (locatable via
 `system.file("compound-discoverer-nodes/CompoundsChromatograms", package = "lcmsPlot")`):
 
-- `CompoundsChromatograms.R` — the node script.
-- `node.json` — the CD node definition.
-- `README.md` — this file.
+- `CompoundsChromatograms.R` - the node script.
+- `node.json` - the CD node definition.
+- `README.md` - this file.
 
 ## 1. Install R and the required packages
 
@@ -34,7 +34,7 @@ that `node.json`'s `ExecutablePath` points to).
    rawrr::installRawrrExe()
    ```
 
-4. *(Development only — skip for normal use.)* To load an `lcmsPlot` **source tree**
+4. *(Development only - skip for normal use.)* To load an `lcmsPlot` **source tree**
    instead of the installed package, also install `pkgload`:
 
    ```r
@@ -42,6 +42,15 @@ that `node.json`'s `ExecutablePath` points to).
    ```
 
    Then set the **lcmsPlot Source Directory** node parameter to the source path.
+
+   **That parameter replaces the `lcmsPlot` package itself, not its
+   dependencies.** Everything in the package's `Imports` still has to be
+   installed in this R, so run step 2's `BiocManager::install("lcmsPlot")` at
+   least once even when you intend to load from source. In particular the script
+   parses `node_args.json` with **`jsonlite`** *before* it can read any
+   parameter, so without `jsonlite` the node cannot see the source directory you
+   set - it falls back to every default and then reports that `lcmsPlot` is not
+   installed. If you hit that, check the `parameters read:` line in the log.
 
 ## 2. Register the node in Compound Discoverer
 
@@ -56,17 +65,15 @@ that `node.json`'s `ExecutablePath` points to).
 
 2. Open `node.json` in a text editor and check the two paths in
    `ScriptProcessorArguments`:
-   - `ExecutablePath` — full path to your `Rscript.exe` (the **R ≥ 4.4.0** install),
+   - `ExecutablePath` - full path to your `Rscript.exe` (the **R ≥ 4.4.0** install),
      e.g. `C:\Program Files\R\R-4.4.1\bin\Rscript.exe`.
-   - `ExecutableCommandLineArguments` — the path to `CompoundsChromatograms.R` (already
+   - `ExecutableCommandLineArguments` - the path to `CompoundsChromatograms.R` (already
      set to the `Tools\Scripts\CompoundsChromatograms` location above); keep
-     `%NODEARGS% %PARAMETERS%`.
+     `%NODEARGS%`. That is the only placeholder Compound Discoverer substitutes -
+     it becomes the path to `node_args.json`, from which the script reads the node
+     parameters. Anything written after it is passed to the script verbatim.
 
-   Note: `node.json` references icon files `IMG_32x32.png` and `IMG_16x16.png` via
-   `ImageLarge`/`ImageSmall` — either place those icons in this folder or remove the two
-   fields.
-
-3. In Compound Discoverer, open **Help → License Manager** and click **Scan for Missing Features**. Confirm the dialog that new features will be available after a restart.
+3. In Compound Discoverer, open **Help -> License Manager** and click **Scan for Missing Features**. Confirm the dialog that new features will be available after a restart.
 
 4. **Restart** Compound Discoverer. The node appears under **Workflow Nodes → Scripting nodes** as *Compounds Chromatograms*.
 
@@ -92,7 +99,7 @@ unconfigured.
 
 | Parameter | Default | Purpose |
 |---|---|---|
-| Compounds Query | `compound_rank <= 20` | which compounds to plot (a filter over the compound table; `compound_rank` 1 = most abundant by area). Empty or `NULL` plots all. |
+| Compounds Query | `compound_rank <= 20` | which compounds to plot (a filter over the compound table; `compound_rank` 1 = most abundant by area). Empty or `NULL` plots all. See *Checked compounds* below. |
 | Output Directory | next to the `.cdResult` | directory for the PNGs |
 | Plot Width | `8` | plot width (inches) |
 | Plot Height | `5` | plot height (inches) |
@@ -102,6 +109,26 @@ unconfigured.
 | Plot Column Position After | `Name` | place the new column after this one |
 | Plot Cell Renderer GUID | `EB29D794-4F2E-4785-8B80-A24D8C0FB3E4` | CD filename cell renderer |
 | lcmsPlot Source Directory | *(empty → installed package)* | set only to load an lcmsPlot source tree (development) |
+
+### Checked compounds
+
+The node follows Compound Discoverer's usual checked-compounds convention: **if
+any compound is checked in the Compounds table, only the checked ones are
+plotted; if none is checked, all of them are** (subject to `Compounds Query`).
+Checking compounds in Compound Discoverer is therefore enough to pick exactly
+what gets plotted, and the `Compounds Query` is ignored while any box is ticked.
+
+To combine the two, reference `checked` in the query yourself - a query that
+mentions it is used exactly as written, and is never overridden:
+
+```
+checked & compound_rank <= 5
+```
+
+The check state comes from the `Checked` column of the exported Compounds table.
+Result files where no compound has ever been checked carry no such column; the
+node then just reports that in its log and plots per the query. Referencing
+`checked` in the query in that case is an error rather than an empty result.
 
 ## Output
 
