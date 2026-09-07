@@ -96,6 +96,31 @@ options(warn = 1)
 # parameters fall back to the defaults set in main().
 # -----------------------------------------------------------------------------
 
+# Packages this script needs *before* lcmsPlot is loaded. node_args.json has to
+# be parsed to discover the parameters, so a missing jsonlite would otherwise
+# surface much later as an unrelated complaint about lcmsPlot not being
+# installed - the parameters having silently fallen back to their defaults.
+.BOOTSTRAP_PACKAGES <- "jsonlite"
+
+.check_bootstrap_packages <- function() {
+    missing <- Filter(
+        function(p) !requireNamespace(p, quietly = TRUE),
+        .BOOTSTRAP_PACKAGES)
+
+    if (length(missing) > 0) {
+        stop(
+            "The following package(s) must be installed in this R before the ",
+            "node can read its parameters: ", paste(missing, collapse = ", "),
+            ". Install them with install.packages(c(",
+            paste0("\"", missing, "\"", collapse = ", "), ")). Note that this ",
+            "is required even when the 'lcmsPlot Source Directory' parameter ",
+            "is set: that parameter replaces the lcmsPlot package itself, not ",
+            "its dependencies.",
+            call. = FALSE
+        )
+    }
+}
+
 # Load lcmsPlot: from the installed package when `dir` is empty (deployment), or
 # from a source tree via pkgload when `dir` is set (development). Load-time
 # messages/warnings go to the log file only.
@@ -136,7 +161,9 @@ load_lcmsplot <- function(dir) {
             stop(
                 "The 'lcmsPlot' package is not installed in this R. Install it ",
                 "(see the node README), or set the 'lcmsPlot Source Directory' ",
-                "parameter to a source tree.",
+                "parameter to a source tree. If that parameter *is* set in the ",
+                "workflow, it did not reach this script: check the 'parameters ",
+                "read' line logged above.",
                 call. = FALSE
             )
         }
@@ -147,11 +174,29 @@ load_lcmsplot <- function(dir) {
 }
 
 # Node parameters from node_args.json (empty list if absent / unreadable).
+#
+# A failure here is reported rather than swallowed: it leaves every parameter on
+# its default, which is easy to mistake for a misconfigured node. The names that
+# were actually read are logged so that a delivery mismatch is visible in one
+# run instead of having to be inferred from the resulting behaviour.
 .read_node_parameters <- function(node_args) {
-    tryCatch({
+    params <- tryCatch({
         np <- jsonlite::fromJSON(node_args, simplifyVector = TRUE)$NodeParameters
         if (is.null(np)) list() else as.list(np)
-    }, error = function(e) list())
+    }, error = function(e) {
+        log_err("Could not read NodeParameters from ", node_args, ": ",
+                conditionMessage(e))
+        log_err("  -> every node parameter falls back to its default")
+        list()
+    })
+
+    if (length(params) == 0) {
+        log_msg("  no node parameters found; using the defaults throughout")
+    } else {
+        log_msg("  parameters read: ", paste(names(params), collapse = ", "))
+    }
+
+    params
 }
 
 # One node parameter as character, or `default` when absent/blank.
@@ -171,9 +216,52 @@ load_lcmsplot <- function(dir) {
     if (is.na(v)) default else v
 }
 
+# Compound Discoverer's checked-compounds convention:
+# if any compound is checked in the Compounds table, act on only those;
+# if none is checked, act on all of them.
+#
+# Here that means the checked compounds replace the `Compounds Query`, so
+# checking compounds in Compound Discoverer is enough to pick exactly what gets
+# plotted. A query that already mentions `checked` is left alone: the user is
+# driving the selection explicitly and may well want to combine it with other
+# criteria (for instance "checked & compound_rank <= 5").
+.apply_checked_convention <- function(ds, query) {
+    if (!"checked" %in% names(ds@compounds)) {
+        log_msg("  checked: Compounds table carries no 'Checked' column")
+        return(query)
+    }
+
+    if (!is.null(query) &&
+        "checked" %in% all.vars(rlang::parse_expr(query))) {
+        log_msg("  checked: query references 'checked'; using it as given")
+        return(query)
+    }
+
+    n_checked <- length(unique(
+        ds@compounds$compound_id[which(ds@compounds$checked)]))
+
+    if (n_checked == 0) {
+        log_msg("  checked: no compounds are checked; plotting per the query")
+        return(query)
+    }
+
+    log_msg("  checked: ", n_checked, " compound(s) checked in Compound ",
+            "Discoverer; plotting only those",
+            if (!is.null(query)) {
+                paste0(" (overriding the query '", query, "')")
+            } else {
+                ""
+            })
+    "checked"
+}
+
 # =============================================================================
 
 main <- function() {
+    log_msg("STEP: checking the packages needed to read the node parameters")
+    .check_bootstrap_packages()
+    log_msg("  -> ", paste(.BOOTSTRAP_PACKAGES, collapse = ", "), " available")
+
     log_msg("STEP: resolving node_args.json path")
     node_args <- resolve_node_args()
     log_msg("Using node_args.json: ", node_args)
@@ -227,6 +315,8 @@ main <- function() {
     } else {
         NULL
     }
+    query <- .apply_checked_convention(ds, query)
+
     p <- lcmsPlot(ds) +
         lp_compound_discoverer(compounds_query = query, rt_extend = 5) +
         lp_chromatogram(highlight_peaks = TRUE)

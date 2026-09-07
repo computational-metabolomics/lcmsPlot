@@ -977,6 +977,27 @@ lcmsPlot("example_cd.cdResult") +
     lp_legend(position = "bottom")
 ```
 
+`compounds_query` can also select the compounds you curated by hand in Compound
+Discoverer, through the `checked` column of the Compounds table:
+
+```{r plot-compound-discoverer-checked, eval=FALSE}
+lcmsPlot("example_cd.cdResult") +
+    lp_compound_discoverer(compounds_query = "checked") +
+    lp_chromatogram(highlight_peaks = TRUE) +
+    lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
+```
+
+Note that Compound Discoverer only stores compound check states once compounds
+have actually been checked and the result saved in the application. Referencing
+`checked` on a result file where that has never happened raises an error
+explaining as much, rather than silently returning nothing.
+
+`checked` is available on the scripting-node source too, where it comes from the
+`Checked` column of the exported Compounds table. The **Compounds Chromatograms**
+node additionally follows Compound Discoverer's usual convention: if any compound
+is checked, only the checked ones are plotted; if none is checked, all of them
+are. See that node's `README.md` for the details.
+
 ### Compound Discoverer scripting node
 
 Beyond loading a `.cdResult` file directly, `lcmsPlot` ships a ready-made

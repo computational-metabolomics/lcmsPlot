@@ -22,6 +22,11 @@ the following columns:
 \item{mz}{Mass-to-charge ratio (m/z) of the detected ion.}
 \item{maxo}{Maximum observed peak intensity.}
 \item{into}{Integrated peak area reported by Compound Discoverer.}
+\item{checked}{Whether the compound is checked in the Compounds table.
+Available only once compounds have actually been checked in the Compound
+Discoverer application: \code{.cdResult} files store no such column until
+then, and the scripting node exports none. Referencing \code{checked} in that
+case raises an error rather than matching nothing.}
 }}
 
 \item{rt_extend}{A \code{numeric} value indicating how much (in seconds)

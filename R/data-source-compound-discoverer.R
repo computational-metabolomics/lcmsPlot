@@ -10,8 +10,24 @@ compounds_results_columns_map <- c(
     rtmax = "RightRT",
     mz = "MassOverCharge",
     maxo = "Intensity",
-    into = "Area"
+    into = "Area",
+    checked = "Checked"
 )
+
+#' Check whether a Compound Discoverer database exposes compound check states
+#'
+#' Compound Discoverer declares the `Checked` column of the Compounds table
+#' (`ConsolidatedUnknownCompoundItems`) in its `DataTypesColumns` metadata, but
+#' only materialises the physical column once compounds have actually been
+#' checked and the result saved in the Compound Discoverer application. The
+#' column therefore has to be probed rather than assumed.
+#'
+#' @param conn A `DBIConnection` to a Compound Discoverer results database.
+#' @return A `logical` value indicating whether the `Checked` column is present.
+#' @keywords internal
+has_compound_checked_column <- function(conn) {
+    "Checked" %in% DBI::dbListFields(conn, "ConsolidatedUnknownCompoundItems")
+}
 
 #' Open a connection to a Compound Discoverer results database
 #'
@@ -53,12 +69,32 @@ get_workflow_input_files <- function(conn) {
 #' @param conn A `DBIConnection` to a Compound Discoverer results database.
 #' @param compounds_query_str A `character` value giving a filtering expression
 #' evaluated on the resulting compound table (e.g. using compound name,
-#' formula, retention time, or m/z).
+#' formula, retention time, m/z, or `checked`). If `NULL`, no filter is
+#' applied.
 #' @return A `tibble` containing XIC trace metadata and binary trace data
 #' for the selected compounds.
 #' @keywords internal
 get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
-    compounds_query <- rlang::parse_expr(compounds_query_str)
+    compounds_query <- if (is.null(compounds_query_str)) {
+        NULL
+    } else {
+        rlang::parse_expr(compounds_query_str)
+    }
+
+    # The 'Checked' column only exists once compounds have been checked and the
+    # result saved in Compound Discoverer, so it has to be probed.
+    has_checked <- has_compound_checked_column(conn)
+
+    if (!has_checked &&
+        !is.null(compounds_query) &&
+        "checked" %in% all.vars(compounds_query)) {
+        stop("get_xic_traces_from_compounds: 'checked' is not available in this .cdResult file. Compound Discoverer only stores compound check states once compounds have been checked and the result saved in the application.")
+    }
+
+    columns_map <- compounds_results_columns_map
+    if (!has_checked) {
+        columns_map <- columns_map[names(columns_map) != "checked"]
+    }
 
     # 1. Define the table references
     ion_tab <- tbl(conn, "UnknownCompoundIonInstanceItems") |>
@@ -78,7 +114,8 @@ get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
             CompoundID = .data$ID,
             .data$Name,
             .data$ElementalCompositionFormula,
-            .data$MassOverCharge)
+            .data$MassOverCharge,
+            any_of("Checked"))
 
     peak_tab  <- tbl(conn, "ChromatogramPeakItems") |>
         select(
@@ -150,18 +187,30 @@ get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
             .data$RightRT,
             .data$MassOverCharge,
             .data$Intensity,
-            .data$Area
+            .data$Area,
+            any_of("Checked")
         ) |>
-        rename(!!!compounds_results_columns_map) |>
+        rename(!!!columns_map) |>
         mutate(
             rt = .data$rt * 60,
             rtmin = .data$rtmin * 60,
             rtmax = .data$rtmax * 60
-        ) |>
-        filter(!!compounds_query)
+        )
+
+    # 'checked' is left as SQLite's 0/1 integer here so that the filter below is
+    # still pushed down to the database; it is coerced to logical after collect.
+    if (!is.null(compounds_query)) {
+        query_result <- query_result |> filter(!!compounds_query)
+    }
 
     # 4. Collect
-    query_result |> collect()
+    result <- query_result |> collect()
+
+    if (has_checked) {
+        result <- result |> mutate(checked = as.logical(.data$checked))
+    }
+
+    result
 }
 
 #' Parse a binary XIC trace from Compound Discoverer
