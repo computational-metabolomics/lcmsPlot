@@ -34,9 +34,11 @@ a \code{matrix} with columns \code{mzmin}, \code{mzmax},
 a \code{data.frame} with columns \code{sample_id}, \code{mz} and \code{rt} (optional);
 a \code{data.frame} with columns \code{sample_id}, \code{mzmin}, \code{mzmax},
 \code{rtmin} (optional), \code{rtmax} (optional);
-a \code{character} vector representing the grouped peaks (feature) names
-as returned by \code{xcms::groupnames} - requires the data to be
-an \code{XCMSnExp} or \code{MsExperiment} object with grouped peaks.}
+a \code{character} vector of feature identifiers, i.e. the row names of
+\code{xcms::featureDefinitions()} - whatever they have been set to, or the
+\code{"FT0001"}-style defaults assigned during correspondence. This requires
+the data to be an \code{XCMSnExp} or \code{MsExperiment} object with grouped peaks;
+identifiers matching no feature are skipped with a warning.}
 
 \item{sample_ids}{A \code{character} vector specifying the sample IDs
 to include in the plot. If \code{NULL}, the function uses the sample IDs

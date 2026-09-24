@@ -630,12 +630,12 @@ get_grouped_peaks.default <- function(obj) {
 
 .get_grouped_peaks_xcms <- function(obj) {
     if (is_xcms_processed_data(obj) && xcms::hasFeatures(obj)) {
-        as_tibble(xcms::featureDefinitions(obj)) |>
+        feat_defs <- xcms::featureDefinitions(obj)
+
+        as_tibble(feat_defs) |>
             rename(all_of(c(mz = "mzmed", rt = "rtmed"))) |>
-            mutate(name = xcms_utils$group_names(obj)) |>
-            xcms_utils$format_feature_identifiers(
-                num_digits_rt = 0,
-                num_digits_mz = 4)
+            mutate(name = xcms_utils$feature_names(feat_defs)) |>
+            xcms_utils$collapse_peak_indices()
     } else {
         NULL
     }

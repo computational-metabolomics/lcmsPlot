@@ -6,51 +6,34 @@ xcms_utils <- list(
             any()
     },
 
-    group_names = function(object, mzdec = 0, rtdec = 0) {
-        feat_defs <- xcms::featureDefinitions(object)
-        mzfmt <- paste("%.", mzdec, "f", sep = "")
-        rtfmt <- paste("%.", rtdec, "f", sep = "")
-        gnames <- paste("M", sprintf(mzfmt, feat_defs[,"mzmed"]), "T",
-                        sprintf(rtfmt, feat_defs[,"rtmed"]), sep = "")
+    # Feature identifiers come from the row names of the feature definitions,
+    # i.e. whatever the user has set them to (or the "FT0001"-style defaults
+    # xcms assigns during correspondence). Only when an object carries no row
+    # names at all do we synthesise ids in the same "FT" style, so that a single
+    # nomenclature is used throughout.
+    feature_names = function(feature_definitions) {
+        names <- rownames(feature_definitions)
+        n <- nrow(feature_definitions)
 
-        if (any(dup <- duplicated(gnames))) {
-            for (dupname in unique(gnames[dup])) {
-                dupidx <- which(gnames == dupname)
-                gnames[dupidx] <- paste(
-                    gnames[dupidx],
-                    seq(along = dupidx),
-                    sep = "_")
-            }
+        if (is.null(names) || length(names) != n || anyNA(names) ||
+            !all(nzchar(names))) {
+            width <- max(nchar(as.character(n)), 1L)
+            names <- sprintf(paste0("FT%0", width, "d"), seq_len(n))
         }
 
-        return(gnames)
+        return(as.character(names))
     },
 
-    format_feature_identifiers = function(
-        features,
-        num_digits_rt = 0,
-        num_digits_mz = 0
-    ) {
+    collapse_peak_indices = function(features) {
         features |>
-            # Extract decorations from 'name' (text after the first '_')
-            mutate(idsDeco = stringr::str_extract(name, "_.*$")) |>
-            # Replace NA with empty string for idsDeco
-            mutate(idsDeco = ifelse(is.na(idsDeco), "", idsDeco)) |>
-            # Create the custom name
-            mutate(namecustom = make.unique(paste0(
-                "M", round(mz, num_digits_mz),
-                "T", round(rt, num_digits_rt),
-                idsDeco))
-            ) |>
             # Collapse peakidx column to a comma-separated string
             mutate(
                 peakidx = vapply(
-                    peakidx,
+                    .data$peakidx,
                     function(x) paste(x, collapse = ","),
                     FUN.VALUE = character(1))
             ) |>
             # Reorder columns
-            relocate(name, namecustom) |>
-            select(-idsDeco)
+            relocate("name")
     }
 )
