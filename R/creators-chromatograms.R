@@ -7,8 +7,8 @@
 #' @param data_obj The data object (e.g. `XCMSnExp`, `DBIConnection`, `character`).
 #' @param metadata A `tibble` of sample metadata.
 #' @param options A `list` of plot options.
-#' @param features `NULL`, a `character` vector of feature IDs, or a
-#' `matrix`/`tibble` of feature ranges.
+#' @param features `NULL`, a `character` vector of feature IDs (the row names
+#' of `xcms::featureDefinitions()`), or a `matrix`/`tibble` of feature ranges.
 #' @return A named `list` with elements `chromatograms`, `mass_traces`,
 #' `feature_metadata`, and `detected_peaks`.
 #' @keywords internal
@@ -768,8 +768,9 @@ setMethod(
         raw_data <- io_get_raw_data(metadata$sample_path)
         adjusted_rts <- get_adjusted_rts(data_obj)
         all_detected_peaks <- get_detected_peaks(data_obj)
-        grouped_peaks <- get_grouped_peaks(data_obj) |>
-            filter(.data$name %in% options$chromatograms$features)
+        grouped_peaks <- match_features_by_name(
+            get_grouped_peaks(data_obj),
+            options$chromatograms$features)
         detected_peaks <- tibble()
 
         chromatograms <- tibble()

@@ -46,8 +46,8 @@ create_chromatograms(data_obj, metadata, options, features)
 
 \item{options}{A \code{list} of plot options.}
 
-\item{features}{\code{NULL}, a \code{character} vector of feature IDs, or a
-\code{matrix}/\code{tibble} of feature ranges.}
+\item{features}{\code{NULL}, a \code{character} vector of feature IDs (the row names
+of \code{xcms::featureDefinitions()}), or a \code{matrix}/\code{tibble} of feature ranges.}
 }
 \value{
 A named \code{list} with elements \code{chromatograms}, \code{mass_traces},

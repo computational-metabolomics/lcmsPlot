@@ -1,3 +1,33 @@
+# lcmsPlot 1.1.11
+
+- **Feature identifiers now come from the feature definition row
+  names.** Where lcmsPlot previously derived its own `xcms::groupnames()`-style
+  `M<mz>T<rt>` labels from `mzmed`/`rtmed`, it now uses
+  `rownames(xcms::featureDefinitions(obj))` — whatever you have set them to, or
+  the `"FT0001"`-style defaults xcms assigns during correspondence. This affects
+  both the identifiers you pass to `lp_chromatogram(features = ...)` and the
+  `feature_id` column used for labelling and faceting, so a call such as
+
+  ```r
+  lp_chromatogram(features = c('M205T2792', 'M283T3890'))
+  ```
+
+  becomes
+
+  ```r
+  lp_chromatogram(features = c('FT002', 'FT027'))
+  ```
+
+  Annotating features by renaming the rows of `featureDefinitions()` is now
+  enough to have those names appear on the plot; no separate labelling step is
+  needed. Objects whose feature definitions carry no row names at all still get
+  positional `"FT..."` identifiers, so a single nomenclature applies throughout.
+
+- **Feature identifiers that match no feature are now reported.** Previously an
+  unrecognised identifier was dropped silently and produced an empty plot;
+  `lp_chromatogram()` now warns, naming the identifiers it skipped, and plots
+  the ones that did match.
+
 # lcmsPlot 1.1.10
 
 - `lp_compound_discoverer(compounds_query = ...)` can now filter on the

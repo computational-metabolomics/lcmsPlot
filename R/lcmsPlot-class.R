@@ -442,9 +442,11 @@ make_interface_function <- function(name, args_list, fn) {
 #' a `data.frame` with columns `sample_id`, `mz` and `rt` (optional);
 #' a `data.frame` with columns `sample_id`, `mzmin`, `mzmax`,
 #' `rtmin` (optional), `rtmax` (optional);
-#' a `character` vector representing the grouped peaks (feature) names
-#' as returned by `xcms::groupnames` - requires the data to be
-#' an `XCMSnExp` or `MsExperiment` object with grouped peaks.
+#' a `character` vector of feature identifiers, i.e. the row names of
+#' `xcms::featureDefinitions()` - whatever they have been set to, or the
+#' `"FT0001"`-style defaults assigned during correspondence. This requires
+#' the data to be an `XCMSnExp` or `MsExperiment` object with grouped peaks;
+#' identifiers matching no feature are skipped with a warning.
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object.

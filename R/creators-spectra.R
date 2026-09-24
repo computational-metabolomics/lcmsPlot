@@ -25,7 +25,12 @@ setMethod(
                 if (is.null(x) || nrow(x) == 0)
                     return(NULL)
 
-                x <- filter(x, .data$name %in% options$chromatograms$features)
+                # When chromatograms are shown too, their creator already
+                # warns about identifiers that match no feature.
+                x <- match_features_by_name(
+                    x,
+                    options$chromatograms$features,
+                    warn = is_standalone)
 
                 if (nrow(x) == 0)
                     NULL

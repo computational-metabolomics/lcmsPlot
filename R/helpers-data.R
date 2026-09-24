@@ -221,6 +221,50 @@ get_mz_range <- function(mz, ppm = 5) {
     return(c(mz - mzdev, mz + mzdev))
 }
 
+#' Select grouped peaks by feature name
+#'
+#' Subsets the grouped peaks (features) to those whose `name` matches one of
+#' the supplied identifiers. Feature identifiers are the row names of the
+#' object's feature definitions, i.e. whatever the user has set them to, or the
+#' `"FT0001"`-style defaults xcms assigns during correspondence.
+#'
+#' @param grouped_peaks A `tibble` of grouped peaks as returned by
+#' [get_grouped_peaks()], or `NULL`.
+#' @param feature_names A `character` vector of feature identifiers to keep.
+#' @param warn A `logical` value indicating whether to warn about identifiers
+#' that match no feature.
+#' @return A `tibble` with the matching grouped peaks; possibly with zero rows.
+#' @keywords internal
+match_features_by_name <- function(
+    grouped_peaks,
+    feature_names,
+    warn = TRUE
+) {
+    if (is.null(grouped_peaks) || nrow(grouped_peaks) == 0) {
+        return(grouped_peaks)
+    }
+
+    if (warn) {
+        unmatched <- setdiff(unique(feature_names), grouped_peaks$name)
+
+        if (length(unmatched) > 0) {
+            warning(sprintf(
+                paste0(
+                    "%d of %d features were not found in the feature ",
+                    "definitions and will be skipped: %s. Feature ",
+                    "identifiers are the row names of the feature ",
+                    "definitions (e.g. \"%s\")."),
+                length(unmatched),
+                length(unique(feature_names)),
+                paste0("'", unmatched, "'", collapse = ", "),
+                grouped_peaks$name[1]
+            ), call. = FALSE)
+        }
+    }
+
+    filter(grouped_peaks, .data$name %in% feature_names)
+}
+
 #' Get a feature's m/z and RT ranges given different feature specifications
 #'
 #' @param feature The input feature which can be a vector or a data frame row.

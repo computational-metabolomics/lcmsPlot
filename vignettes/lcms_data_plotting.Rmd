@@ -598,8 +598,10 @@ pdp <- xcms::PeakDensityParam(
 faahko <- xcms::groupChromPeaks(faahko, param = pdp)
 ```
 
-Each resulting group of peaks is assigned a unique feature ID, defined by a
-consensus m/z value and retention time.
+Each resulting group of peaks is assigned a unique feature ID, which is the
+corresponding row name of `xcms::featureDefinitions(faahko)` -- by default
+`"FT001"`, `"FT002"`, and so on, but you are free to set your own before
+plotting, and lcmsPlot will use whatever you have set.
 These feature IDs can then be used to automatically extract and plot
 chromatograms for individual features across all samples, enabling direct visual
 comparison of aligned and grouped peaks:
@@ -607,7 +609,7 @@ comparison of aligned and grouped peaks:
 ```{r plot-features}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = c('M205T2792', 'M207T2719', 'M279T2791', 'M284T2719'),
+        features = c('FT002', 'FT004', 'FT021', 'FT029'),
         ppm = 10,
         rt_tol = 80,
         highlight_peaks = TRUE,
@@ -709,14 +711,14 @@ interference, or measurement instability.
 ```{r plot-chroms-with-mass-traces}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = 'M205T2792',
+        features = 'FT002',
         sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
         ppm = 10,
         rt_tol = 50,
         highlight_peaks = TRUE) +
     lp_mass_trace() +
     lp_arrange(group_by = 'sample_id') +
-    lp_labels(title = "Feature M205T2792", legend = "Sample") +
+    lp_labels(title = "Feature FT002", legend = "Sample") +
     lp_legend(position = "bottom")
 ```
 
@@ -726,7 +728,7 @@ chromatograms + mass traces on a factor, such as `feature_id`:
 ```{r plot-chroms-with-mass-traces-faceted}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = c('M283T3890', 'M205T2792'),
+        features = c('FT027', 'FT002'),
         sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
         ppm = 10,
         rt_tol = 50,
@@ -743,7 +745,7 @@ Or multiple factors (`feature_id` and `sample_id`):
 ```{r plot-chroms-with-mass-traces-faceted-factors, fig.height=12, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = c('M283T3890', 'M205T2792'),
+        features = c('FT027', 'FT002'),
         sample_ids = c('ko15', 'ko16', 'wt15', 'wt16'),
         ppm = 10,
         rt_tol = 50,
@@ -855,13 +857,13 @@ below the chromatogram.
 ```{r plot-spectra-scan-closest-rt, fig.height=4, fig.width=9}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = 'M283T3890',
+        features = 'FT027',
         sample_ids = 'ko15',
         ppm = 5,
         rt_tol = 50,
         highlight_peaks = TRUE) +
     lp_spectra(rt = 3860, mode = "closest", ms_level = 1) +
-    lp_labels(title = "Feature M283T3890", legend = "Sample") +
+    lp_labels(title = "Feature FT027", legend = "Sample") +
     lp_legend(position = "bottom")
 ```
 
@@ -911,7 +913,7 @@ across the peak and displayed sequentially beneath the chromatogram.
 ```{r plot-spectra-across-peak, fig.height=10, fig.width=6}
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
-        features = "M205T2792",
+        features = "FT002",
         sample_ids = 'ko15',
         ppm = 5,
         rt_tol = 50,

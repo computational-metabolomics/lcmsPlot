@@ -4,7 +4,7 @@ test_that("create_chromatograms with character features creates correct chromato
   data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
 
   opts <- lcmsPlot:::default_options()
-  opts$chromatograms$features <- c('M205T2785', 'M207T2713')
+  opts$chromatograms$features <- c('FT001', 'FT003')
   opts$chromatograms$sample_ids <- c('ko15', 'wt15')
   opts$chromatograms$ppm <- 5
   opts$chromatograms$rt_tol <- 10
@@ -26,7 +26,61 @@ test_that("create_chromatograms with character features creates correct chromato
   expect_equal(round(min(data_container@chromatograms$rt)), 2705)
   expect_gt(nrow(data_container@mass_traces), 0)
   expect_equal(unique(data_container@feature_metadata$metadata_index), c(1, 2))
-  expect_equal(unique(data_container@feature_metadata$feature_id), c('M205T2785', 'M207T2713'))
+  expect_equal(unique(data_container@feature_metadata$feature_id), c('FT001', 'FT003'))
+})
+
+test_that("create_chromatograms with character features honours custom feature definition rownames", {
+  # arrange
+  data_obj <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)
+  feat_defs <- xcms::featureDefinitions(data_obj)
+  rownames(feat_defs) <- paste0("MyFeature_", seq_len(nrow(feat_defs)))
+  xcms::featureDefinitions(data_obj) <- feat_defs
+
+  data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$features <- c('MyFeature_1', 'MyFeature_3')
+  opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+  opts$chromatograms$ppm <- 5
+  opts$chromatograms$rt_tol <- 10
+
+  # act
+  result <- create_chromatograms(
+    data_container@data_obj,
+    data_container@metadata,
+    opts,
+    opts$chromatograms$features
+  )
+
+  # assert
+  expect_gt(nrow(result$chromatograms), 0)
+  expect_equal(unique(result$feature_metadata$feature_id), c('MyFeature_1', 'MyFeature_3'))
+})
+
+test_that("create_chromatograms warns about feature IDs that match no feature", {
+  # arrange
+  data_obj <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)
+  data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$features <- c('FT001', 'M205T2785')
+  opts$chromatograms$sample_ids <- c('ko15', 'wt15')
+  opts$chromatograms$ppm <- 5
+  opts$chromatograms$rt_tol <- 10
+
+  # act / assert
+  expect_warning(
+    result <- create_chromatograms(
+      data_container@data_obj,
+      data_container@metadata,
+      opts,
+      opts$chromatograms$features
+    ),
+    "M205T2785"
+  )
+
+  # the matching feature is still plotted
+  expect_equal(unique(result$feature_metadata$feature_id), 'FT001')
 })
 
 test_that("create_chromatograms with matrix features creates correct chromatograms from raw features", {
