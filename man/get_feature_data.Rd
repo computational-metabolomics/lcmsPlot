@@ -4,7 +4,7 @@
 \alias{get_feature_data}
 \title{Get a feature's m/z and RT ranges given different feature specifications}
 \usage{
-get_feature_data(feature, options, full_rt_range)
+get_feature_data(feature, options, full_rt_range, feature_id = NULL)
 }
 \arguments{
 \item{feature}{The input feature which can be a vector or a data frame row.
@@ -17,6 +17,10 @@ The accepted columns combinations are:
 \item{options}{The plot object's options.}
 
 \item{full_rt_range}{The full RT range if an RT range is not given.}
+
+\item{feature_id}{A \code{character} value with the feature's identifier. When
+\code{NULL} or \code{NA}, an \code{xcms::groupnames()}-style \code{"M<mz>T<rt>"} identifier is
+derived from the m/z and RT values.}
 }
 \value{
 A named list defining a feature with names: feature_id, mzr, rtr.

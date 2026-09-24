@@ -315,12 +315,15 @@ lcmsPlot(faahko, sample_id_column = "sample_name") +
 ```
 
 The above plot can be faceted on metadata factors;
-in this case we facet on `feature_id` and `sample_id`:
+in this case we facet on `feature_id` and `sample_id`.
+A manually specified feature takes its `feature_id` from the row name
+(or from a `feature_id` column when `features` is a `data.frame`);
+unnamed rows fall back to an `M<mz>T<rt>` identifier derived from the ranges:
 
 ```{r plot-xic-faceted, fig.height=4, fig.width=8}
 lcmsPlot(faahko, sample_id_column = "sample_name") +
     lp_chromatogram(
-        features = rbind(c(
+        features = rbind(mz335 = c(
             mzmin = 334.9,
             mzmax = 335.1,
             rtmin = 2700,
@@ -348,8 +351,8 @@ patterns vary simultaneously across both factors.
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = rbind(
-            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-            c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+            mz335 = c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            mz279 = c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
         ),
         highlight_peaks = TRUE,
         highlight_peaks_color = '#f00') +
@@ -449,8 +452,8 @@ xl <- create_xcms_raw_list(raw_paths)
 lcmsPlot(xl) +
     lp_chromatogram(
         features = rbind(
-            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-            c(mzmin = 344.0, mzmax = 344.1, rtmin = 2600, rtmax = 2800)
+            mz335 = c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            mz344 = c(mzmin = 344.0, mzmax = 344.1, rtmin = 2600, rtmax = 2800)
         )
     ) +
     lp_grid(rows = "feature_id", cols = "sample_id", free_y = TRUE)
@@ -796,8 +799,8 @@ metadata <- data.frame(
 lcmsPlot(raw_files, sample_id_column = "sample_id", metadata = metadata) +
     lp_chromatogram(
         features = rbind(
-            c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
-            c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
+            mz335 = c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900),
+            mz279 = c(mzmin = 278.99721, mzmax = 279.00279, rtmin = 2740, rtmax = 2840)
         )
     ) +
     lp_grid(rows = 'feature_id', cols = 'sample_type', free_y = TRUE)
@@ -884,8 +887,8 @@ allowing direct inspection of the ions contributing to each peak.
 lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_chromatogram(
         features = rbind(
-            c(mzmin = 362.0982, mzmax = 362.1018, rtmin = 3130, rtmax = 3200),
-            c(mzmin = 357.1946, mzmax = 357.2054, rtmin = 3800, rtmax = 3900)
+            mz362 = c(mzmin = 362.0982, mzmax = 362.1018, rtmin = 3130, rtmax = 3200),
+            mz357 = c(mzmin = 357.1946, mzmax = 357.2054, rtmin = 3800, rtmax = 3900)
         ),
         sample_ids = 'ko15',
         highlight_peaks = TRUE) +

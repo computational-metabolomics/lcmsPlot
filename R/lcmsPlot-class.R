@@ -447,6 +447,12 @@ make_interface_function <- function(name, args_list, fn) {
 #' `"FT0001"`-style defaults assigned during correspondence. This requires
 #' the data to be an `XCMSnExp` or `MsExperiment` object with grouped peaks;
 #' identifiers matching no feature are skipped with a warning.
+#'
+#' For the `matrix` and `data.frame` forms, each feature's identifier (used for
+#' labelling and as the `feature_id` faceting column) is taken from a
+#' `feature_id` column, or else from the row names (e.g.
+#' `rbind(my_feature = c(mz = 335, rt = 2800))`). Features without one get an
+#' `xcms::groupnames()`-style `"M<mz>T<rt>"` identifier.
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object.

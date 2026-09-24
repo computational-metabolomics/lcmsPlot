@@ -38,7 +38,13 @@ a \code{character} vector of feature identifiers, i.e. the row names of
 \code{xcms::featureDefinitions()} - whatever they have been set to, or the
 \code{"FT0001"}-style defaults assigned during correspondence. This requires
 the data to be an \code{XCMSnExp} or \code{MsExperiment} object with grouped peaks;
-identifiers matching no feature are skipped with a warning.}
+identifiers matching no feature are skipped with a warning.
+
+For the \code{matrix} and \code{data.frame} forms, each feature's identifier (used for
+labelling and as the \code{feature_id} faceting column) is taken from a
+\code{feature_id} column, or else from the row names (e.g.
+\code{rbind(my_feature = c(mz = 335, rt = 2800))}). Features without one get an
+\code{xcms::groupnames()}-style \code{"M<mz>T<rt>"} identifier.}
 
 \item{sample_ids}{A \code{character} vector specifying the sample IDs
 to include in the plot. If \code{NULL}, the function uses the sample IDs

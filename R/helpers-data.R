@@ -265,6 +265,31 @@ match_features_by_name <- function(
     filter(grouped_peaks, .data$name %in% feature_names)
 }
 
+#' Get user-supplied identifiers for a set of raw feature specifications
+#'
+#' Identifiers come from a `feature_id` column when present, otherwise from
+#' the row names. Purely numeric row names (the automatic ones of a
+#' `data.frame`, or the positional ones of an `XChromatograms`) are not
+#' considered identifiers.
+#'
+#' @param features A `matrix` or `data.frame` of feature specifications.
+#' @return A `character` vector with one identifier per row (`NA` where none
+#' was given), or `NULL` if no identifiers were given at all.
+#' @keywords internal
+get_feature_names <- function(features) {
+    if (is.data.frame(features) && "feature_id" %in% colnames(features)) {
+        return(as.character(features$feature_id))
+    }
+
+    rn <- rownames(features)
+
+    if (is.null(rn) || all(grepl("^[0-9]+$", rn))) {
+        return(NULL)
+    }
+
+    ifelse(rn == "", NA_character_, rn)
+}
+
 #' Get a feature's m/z and RT ranges given different feature specifications
 #'
 #' @param feature The input feature which can be a vector or a data frame row.
@@ -273,9 +298,19 @@ match_features_by_name <- function(
 #' - mzmin, mzmax, rtmin (optional), rtmax (optional)
 #' @param options The plot object's options.
 #' @param full_rt_range The full RT range if an RT range is not given.
+#' @param feature_id A `character` value with the feature's identifier. When
+#' `NULL` or `NA`, an `xcms::groupnames()`-style `"M<mz>T<rt>"` identifier is
+#' derived from the m/z and RT values.
 #' @return A named list defining a feature with names: feature_id, mzr, rtr.
 #' @keywords internal
-get_feature_data <- function(feature, options, full_rt_range) {
+get_feature_data <- function(
+    feature,
+    options,
+    full_rt_range,
+    feature_id = NULL
+) {
+    user_feature_id <- feature_id
+
     # Helper: safely extract a value by name from vector or tibble
     get_val <- function(x, name) {
         if (is.data.frame(x)) {
@@ -326,6 +361,10 @@ get_feature_data <- function(feature, options, full_rt_range) {
         stop("Unsupported feature format: must provide either 'mz' or ('mzmin' and 'mzmax').")
     }
 
+    if (!is.null(user_feature_id) && !is.na(user_feature_id)) {
+        feature_id <- user_feature_id
+    }
+
     list(
         feature_id = feature_id,
         mzr = mzr,
@@ -361,12 +400,17 @@ get_features <- function(
         feature_indices <- seq_len(nrow(input_features))
     }
 
+    feature_names <- get_feature_names(input_features)
     features <- list()
 
     for (i in seq_len(length(feature_indices))) {
         feature_index <- feature_indices[i]
         feature <- input_features[feature_index, ]
-        features[[i]] <- get_feature_data(feature, options, full_rt_range)
+        features[[i]] <- get_feature_data(
+            feature,
+            options,
+            full_rt_range,
+            feature_id = feature_names[feature_index])
     }
 
     return(features)

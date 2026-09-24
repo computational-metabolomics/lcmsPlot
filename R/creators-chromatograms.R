@@ -588,6 +588,10 @@ setMethod(
         # is what orders the series when lp_chromatogram(stacked = ) is used.
         mz_windows <- MSnbase::mz(data_obj)
 
+        # featureChromatograms() records which row each feature came from.
+        feat_defs <- xcms::featureDefinitions(data_obj)
+        feat_rows <- if ("row" %in% colnames(feat_defs)) feat_defs$row else integer()
+
         # Pre-compute feature_id per row: mz and RT range are the same across
         # all samples for a given row, so derive them from column 1.
         row_feature_info <- lapply(seq_len(n_features), function(i) {
@@ -595,7 +599,10 @@ setMethod(
             rts <- MSnbase::rtime(data_obj[i, 1L])
             mz_center <- mean(mzr)
             rt_center <- if (length(rts) > 0L) mean(range(rts)) else NA_real_
-            feature_id <- if (!is.na(rt_center)) {
+            row_feature_names <- rownames(feat_defs)[feat_rows == i]
+            feature_id <- if (length(row_feature_names) == 1L) {
+                row_feature_names
+            } else if (!is.na(rt_center)) {
                 sprintf("M%dT%d", round(mz_center), round(rt_center))
             } else {
                 sprintf("M%d", round(mz_center))

@@ -1,3 +1,20 @@
+# lcmsPlot 1.1.12
+
+- **Manually specified features can be named.** A feature passed to
+  `lp_chromatogram(features = )` as a `matrix` or `data.frame` now takes its
+  `feature_id` from the row names, or from a `feature_id` column of a
+  `data.frame`, so
+
+  ```r
+  lp_chromatogram(features = rbind(
+      mz335 = c(mzmin = 334.9, mzmax = 335.1, rtmin = 2700, rtmax = 2900)))
+  ```
+
+  labels and facets the feature as `mz335`. Unnamed rows keep the
+  `M<mz>T<rt>` identifier derived from their ranges. Likewise, an
+  `XChromatograms` object from `xcms::featureChromatograms()` now uses the
+  feature definition row names (e.g. `"FT0003"`) rather than `M<mz>T<rt>`.
+
 # lcmsPlot 1.1.11
 
 - **Feature identifiers now come from the feature definition row
