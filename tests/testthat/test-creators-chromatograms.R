@@ -151,6 +151,29 @@ test_that("create_chromatograms with XChromatograms assigns feature_id from mz/r
   expect_false(result$feature_metadata$feature_id[1] == result$feature_metadata$feature_id[2])
 })
 
+test_that("create_chromatograms with XChromatograms uses user-set row names", {
+  xdata <- get_XCMSnExp_object(should_detect_peaks = TRUE)
+  mz_ranges <- cbind(mzmin = c(334.9, 206.9), mzmax = c(335.1, 207.1))
+  xchrom <- xcms::chromatogram(xdata, mz = mz_ranges)
+  rownames(xchrom) <- c("mz335", "mz207")
+
+  data_container <- create_data_container_from_obj(
+    xchrom, sample_id_column = NULL, metadata = NULL
+  )
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$sample_ids <- data_container@metadata$sample_id
+
+  result <- create_chromatograms(
+    data_container@data_obj,
+    data_container@metadata,
+    opts,
+    NULL
+  )
+
+  expect_equal(result$feature_metadata$feature_id, rep(c("mz335", "mz207"), times = 2))
+})
+
 test_that("create_chromatograms with featureChromatograms() output uses the feature definition row names", {
   xdata <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)
   feature_ids <- rownames(xcms::featureDefinitions(xdata))[c(3, 5)]

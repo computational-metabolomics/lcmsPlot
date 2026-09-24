@@ -591,6 +591,7 @@ setMethod(
         # featureChromatograms() records which row each feature came from.
         feat_defs <- xcms::featureDefinitions(data_obj)
         feat_rows <- if ("row" %in% colnames(feat_defs)) feat_defs$row else integer()
+        row_names <- get_feature_names(data_obj)
 
         # Pre-compute feature_id per row: mz and RT range are the same across
         # all samples for a given row, so derive them from column 1.
@@ -600,7 +601,9 @@ setMethod(
             mz_center <- mean(mzr)
             rt_center <- if (length(rts) > 0L) mean(range(rts)) else NA_real_
             row_feature_names <- rownames(feat_defs)[feat_rows == i]
-            feature_id <- if (length(row_feature_names) == 1L) {
+            feature_id <- if (!is.null(row_names) && !is.na(row_names[i])) {
+                row_names[i]
+            } else if (length(row_feature_names) == 1L) {
                 row_feature_names
             } else if (!is.na(rt_center)) {
                 sprintf("M%dT%d", round(mz_center), round(rt_center))

@@ -387,6 +387,8 @@ chromatogram per cell of a features x samples matrix.
 In the example below, two features are defined by their m/z ranges and the
 corresponding retention time windows.
 `xcms::chromatogram()` is called to extract the EICs from the `faahko` dataset.
+Setting the row names of the result names the features (`feature_id`);
+without them, an `M<mz>T<rt>` identifier is derived from the ranges.
 The resulting plot is arranged as a grid with features as rows and
 samples as columns.
 
@@ -396,6 +398,7 @@ mzr <- matrix(c(344, 344, 360, 360), ncol = 2, byrow = TRUE)
 rtr <- matrix(c(2500, 2880, 2600, 2880), ncol = 2, byrow = TRUE)
 
 chrs <- chromatogram(faahko, mz = mzr, rt = rtr)
+rownames(chrs) <- c("mz344", "mz360")
 
 lcmsPlot(chrs) +
     lp_chromatogram(na.rm = TRUE) +

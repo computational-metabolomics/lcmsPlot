@@ -1,3 +1,17 @@
+# lcmsPlot 1.1.13
+
+- **`XChromatograms` features can be named.** Setting the row names of an
+  `XChromatograms` object now sets the `feature_id` used for labelling and
+  faceting:
+
+  ```r
+  chrs <- chromatogram(xdata, mz = mzr, rt = rtr)
+  rownames(chrs) <- c("mz344", "mz360")
+  ```
+
+  Row names take precedence over `xcms::featureChromatograms()` feature
+  identifiers; rows with neither keep the `M<mz>T<rt>` identifier.
+
 # lcmsPlot 1.1.12
 
 - **Manually specified features can be named.** A feature passed to
