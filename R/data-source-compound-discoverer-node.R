@@ -755,12 +755,13 @@ CompoundDiscovererNodeSource <- function(
 #' Write a Compound Discoverer `node_response.json` adding a per-compound column
 #'
 #' Writes a `node_response.json` that returns **only** the Compounds table (the
-#' one table modified) with one new column appended, matched on the Compounds
-#' table's `"Compounds ID"` primary key. Each row's value comes from
-#' `id_to_value` (rows without a mapping get an empty string). The column is
-#' displayed in Compound Discoverer via the supplied `SpecialCellRenderer` GUID -
-#' e.g. CD's filename renderer, which turns the cell into a clickable file link.
-#' Only the modified table is returned.
+#' one table modified) with **only** two columns: the `"Compounds ID"` primary
+#' key and one new column matched on it. Compound Discoverer adds every column
+#' it gets back, so no other Compounds column is returned (that would duplicate
+#' it). Each row's value comes from `id_to_value` (rows without a mapping get an
+#' empty string). The column is displayed in Compound Discoverer via the
+#' supplied `SpecialCellRenderer` GUID - e.g. CD's filename renderer, which
+#' turns the cell into a clickable file link.
 #'
 #' @param node_args A `character` path to the `node_args.json` file.
 #' @param id_to_value A `data.frame` with columns `compound_id` and `value`
@@ -825,6 +826,9 @@ CompoundDiscovererNodeSource <- function(
     vals <- unname(lut[as.character(df[[id_col]])])
     vals[is.na(vals)] <- ""
     df[[column_name]] <- vals
+    # Return only the primary key and the new column: CD adds every returned
+    # column, so echoing the rest of the table would duplicate it.
+    df <- df[, c(id_col, column_name), drop = FALSE]
 
     out_file <- sub("\\.txt$", ".out.txt", data_file)
     if (identical(out_file, data_file)) {
@@ -833,7 +837,31 @@ CompoundDiscovererNodeSource <- function(
     utils::write.table(
         df, out_file, sep = "\t", row.names = FALSE, quote = TRUE)
 
-    # Append the column description and repoint the Compounds DataFile.
+    # Keep the ID column's original description (its `ID = "ID"` lets CD match
+    # rows); CD exports may pad column names with trailing spaces.
+    descs <- cmp_tbl$ColumnDescriptions
+    desc_names <- vapply(descs, function(d) {
+        if (is.null(d$ColumnName)) "" else trimws(d$ColumnName)
+    }, character(1))
+    desc_ids <- vapply(descs, function(d) {
+        if (is.null(d$ID)) "" else d$ID
+    }, character(1))
+    id_idx <- match(id_col, desc_names)
+    if (is.na(id_idx)) {
+        id_idx <- match("ID", desc_ids)
+    }
+    id_desc <- if (is.na(id_idx)) {
+        list(
+            ColumnName = id_col,
+            ID = "ID",
+            DataType = "Int",
+            Options = stats::setNames(list(), character(0))
+        )
+    } else {
+        descs[[id_idx]]
+    }
+
+    # Describe only the ID and new columns, and repoint the Compounds DataFile.
     new_col <- list(
         ColumnName = column_name,
         ID = "",
@@ -843,8 +871,7 @@ CompoundDiscovererNodeSource <- function(
             SpecialCellRenderer = renderer
         )
     )
-    cmp_tbl$ColumnDescriptions[[length(cmp_tbl$ColumnDescriptions) + 1]] <-
-        new_col
+    cmp_tbl$ColumnDescriptions <- list(id_desc, new_col)
     cmp_tbl$DataFile <- out_file
     # Return only the modified Compounds table.
     spec$Tables <- list(cmp_tbl)

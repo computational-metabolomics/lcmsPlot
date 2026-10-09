@@ -525,8 +525,20 @@ test_that(".cd_node_write_plot_column adds a filename column + response JSON", {
     expect_match(cmp$DataFile, "\\.out\\.txt$")
     expect_true(file.exists(cmp$DataFile))
 
+    # Only the ID and Plot columns are described: CD adds every returned
+    # column, so echoing Name/Formula would duplicate them.
+    desc_names <- vapply(
+        cmp$ColumnDescriptions, function(d) d$ColumnName, character(1))
+    expect_equal(desc_names, c("Compounds ID", "Plot"))
+    expect_false(any(c("Name", "Formula") %in% desc_names))
+
+    # The ID column keeps its original description so CD can match rows.
+    id_desc <- cmp$ColumnDescriptions[[1]]
+    expect_equal(id_desc$ID, "ID")
+    expect_equal(id_desc$DataType, "Int")
+
     # The new column description carries the renderer + type.
-    last_col <- cmp$ColumnDescriptions[[length(cmp$ColumnDescriptions)]]
+    last_col <- cmp$ColumnDescriptions[[2]]
     expect_equal(last_col$ColumnName, "Plot")
     expect_equal(last_col$DataType, "String")
     expect_equal(last_col$Options$SpecialCellRenderer,
@@ -537,7 +549,7 @@ test_that(".cd_node_write_plot_column adds a filename column + response JSON", {
     out_df <- utils::read.table(
         cmp$DataFile, header = TRUE, sep = "\t", check.names = FALSE,
         stringsAsFactors = FALSE, colClasses = "character")
-    expect_true("Plot" %in% colnames(out_df))
+    expect_equal(colnames(out_df), c("Compounds ID", "Plot"))
     expect_equal(out_df$Plot[out_df$`Compounds ID` == "1"],
                  "C:/plots/1_C4H7N.png")
     expect_equal(out_df$Plot[out_df$`Compounds ID` == "3"],
@@ -566,6 +578,35 @@ test_that(".cd_node_write_plot_column returns NULL without ExpectedResponsePath"
     out <- lcmsPlot:::.cd_node_write_plot_column(
         p, data.frame(compound_id = 1, value = "a.png"))
     expect_null(out)
+})
+
+test_that(".cd_node_write_plot_column describes the ID column when CD didn't", {
+    dir <- tempfile("cd_resp_noid")
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    cmp_file <- file.path(dir, "c.txt")
+    utils::write.table(
+        data.frame("Compounds ID" = 1, "Name" = "x", "Area" = 10,
+                   check.names = FALSE),
+        cmp_file, sep = "\t", row.names = FALSE)
+    response_path <- file.path(dir, "node_response.json")
+    node_args <- list(
+        ExpectedResponsePath = response_path,
+        Tables = list(list(
+            TableName = "Compounds", DataFile = cmp_file,
+            ColumnDescriptions = list(
+                list(ColumnName = "Area", ID = "", DataType = "Float")))))
+    p <- file.path(dir, "node_args.json")
+    writeLines(jsonlite::toJSON(node_args, auto_unbox = TRUE), p)
+
+    lcmsPlot:::.cd_node_write_plot_column(
+        p, data.frame(compound_id = 1, value = "a.png"))
+
+    cmp <- jsonlite::fromJSON(response_path, simplifyVector = FALSE)$Tables[[1]]
+    expect_equal(length(cmp$ColumnDescriptions), 2)
+    id_desc <- cmp$ColumnDescriptions[[1]]
+    expect_equal(id_desc$ColumnName, "Compounds ID")
+    expect_equal(id_desc$ID, "ID")
+    expect_equal(cmp$ColumnDescriptions[[2]]$ColumnName, "Plot")
 })
 
 test_that(".cd_node_parse_checked() handles the encodings CD may export", {

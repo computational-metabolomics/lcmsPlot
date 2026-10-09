@@ -31,11 +31,12 @@ the \code{node_args} has no \code{ExpectedResponsePath} (e.g. a standalone run).
 }
 \description{
 Writes a \code{node_response.json} that returns \strong{only} the Compounds table (the
-one table modified) with one new column appended, matched on the Compounds
-table's \code{"Compounds ID"} primary key. Each row's value comes from
-\code{id_to_value} (rows without a mapping get an empty string). The column is
-displayed in Compound Discoverer via the supplied \code{SpecialCellRenderer} GUID -
-e.g. CD's filename renderer, which turns the cell into a clickable file link.
-Only the modified table is returned.
+one table modified) with \strong{only} two columns: the \code{"Compounds ID"} primary
+key and one new column matched on it. Compound Discoverer adds every column
+it gets back, so no other Compounds column is returned (that would duplicate
+it). Each row's value comes from \code{id_to_value} (rows without a mapping get an
+empty string). The column is displayed in Compound Discoverer via the
+supplied \code{SpecialCellRenderer} GUID - e.g. CD's filename renderer, which
+turns the cell into a clickable file link.
 }
 \keyword{internal}
