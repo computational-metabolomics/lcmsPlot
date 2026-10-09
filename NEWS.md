@@ -1,3 +1,12 @@
+# lcmsPlot 1.1.14
+
+- **The Compound Discoverer Compounds Chromatograms node no longer duplicates
+  columns.** Its `node_response.json` now returns only the `Compounds ID`
+  column and the new plot column, in both the data file and the
+  `ColumnDescriptions`. Compound Discoverer adds every column it gets back, so
+  echoing the full Compounds table used to make columns such as Area and Gap
+  Fill Status appear twice (#45).
+
 # lcmsPlot 1.1.13
 
 - **`XChromatograms` features can be named.** Setting the row names of an
