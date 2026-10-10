@@ -10,7 +10,8 @@ create_chromatogram(
   rt_range,
   ms_level = 1,
   fill_gaps = FALSE,
-  adjusted_rt = NULL
+  adjusted_rt = NULL,
+  include_mass_traces = TRUE
 )
 }
 \arguments{
@@ -27,11 +28,16 @@ of the scans to consider.}
 between scans with zeros.}
 
 \item{adjusted_rt}{A \code{tibble} containing the raw and adjusted RTs.}
+
+\item{include_mass_traces}{A \code{logical} indicating whether to build the mass
+traces. Callers that discard them should pass \code{FALSE}, which on the \code{rawrr}
+backend avoids reading the scan header and spectra.}
 }
 \value{
 A \code{list} with two data frames (\code{chromatograms} and \code{mass_traces})
 containing the chromatograms with columns \code{rt} and \code{intensity}
-and mass traces with columns \code{rt} and \code{mz}.
+and mass traces with columns \code{rt} and \code{mz}. \code{mass_traces} is empty when
+\code{include_mass_traces} is \code{FALSE}.
 }
 \description{
 Create an extracted ion chromatogram

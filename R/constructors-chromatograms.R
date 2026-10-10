@@ -55,9 +55,13 @@ create_bpc_tic <- function(raw_data, aggregation_fun, rt_adjusted = NULL) {
 #' @param fill_gaps A `logical` indicating whether to fill gaps
 #' between scans with zeros.
 #' @param adjusted_rt A `tibble` containing the raw and adjusted RTs.
+#' @param include_mass_traces A `logical` indicating whether to build the mass
+#' traces. Callers that discard them should pass `FALSE`, which on the `rawrr`
+#' backend avoids reading the scan header and spectra.
 #' @return A `list` with two data frames (`chromatograms` and `mass_traces`)
 #' containing the chromatograms with columns `rt` and `intensity`
-#' and mass traces with columns `rt` and `mz`.
+#' and mass traces with columns `rt` and `mz`. `mass_traces` is empty when
+#' `include_mass_traces` is `FALSE`.
 #' @keywords internal
 create_chromatogram <- function(
     raw_data,
@@ -65,7 +69,8 @@ create_chromatogram <- function(
     rt_range,
     ms_level = 1,
     fill_gaps = FALSE,
-    adjusted_rt = NULL
+    adjusted_rt = NULL,
+    include_mass_traces = TRUE
 ) {
     # Guard against an undefined extraction window (e.g. a compound with no RT or
     # m/z): an NA range would otherwise corrupt the scan filtering below.
@@ -77,12 +82,11 @@ create_chromatogram <- function(
     }
 
     if (is(raw_data, "RawrrReader")) {
-        mz <- (mz_range[1] + mz_range[2]) / 2
-        ppm <- ((mz_range[2] - mz_range[1]) / mz) * 1e6
-        chr <- ms_chromatogram(raw_data, mz, ppm, rt_range)
+        xic <- .mz_range_to_xic(mz_range)
+        chr <- ms_chromatogram(raw_data, xic$mz, xic$ppm, rt_range)[[1]]
 
         # Only enable mass traces when there are less than 100 scans.
-        if (nrow(chr) <= 100) {
+        if (include_mass_traces && nrow(chr) <= 100) {
             hdr <- ms_header(raw_data)
             scans_in_rt <- hdr[
                 hdr$retentionTime >= rt_range[1] &
@@ -141,11 +145,17 @@ create_chromatogram <- function(
 
             if (nrow(in_mz_range) > 0) {
                 chr <- rbind(chr, tibble(rt = rt, intensity = total_intensity))
-                mass_trace <- tibble(rt = rt, mz = in_mz_range[, 1])
-                mass_traces <- rbind(mass_traces, mass_trace)
+                if (include_mass_traces) {
+                    mass_trace <- tibble(rt = rt, mz = in_mz_range[, 1])
+                    mass_traces <- rbind(mass_traces, mass_trace)
+                }
             } else if (fill_gaps) {
                 chr <- rbind(chr, tibble(rt = rt, intensity = 0))
             }
+        }
+
+        if (!include_mass_traces) {
+            mass_traces <- tibble(rt = numeric(), mz = numeric())
         }
     } else {
         stop("Input raw data is not of a supported type.")
@@ -155,4 +165,65 @@ create_chromatogram <- function(
         chromatograms = chr,
         mass_traces = mass_traces
     ))
+}
+
+#' Create extracted ion chromatograms for several windows of one file
+#'
+#' Batched counterpart of [create_chromatogram()] for callers that only need
+#' the chromatograms. On the `rawrr` backend all windows are extracted in a
+#' single read of the `.raw` file; other backends extract each window in turn.
+#' Mass traces are not built.
+#'
+#' @param raw_data An instance of class `MsRawReader`.
+#' @param mz_ranges A two-column `matrix` with one m/z range per row.
+#' @param rt_ranges A two-column `matrix` with one RT range per row.
+#' @param fill_gaps A `logical` indicating whether to fill gaps
+#' between scans with zeros.
+#' @return A `list` with one `tibble` (columns `rt` and `intensity`) per row
+#' of `mz_ranges`. Windows with an undefined range give an empty `tibble`.
+#' @keywords internal
+create_chromatograms_batch <- function(
+    raw_data,
+    mz_ranges,
+    rt_ranges,
+    fill_gaps = FALSE
+) {
+    n <- nrow(mz_ranges)
+    result <- rep(
+        list(tibble(rt = numeric(), intensity = numeric())), n)
+    valid <- which(
+        rowSums(is.na(mz_ranges)) == 0 & rowSums(is.na(rt_ranges)) == 0)
+
+    if (length(valid) == 0) {
+        return(result)
+    }
+
+    if (is(raw_data, "RawrrReader")) {
+        xics <- lapply(valid, function(i) .mz_range_to_xic(mz_ranges[i, ]))
+        result[valid] <- ms_chromatogram(
+            raw_data,
+            mz = vapply(xics, `[[`, numeric(1), "mz"),
+            ppm = vapply(xics, `[[`, numeric(1), "ppm"),
+            rt_range = rt_ranges[valid, , drop = FALSE]
+        )
+    } else {
+        result[valid] <- lapply(valid, function(i) {
+            create_chromatogram(
+                raw_data,
+                mz_range = mz_ranges[i, ],
+                rt_range = rt_ranges[i, ],
+                fill_gaps = fill_gaps,
+                include_mass_traces = FALSE
+            )$chromatograms
+        })
+    }
+
+    result
+}
+
+# Convert an m/z range into the centre m/z and ppm tolerance that
+# rawrr::readChromatogram() expects.
+.mz_range_to_xic <- function(mz_range) {
+    mz <- (mz_range[1] + mz_range[2]) / 2
+    list(mz = mz, ppm = ((mz_range[2] - mz_range[1]) / mz) * 1e6)
 }

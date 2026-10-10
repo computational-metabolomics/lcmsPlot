@@ -7,11 +7,15 @@
 \description{
 Stores the path to a ThermoFisher \code{.raw} file. \code{rawrr} does not maintain
 persistent connections, so the path is re-used for each read operation.
+Every read spawns the \code{rawrr} .NET helper, so results that do not change
+between calls (the scan header) are memoised in \code{cache}.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{path}}{A \code{character} value giving the path to the \code{.raw} file.}
+
+\item{\code{cache}}{An \code{environment} holding memoised reads.}
 }}
 
 \keyword{internal}

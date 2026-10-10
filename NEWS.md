@@ -1,3 +1,13 @@
+# lcmsPlot 1.1.15
+
+- **Chromatograms from ThermoFisher `.raw` files are extracted much faster
+  for the Compound Discoverer node and LipidSearch.** All compound XICs of a
+  sample are now read from its `.raw` file in a single `rawrr` call, rather
+  than one call per compound, and the mass traces these sources never plot are
+  no longer computed. The scan header of a `.raw` file is read once and reused,
+  which also speeds up feature chromatograms. The extracted chromatograms are
+  unchanged (#40).
+
 # lcmsPlot 1.1.14
 
 - **The Compound Discoverer Compounds Chromatograms node no longer duplicates
