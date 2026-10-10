@@ -18,21 +18,25 @@ ms_chromatogram(reader, mz, ppm, rt_range)
 \arguments{
 \item{reader}{An instance of \code{MsRawReader}.}
 
-\item{mz}{A \code{numeric} scalar — the target m/z.}
+\item{mz}{A \code{numeric} vector of target m/z values.}
 
-\item{ppm}{A \code{numeric} scalar — the mass tolerance in ppm.}
+\item{ppm}{A \code{numeric} scalar, or one value per \code{mz}, giving the mass
+tolerance in ppm.}
 
-\item{rt_range}{A length-2 \code{numeric} vector — the RT window in seconds.}
+\item{rt_range}{The RT window in seconds: a length-2 \code{numeric} vector shared
+by all \code{mz}, or a two-column \code{matrix} with one row per \code{mz}.}
 }
 \value{
-A \code{list} with two \code{tibble}s: \code{chromatograms} (columns \code{rt} and
-\code{intensity}) and \code{mass_traces} (empty for backends that do not expose
-per-scan m/z data via this interface).
+A \code{list} with one \code{tibble} (columns \code{rt} and \code{intensity}) per \code{mz}.
 }
 \description{
 \code{ms_chromatogram()} uses the backend's own XIC extraction mechanism rather
 than reconstructing chromatograms scan-by-scan from \code{ms_peaks()}.
 Currently only implemented for \code{RawrrReader} (ThermoFisher \code{.raw} files),
 which delegates to \code{rawrr::readChromatogram()}.
+}
+\details{
+The function is vectorised over \code{mz} so that several XICs can be pulled from
+a file in a single read.
 }
 \keyword{internal}

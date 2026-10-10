@@ -23,13 +23,16 @@ setClass(
 #'
 #' Stores the path to a ThermoFisher `.raw` file. `rawrr` does not maintain
 #' persistent connections, so the path is re-used for each read operation.
+#' Every read spawns the `rawrr` .NET helper, so results that do not change
+#' between calls (the scan header) are memoised in `cache`.
 #'
 #' @slot path A `character` value giving the path to the `.raw` file.
+#' @slot cache An `environment` holding memoised reads.
 #' @keywords internal
 setClass(
     "RawrrReader",
     contains = "MsRawReader",
-    slots = list(path = "character")
+    slots = list(path = "character", cache = "environment")
 )
 
 #' Get scan header information from a raw MS file reader
@@ -74,13 +77,16 @@ setGeneric("ms_close", function(reader) standardGeneric("ms_close"))
 #' Currently only implemented for `RawrrReader` (ThermoFisher `.raw` files),
 #' which delegates to `rawrr::readChromatogram()`.
 #'
+#' The function is vectorised over `mz` so that several XICs can be pulled from
+#' a file in a single read.
+#'
 #' @param reader An instance of `MsRawReader`.
-#' @param mz A `numeric` scalar — the target m/z.
-#' @param ppm A `numeric` scalar — the mass tolerance in ppm.
-#' @param rt_range A length-2 `numeric` vector — the RT window in seconds.
-#' @return A `list` with two `tibble`s: `chromatograms` (columns `rt` and
-#' `intensity`) and `mass_traces` (empty for backends that do not expose
-#' per-scan m/z data via this interface).
+#' @param mz A `numeric` vector of target m/z values.
+#' @param ppm A `numeric` scalar, or one value per `mz`, giving the mass
+#' tolerance in ppm.
+#' @param rt_range The RT window in seconds: a length-2 `numeric` vector shared
+#' by all `mz`, or a two-column `matrix` with one row per `mz`.
+#' @return A `list` with one `tibble` (columns `rt` and `intensity`) per `mz`.
 #' @keywords internal
 setGeneric(
     "ms_chromatogram",
@@ -158,6 +164,10 @@ setMethod("ms_close", "MzrReader", function(reader) {
 
 #' @rdname ms_header
 setMethod("ms_header", "RawrrReader", function(reader) {
+    if (!is.null(reader@cache$header)) {
+        return(reader@cache$header)
+    }
+
     .rawrr_ms_order_to_level <- function(ms_order) {
         ifelse(ms_order == "Ms", 1L, as.integer(sub("Ms", "", ms_order)))
     }
@@ -167,7 +177,7 @@ setMethod("ms_header", "RawrrReader", function(reader) {
     tic <- rawrr::readChromatogram(rawfile = reader@path, type = "tic")
     # rawrr::readIndex() exposes no per-scan peak count, and deriving one would
     # mean reading every spectrum, so "mean" is unavailable for this backend.
-    tibble(
+    reader@cache$header <- tibble(
         seqNum = idx$scan,
         retentionTime = idx$StartTime * 60,
         msLevel = .rawrr_ms_order_to_level(idx$MSOrder),
@@ -176,6 +186,7 @@ setMethod("ms_header", "RawrrReader", function(reader) {
         peaksCount = NA_real_,
         meanIntensity = NA_real_
     )
+    reader@cache$header
 })
 
 #' @rdname ms_peaks
@@ -188,14 +199,34 @@ setMethod("ms_peaks", "RawrrReader", function(reader, scans) {
 setMethod(
     "ms_chromatogram", "RawrrReader",
     function(reader, mz, ppm, rt_range) {
-        chrom <- rawrr::readChromatogram(
-            reader@path, type = "xic", mass = mz, tol = ppm)
-        rt_seconds <- chrom[[1]]$times * 60
-        in_range <- rt_seconds >= rt_range[1] & rt_seconds <= rt_range[2]
-        tibble(
-            rt = rt_seconds[in_range],
-            intensity = chrom[[1]]$intensities[in_range]
-        )
+        if (!is.matrix(rt_range)) {
+            rt_range <- matrix(
+                rt_range, nrow = length(mz), ncol = 2, byrow = TRUE)
+        }
+        ppm <- rep_len(ppm, length(mz))
+        result <- vector("list", length(mz))
+
+        # rawrr takes a single tolerance per call and formats it with "%f", so
+        # masses sharing that formatted tolerance are extracted together.
+        groups <- split(seq_along(mz), sprintf("%f", ppm))
+
+        for (idx in groups) {
+            chroms <- rawrr::readChromatogram(
+                reader@path, type = "xic", mass = mz[idx], tol = ppm[idx][1])
+
+            for (k in seq_along(idx)) {
+                i <- idx[k]
+                rt_seconds <- chroms[[k]]$times * 60
+                in_range <- rt_seconds >= rt_range[i, 1] &
+                    rt_seconds <= rt_range[i, 2]
+                result[[i]] <- tibble(
+                    rt = rt_seconds[in_range],
+                    intensity = chroms[[k]]$intensities[in_range]
+                )
+            }
+        }
+
+        result
     }
 )
 
@@ -323,7 +354,7 @@ open_raw_reader <- function(path) {
                 "Install it with: BiocManager::install('rawrr')"
             )
         }
-        new("RawrrReader", path = path)
+        new("RawrrReader", path = path, cache = new.env(parent = emptyenv()))
     } else {
         new("MzrReader", connection = mzR::openMSfile(path))
     }

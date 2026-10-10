@@ -190,6 +190,10 @@ create_compound_chromatograms <- function(
         feature_metadata_list <- list()
         detected_peaks_list <- list()
 
+        # Resolve every compound's extraction window first so that all of a
+        # sample's chromatograms can be read from its file in one pass.
+        entries <- list()
+        kept <- integer()
         for (j in seq_len(n_compounds)) {
             compound <- compounds[j, ]
 
@@ -207,21 +211,41 @@ create_compound_chromatograms <- function(
                 next
             }
 
-            mzr <- get_mz_range(entry$mz, ppm)
-            rtr <- c(entry$rtmin - rt_extend, entry$rtmax + rt_extend)
+            entries[[length(entries) + 1]] <- entry
+            kept <- c(kept, j)
+        }
 
-            data <- create_chromatogram(
-                raw_obj,
-                mz_range = mzr,
-                rt_range = rtr,
-                fill_gaps = fill_gaps
-            )
+        if (length(entries) == 0) {
+            return(list(
+                chromatograms = NULL,
+                feature_metadata = NULL,
+                detected_peaks = NULL
+            ))
+        }
+
+        mz_ranges <- do.call(rbind, lapply(entries, function(entry) {
+            get_mz_range(entry$mz, ppm)
+        }))
+        rt_ranges <- do.call(rbind, lapply(entries, function(entry) {
+            c(entry$rtmin - rt_extend, entry$rtmax + rt_extend)
+        }))
+        chromatograms <- create_chromatograms_batch(
+            raw_obj,
+            mz_ranges = mz_ranges,
+            rt_ranges = rt_ranges,
+            fill_gaps = fill_gaps
+        )
+
+        for (k in seq_along(entries)) {
+            j <- kept[k]
+            entry <- entries[[k]]
+            chromatogram <- chromatograms[[k]]
 
             feature_metadata_id <- (i - 1) * n_compounds + j
 
             chromatograms_list[[j]] <- tibble(
-                rt = data$chromatograms$rt,
-                intensity = data$chromatograms$intensity,
+                rt = chromatogram$rt,
+                intensity = chromatogram$intensity,
                 metadata_index = sample_metadata$sample_index,
                 feature_metadata_id = feature_metadata_id
             )
