@@ -29,6 +29,45 @@ test_that("create_chromatograms with character features creates correct chromato
   expect_equal(unique(data_container@feature_metadata$feature_id), c('FT001', 'FT003'))
 })
 
+test_that("create_chromatograms with character features extracts one chromatogram per grouped peak", {
+  # arrange
+  data_obj <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)
+  data_container <- create_data_container_from_obj(data_obj, sample_id_column = "sample_name", metadata = NULL)
+  feature_ids <- rownames(xcms::featureDefinitions(data_obj))[c(3, 1)]
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$features <- feature_ids
+  opts$chromatograms$sample_ids <- data_container@metadata$sample_id
+  opts$chromatograms$ppm <- 5
+  opts$chromatograms$rt_tol <- 10
+
+  # act
+  result <- create_chromatograms(
+    data_container@data_obj,
+    data_container@metadata,
+    opts,
+    opts$chromatograms$features
+  )
+
+  # assert: the peaks are the features' peakidx rows, features taken in
+  # feature definition order
+  peak_idx <- xcms::featureDefinitions(data_obj)$peakidx
+  names(peak_idx) <- rownames(xcms::featureDefinitions(data_obj))
+  feature_ids <- intersect(names(peak_idx), feature_ids)
+  expected_rows <- unlist(lapply(feature_ids, function(id) sort(unique(peak_idx[[id]]))))
+  all_peaks <- xcms::chromPeaks(data_obj)
+  expect_equal(result$detected_peaks$rt, unname(all_peaks[expected_rows, "rt"]))
+  expect_equal(result$detected_peaks$sample_index, unname(all_peaks[expected_rows, "sample"]))
+
+  # assert: one chromatogram per peak, drawn from that peak's sample
+  expect_equal(nrow(result$feature_metadata), length(expected_rows))
+  expect_equal(result$feature_metadata$metadata_index, unname(all_peaks[expected_rows, "sample"]))
+  expect_equal(
+    result$feature_metadata$feature_id,
+    rep(feature_ids, vapply(feature_ids, function(id) length(unique(peak_idx[[id]])), integer(1))))
+  expect_setequal(unique(result$chromatograms$feature_metadata_id), result$feature_metadata$feature_metadata_id)
+})
+
 test_that("create_chromatograms with character features honours custom feature definition rownames", {
   # arrange
   data_obj <- get_XCMSnExp_object(should_detect_peaks = TRUE, should_group_peaks = TRUE)

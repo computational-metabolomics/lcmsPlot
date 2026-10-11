@@ -87,29 +87,15 @@ create_chromatogram <- function(
 
         # Only enable mass traces when there are less than 100 scans.
         if (include_mass_traces && nrow(chr) <= 100) {
-            hdr <- ms_header(raw_data)
+            hdr <- ms_scan_index(raw_data)
             scans_in_rt <- hdr[
                 hdr$retentionTime >= rt_range[1] &
                     hdr$retentionTime <= rt_range[2],
             ]
-            spectra <- ms_peaks(raw_data, scans_in_rt$seqNum)
-            mass_traces <- tibble()
-
-            for (i in seq_len(nrow(scans_in_rt))) {
-                spectrum <- spectra[[i]]
-                rt <- scans_in_rt[i, ]$retentionTime
-                in_mz_range <- spectrum[
-                    spectrum[, 1] >= mz_range[1] &
-                        spectrum[, 1] <= mz_range[2], ,
-                    drop = FALSE
-                ]
-                if (nrow(in_mz_range) > 0) {
-                    mass_traces <- rbind(
-                        mass_traces,
-                        tibble(rt = rt, mz = in_mz_range[, 1])
-                    )
-                }
-            }
+            in_window <- .points_in_mz_window(
+                ms_peaks(raw_data, scans_in_rt$seqNum), mz_range)
+            mass_traces <- .mass_traces_from_points(
+                scans_in_rt$retentionTime, in_window)
         } else {
             mass_traces <- tibble(
                 rt = numeric(),
@@ -117,7 +103,7 @@ create_chromatogram <- function(
             )
         }
     } else if (is(raw_data, "MzrReader") || is(raw_data, "XcmsRawReader")) {
-        hdr <- ms_header(raw_data)
+        hdr <- ms_scan_index(raw_data)
 
         if (!is.null(adjusted_rt) && nrow(adjusted_rt) == nrow(hdr)) {
             hdr$retentionTime <- adjusted_rt |> pull(.data$adj_rt)
@@ -128,34 +114,24 @@ create_chromatogram <- function(
             hdr$retentionTime >= rt_range[1] &
                 hdr$retentionTime <= rt_range[2],
         ]
-        spectra <- ms_peaks(raw_data, scans_in_rt$seqNum)
+        scan_rts <- scans_in_rt$retentionTime
+        in_window <- .points_in_mz_window(
+            ms_peaks(raw_data, scans_in_rt$seqNum), mz_range)
+        n_points <- vapply(in_window, nrow, integer(1))
 
-        chr <- tibble(rt = numeric(), intensity = numeric())
-        mass_traces <- tibble()
+        # A scan with no point in the window contributes nothing, or a zero
+        # when gaps are filled.
+        keep <- fill_gaps | n_points > 0
+        chr <- tibble(
+            rt = scan_rts[keep],
+            intensity = vapply(
+                in_window[keep], function(x) sum(x[, 2]), numeric(1))
+        )
 
-        for (i in seq_len(nrow(scans_in_rt))) {
-            spectrum <- spectra[[i]]
-            rt <- scans_in_rt[i, ]$retentionTime
-            in_mz_range <- spectrum[
-                spectrum[, 1] >= mz_range[1] &
-                    spectrum[, 1] <= mz_range[2], ,
-                drop = FALSE
-            ]
-            total_intensity <- sum(in_mz_range[, 2])
-
-            if (nrow(in_mz_range) > 0) {
-                chr <- rbind(chr, tibble(rt = rt, intensity = total_intensity))
-                if (include_mass_traces) {
-                    mass_trace <- tibble(rt = rt, mz = in_mz_range[, 1])
-                    mass_traces <- rbind(mass_traces, mass_trace)
-                }
-            } else if (fill_gaps) {
-                chr <- rbind(chr, tibble(rt = rt, intensity = 0))
-            }
-        }
-
-        if (!include_mass_traces) {
-            mass_traces <- tibble(rt = numeric(), mz = numeric())
+        mass_traces <- if (include_mass_traces) {
+            .mass_traces_from_points(scan_rts, in_window)
+        } else {
+            tibble(rt = numeric(), mz = numeric())
         }
     } else {
         stop("Input raw data is not of a supported type.")
@@ -165,6 +141,28 @@ create_chromatogram <- function(
         chromatograms = chr,
         mass_traces = mass_traces
     ))
+}
+
+# Keep the points of each spectrum (an mz/intensity matrix) that fall inside
+# the closed m/z window.
+.points_in_mz_window <- function(spectra, mz_range) {
+    lapply(spectra, function(spectrum) {
+        spectrum[
+            spectrum[, 1] >= mz_range[1] & spectrum[, 1] <= mz_range[2], ,
+            drop = FALSE
+        ]
+    })
+}
+
+# One mass-trace row per point, carrying the retention time of its scan.
+.mass_traces_from_points <- function(scan_rts, in_window) {
+    tibble(
+        rt = rep(scan_rts, vapply(in_window, nrow, integer(1))),
+        # as.numeric() keeps the column when no scan has a point (unlist()
+        # of an empty list is NULL).
+        mz = as.numeric(
+            unlist(lapply(in_window, function(x) x[, 1]), use.names = FALSE))
+    )
 }
 
 #' Create extracted ion chromatograms for several windows of one file

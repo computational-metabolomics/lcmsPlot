@@ -6,11 +6,15 @@
 \title{An \code{mzR}-backed raw MS file reader}
 \description{
 Wraps an open \code{mzR} connection (as returned by \code{mzR::openMSfile()}).
+The scan header is memoised in \code{cache}: on netCDF files building it means
+reading every spectrum, and it is needed once per extracted chromatogram.
 }
 \section{Slots}{
 
 \describe{
 \item{\code{connection}}{An \code{mzR} connection object.}
+
+\item{\code{cache}}{An \code{environment} holding memoised reads.}
 }}
 
 \keyword{internal}

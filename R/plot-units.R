@@ -129,17 +129,22 @@ highlight_peaks <- function(
 }
 
 build_ribbon_data <- function(dataset, detected_peaks) {
-    detected_peaks |>
-        mutate(peak_id = row_number()) |>
-        rowwise() |>
-        do({
-            peak <- .
-            dataset |>
-                filter(.data$sample_id == peak$sample_id) |>
-                filter(.data$rt >= peak$rtmin, .data$rt <= peak$rtmax) |>
-                mutate(peak_id = peak$peak_id)
-        }) |>
-        bind_rows()
+    peaks <- tibble(
+        sample_id = detected_peaks$sample_id,
+        .peak_rtmin = detected_peaks$rtmin,
+        .peak_rtmax = detected_peaks$rtmax,
+        peak_id = seq_len(nrow(detected_peaks))
+    )
+
+    peaks |>
+        inner_join(
+            dataset,
+            by = join_by(
+                "sample_id",
+                ".peak_rtmin" <= "rt",
+                ".peak_rtmax" >= "rt"),
+            relationship = "many-to-many") |>
+        select(all_of(c(names(dataset), "peak_id")))
 }
 
 build_geom <- function(mode, plot_data, color, factor) {

@@ -7,7 +7,7 @@
 #' `mz`, `intensity`, and `rt`.
 #' @keywords internal
 create_spectrum_from_closest_scan_to_rt <- function(raw_data, rt, ms_level) {
-    hdr <- ms_header(raw_data)
+    hdr <- ms_scan_index(raw_data)
 
     ms_level_indices <- which(hdr$msLevel == ms_level)
 
@@ -44,7 +44,7 @@ create_spectrum_from_scan_index <- function(
     sample_metadata,
     scan_index
 ) {
-    hdr <- ms_header(raw_data)
+    hdr <- ms_scan_index(raw_data)
     if (is.character(scan_index)) {
         sidx <- sample_metadata[[scan_index]]
     } else {
