@@ -429,7 +429,7 @@ setMethod(
             sample_metadata <- metadata[i, ]
             raw_obj <- raw_data[[sample_metadata$sample_path]]
 
-            hdr <- ms_header(raw_obj)
+            hdr <- ms_scan_index(raw_obj)
             full_rt_range <- range(hdr$retentionTime)
 
             feats <- get_features(
@@ -530,7 +530,7 @@ setMethod(
         metadata <- metadata |>
             filter(.data$sample_id %in% options$chromatograms$sample_ids)
 
-        chromatograms <- tibble()
+        chromatograms_list <- list(tibble())
 
         for (j in seq_len(ncol(data_obj))) {
             sample_metadata <- metadata |>
@@ -541,14 +541,16 @@ setMethod(
             for (i in seq_len(nrow(data_obj))) {
                 chrom <- data_obj[i, j]
 
-                chromatograms <- rbind(chromatograms, tibble(
+                chromatograms_list[[length(chromatograms_list) + 1]] <- tibble(
                     rt = MSnbase::rtime(chrom),
                     intensity = MSnbase::intensity(chrom),
                     metadata_index = sample_metadata$sample_index,
                     feature_metadata_id = NA_real_
-                ))
+                )
             }
         }
+
+        chromatograms <- do.call(rbind, chromatograms_list)
 
         list(
             chromatograms = chromatograms,
@@ -805,16 +807,12 @@ setMethod(
         grouped_peaks <- match_features_by_name(
             get_grouped_peaks(data_obj),
             options$chromatograms$features)
-        detected_peaks <- tibble()
+        all_peak_rows <- seq_len(NROW(all_detected_peaks))
 
-        chromatograms <- tibble()
-        mass_traces <- tibble(
-            rt = numeric(),
-            mz = numeric(),
-            metadata_index = numeric(),
-            feature_metadata_id = numeric()
-        )
-        feature_metadata <- tibble(feature_metadata_id = numeric(), metadata_index = numeric())
+        detected_peaks_list <- list()
+        chromatograms_list <- list()
+        mass_traces_list <- list()
+        feature_metadata_list <- list()
         feature_metadata_counter <- 0L
 
         for (i in seq_len(nrow(grouped_peaks))) {
@@ -828,14 +826,12 @@ setMethod(
                 strsplit(',') |>
                 unlist() |>
                 as.numeric()
-            peaks <- all_detected_peaks |>
-                filter(
-                    row_number() %in% peak_indices,
-                    .data$sample_index %in% metadata$sample_index
-                ) |>
+            peaks <- all_detected_peaks[
+                all_peak_rows %in% peak_indices, , drop = FALSE] |>
+                filter(.data$sample_index %in% metadata$sample_index) |>
                 left_join(metadata, by = "sample_index")
 
-            detected_peaks <- rbind(detected_peaks, peaks)
+            detected_peaks_list[[i]] <- peaks
 
             for (j in seq_len(nrow(peaks))) {
                 peak <- peaks[j,]
@@ -860,29 +856,48 @@ setMethod(
                 )
 
                 feature_metadata_counter <- feature_metadata_counter + 1L
-                feature_metadata <- rbind(feature_metadata, tibble(
+                k <- feature_metadata_counter
+
+                feature_metadata_list[[k]] <- tibble(
                     feature_metadata_id = feature_metadata_counter,
                     metadata_index = sample_metadata$sample_index,
                     feature_id = feature$name
-                ))
+                )
 
-                chromatograms <- rbind(chromatograms, tibble(
+                chromatograms_list[[k]] <- tibble(
                     rt = data$chromatograms$rt,
                     intensity = data$chromatograms$intensity,
                     metadata_index = sample_metadata$sample_index,
                     feature_metadata_id = feature_metadata_counter
-                ))
+                )
 
                 if (nrow(data$mass_traces) > 0) {
-                    mass_traces <- rbind(mass_traces, tibble(
+                    mass_traces_list[[k]] <- tibble(
                         rt = data$mass_traces$rt,
                         mz = data$mass_traces$mz,
                         metadata_index = sample_metadata$sample_index,
                         feature_metadata_id = feature_metadata_counter
-                    ))
+                    )
                 }
             }
         }
+
+        bind_or <- function(lst, empty) {
+            lst <- remove_null_elements(lst)
+            if (length(lst) == 0) empty else do.call(rbind, lst)
+        }
+
+        detected_peaks <- bind_or(detected_peaks_list, tibble())
+        chromatograms <- bind_or(chromatograms_list, tibble())
+        mass_traces <- bind_or(mass_traces_list, tibble(
+            rt = numeric(),
+            mz = numeric(),
+            metadata_index = numeric(),
+            feature_metadata_id = numeric()
+        ))
+        feature_metadata <- bind_or(
+            feature_metadata_list,
+            tibble(feature_metadata_id = numeric(), metadata_index = numeric()))
 
         io_close_raw_data(raw_data)
 
@@ -918,7 +933,7 @@ setMethod(
                 sample_adjusted_rt <- NULL
             }
 
-            hdr <- ms_header(raw_obj)
+            hdr <- ms_scan_index(raw_obj)
             full_rt_range <- range(hdr$retentionTime)
 
             chromatograms_list <- list()

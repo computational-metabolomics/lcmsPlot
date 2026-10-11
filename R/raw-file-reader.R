@@ -10,14 +10,25 @@ setClass("MsRawReader", contains = "VIRTUAL")
 #' An `mzR`-backed raw MS file reader
 #'
 #' Wraps an open `mzR` connection (as returned by `mzR::openMSfile()`).
+#' The scan header is memoised in `cache`: on netCDF files building it means
+#' reading every spectrum, and it is needed once per extracted chromatogram.
 #'
 #' @slot connection An `mzR` connection object.
+#' @slot cache An `environment` holding memoised reads.
 #' @keywords internal
 setClass(
     "MzrReader",
     contains = "MsRawReader",
-    slots = list(connection = "ANY")
+    slots = list(connection = "ANY", cache = "environment")
 )
+
+# A class prototype environment would be shared by every reader, so each
+# instance gets its own cache.
+setMethod("initialize", "MzrReader", function(.Object, ...) {
+    .Object <- callNextMethod(.Object, ...)
+    .Object@cache <- new.env(parent = emptyenv())
+    .Object
+})
 
 #' A `rawrr`-backed raw MS file reader
 #'
@@ -50,6 +61,18 @@ setClass(
 #' it return `NA_real_`.
 #' @keywords internal
 setGeneric("ms_header", function(reader) standardGeneric("ms_header"))
+
+#' Get the scan index of a raw MS file reader
+#'
+#' A lightweight counterpart of [ms_header()] for callers that only need to
+#' locate scans by retention time and MS level. Unlike `ms_header()`, it never
+#' reads the spectra, which on netCDF files is what makes the header expensive.
+#'
+#' @param reader An instance of `MsRawReader`.
+#' @return A `data.frame` with the columns `seqNum`, `retentionTime`, and
+#' `msLevel`, identical to the same columns of `ms_header()`.
+#' @keywords internal
+setGeneric("ms_scan_index", function(reader) standardGeneric("ms_scan_index"))
 
 #' Get peak matrices for selected scans from a raw MS file reader
 #'
@@ -95,7 +118,11 @@ setGeneric(
 
 #' @rdname ms_header
 setMethod("ms_header", "MzrReader", function(reader) {
-    hdr <- mzR::header(reader@connection)
+    if (!is.null(reader@cache$header)) {
+        return(reader@cache$header)
+    }
+
+    hdr <- .mzr_raw_header(reader)
 
     if (is(reader@connection, "mzRnetCDF")) {
         ms1_idx <- which(hdr$msLevel == 1)
@@ -130,7 +157,23 @@ setMethod("ms_header", "MzrReader", function(reader) {
 
     hdr$meanIntensity <- .mean_from_counts(hdr$totIonCurrent, hdr$peaksCount)
 
+    reader@cache$header <- hdr
     hdr
+})
+
+# mzR::header() as the file reports it, read once per reader.
+.mzr_raw_header <- function(reader) {
+    if (is.null(reader@cache$raw_header)) {
+        reader@cache$raw_header <- mzR::header(reader@connection)
+    }
+    reader@cache$raw_header
+}
+
+.scan_index_columns <- c("seqNum", "retentionTime", "msLevel")
+
+#' @rdname ms_scan_index
+setMethod("ms_scan_index", "MzrReader", function(reader) {
+    .mzr_raw_header(reader)[, .scan_index_columns]
 })
 
 # Per-scan average intensity over the measured peaks. Scans with no peaks
@@ -187,6 +230,12 @@ setMethod("ms_header", "RawrrReader", function(reader) {
         meanIntensity = NA_real_
     )
     reader@cache$header
+})
+
+#' @rdname ms_scan_index
+setMethod("ms_scan_index", "RawrrReader", function(reader) {
+    # The rawrr header is memoised, and readIndex() is most of its cost anyway.
+    ms_header(reader)[, .scan_index_columns]
 })
 
 #' @rdname ms_peaks
@@ -281,6 +330,16 @@ setMethod("ms_header", "XcmsRawReader", function(reader) {
         totIonCurrent = obj@tic,
         peaksCount = n_peaks,
         meanIntensity = mean_int
+    )
+})
+
+#' @rdname ms_scan_index
+setMethod("ms_scan_index", "XcmsRawReader", function(reader) {
+    scantime <- reader@obj@scantime
+    tibble(
+        seqNum = seq_along(scantime),
+        retentionTime = scantime,
+        msLevel = 1L
     )
 })
 

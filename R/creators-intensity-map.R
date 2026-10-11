@@ -24,7 +24,7 @@ setMethod(
         process_sample <- function(i) {
             sample_metadata <- metadata[i, ]
             ms <- open_raw_reader(sample_metadata$sample_path)
-            hdr <- ms_header(ms)
+            hdr <- ms_scan_index(ms)
 
             rt_range <- options$intensity_maps$rt_range
             mz_range <- options$intensity_maps$mz_range
@@ -33,29 +33,29 @@ setMethod(
                 hdr$retentionTime >= rt_range[1] &
                     hdr$retentionTime <= rt_range[2])
 
-            scans <- lapply(idx, function(j) {
-                pk <- ms_peaks(ms, j)[[1]]
-                if (nrow(pk) > 0) {
-                    pk <- pk[
-                        pk[,1] >= mz_range[1] & pk[,1] <= mz_range[2], ,
-                        drop = FALSE]
-                    if (nrow(pk) > 0) {
-                        tibble(
-                            rt = rep(hdr$retentionTime[j], nrow(pk)),
-                            mz = pk[,1],
-                            intensity = pk[,2]
-                        )
-                    } else {
-                        NULL
-                    }
-                } else {
-                    NULL
-                }
-            })
+            # One read for every scan in the window rather than one per scan.
+            in_window <- if (length(idx) > 0) {
+                .points_in_mz_window(ms_peaks(ms, idx), mz_range)
+            } else {
+                list()
+            }
 
             ms_close(ms)
 
-            df <- do.call(rbind, scans)
+            n_points <- vapply(in_window, nrow, integer(1))
+            df <- if (sum(n_points) > 0) {
+                tibble(
+                    rt = rep(hdr$retentionTime[idx], n_points),
+                    mz = unlist(
+                        lapply(in_window, function(x) x[, 1]),
+                        use.names = FALSE),
+                    intensity = unlist(
+                        lapply(in_window, function(x) x[, 2]),
+                        use.names = FALSE)
+                )
+            } else {
+                NULL
+            }
 
             if (!is.null(df) && nrow(df) > 0) {
                 if (identical(options$intensity_maps$geom, "point")) {

@@ -63,6 +63,7 @@ setMethod(
         }
 
         feature_metadata_id <- 1
+        spectra_list <- list(all_spectra)
 
         # Process each sample
         for (i in seq_len(nrow(metadata))) {
@@ -85,7 +86,7 @@ setMethod(
                         metadata_index = sample_metadata$sample_index,
                         feature_metadata_id = NA_real_
                     )
-                all_spectra <- rbind(all_spectra, spectra)
+                spectra_list[[length(spectra_list) + 1]] <- spectra
             } else {
                 features <- get_features(
                     options,
@@ -110,7 +111,7 @@ setMethod(
                             feature_metadata_id =
                                 feature_metadata_id
                         )
-                    all_spectra <- rbind(all_spectra, spectra)
+                    spectra_list[[length(spectra_list) + 1]] <- spectra
 
                     feature_metadata_id <- feature_metadata_id + 1
                 }
@@ -118,6 +119,8 @@ setMethod(
 
             ms_close(raw_obj)
         }
+
+        all_spectra <- do.call(rbind, spectra_list)
 
         all_spectra <- all_spectra |>
             mutate(reference = FALSE)

@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.15
+Version: 1.1.16
 Authors@R: c(
     person(
         "Ossama",
@@ -29,7 +29,7 @@ Depends:
 Imports:
     methods,
     rlang,
-    dplyr,
+    dplyr (>= 1.1.0),
     tibble,
     tidyr,
     BiocParallel,

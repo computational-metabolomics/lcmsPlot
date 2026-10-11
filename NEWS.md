@@ -1,3 +1,15 @@
+# lcmsPlot 1.1.16
+
+- **Data extraction from mzML, mzXML and CDF files is faster.** The scan
+  header of a file is read once and reused, and chromatograms, spectra and
+  intensity maps locate scans without reading every spectrum, which on CDF
+  files used to happen once per feature, peak or spectrum. Extracted ion
+  chromatograms, intensity maps and peak highlighting are also built in a
+  single pass instead of one row at a time. On the faahKO data, feature
+  chromatograms are about 10 times faster, `across_peak` spectra about 15
+  times and intensity maps up to 100 times. The extracted data is unchanged
+  (#48).
+
 # lcmsPlot 1.1.15
 
 - **Chromatograms from ThermoFisher `.raw` files are extracted much faster

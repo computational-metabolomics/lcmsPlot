@@ -238,3 +238,114 @@ test_that("create_chromatograms_batch matches create_chromatogram on mzR files",
   expect_equal(batch[1:2], singles)
   expect_equal(nrow(batch[[3]]), 0)
 })
+
+test_that("ms_header is memoised per mzR reader", {
+  # arrange
+  raw_data <- get_raw_data()
+
+  # act
+  first <- ms_header(raw_data)
+  second <- ms_header(raw_data)
+
+  # assert
+  expect_identical(first, second)
+  expect_identical(raw_data@cache$header, first)
+  close_raw_data(raw_data)
+})
+
+test_that("mzR readers do not share a cache", {
+  # arrange
+  reader_a <- get_raw_data(1)
+  reader_b <- get_raw_data(2)
+
+  # act
+  ms_header(reader_a)
+
+  # assert
+  expect_false(identical(reader_a@cache, reader_b@cache))
+  expect_null(reader_b@cache$header)
+  close_raw_data(reader_a)
+  close_raw_data(reader_b)
+})
+
+test_that("ms_scan_index matches the header without reading the spectra", {
+  # arrange
+  raw_data <- get_raw_data()
+
+  # act
+  scan_index <- ms_scan_index(raw_data)
+
+  # assert: on netCDF the full header is what reads every spectrum
+  expect_null(raw_data@cache$header)
+  hdr <- ms_header(raw_data)
+  expect_equal(
+    as.data.frame(scan_index),
+    as.data.frame(hdr[, c("seqNum", "retentionTime", "msLevel")]))
+  close_raw_data(raw_data)
+})
+
+# The scan-by-scan definition of an extracted ion chromatogram, kept as a
+# reference for the vectorised implementation.
+naive_chromatogram <- function(raw_data, mz_range, rt_range, fill_gaps) {
+  hdr <- ms_header(raw_data)
+  hdr <- hdr[hdr$msLevel == 1, ]
+  hdr <- hdr[hdr$retentionTime >= rt_range[1] &
+               hdr$retentionTime <= rt_range[2], ]
+  chr <- data.frame(rt = numeric(), intensity = numeric())
+  mt <- data.frame(rt = numeric(), mz = numeric())
+  for (i in seq_len(nrow(hdr))) {
+    pk <- ms_peaks(raw_data, hdr$seqNum[i])[[1]]
+    pk <- pk[pk[, 1] >= mz_range[1] & pk[, 1] <= mz_range[2], , drop = FALSE]
+    if (nrow(pk) > 0) {
+      chr <- rbind(chr, data.frame(rt = hdr$retentionTime[i], intensity = sum(pk[, 2])))
+      mt <- rbind(mt, data.frame(rt = hdr$retentionTime[i], mz = pk[, 1]))
+    } else if (fill_gaps) {
+      chr <- rbind(chr, data.frame(rt = hdr$retentionTime[i], intensity = 0))
+    }
+  }
+  rownames(chr) <- NULL
+  rownames(mt) <- NULL
+  list(chromatograms = chr, mass_traces = mt)
+}
+
+test_that("create_chromatogram matches the scan-by-scan reference", {
+  # arrange
+  raw_data <- get_raw_data()
+  cases <- list(
+    list(mz = c(334.9, 335.1), rt = c(2700, 2900), fill_gaps = FALSE),
+    list(mz = c(334.9, 335.1), rt = c(2700, 2900), fill_gaps = TRUE),
+    list(mz = c(200, 300), rt = c(4200, 4300), fill_gaps = FALSE))
+
+  for (case in cases) {
+    # act
+    actual <- create_chromatogram(
+      raw_data, case$mz, case$rt, fill_gaps = case$fill_gaps)
+    expected <- naive_chromatogram(raw_data, case$mz, case$rt, case$fill_gaps)
+
+    # assert
+    expect_equal(as.data.frame(actual$chromatograms), expected$chromatograms)
+    expect_equal(as.data.frame(actual$mass_traces), expected$mass_traces)
+  }
+  close_raw_data(raw_data)
+})
+
+test_that("create_chromatogram keeps its columns for an empty window", {
+  # arrange
+  raw_data <- get_raw_data()
+
+  # act: an RT window outside the run
+  outside <- create_chromatogram(raw_data, c(334.9, 335.1), c(1, 2))
+  # act: scans in range but no m/z in the window, with gap filling
+  no_mz <- create_chromatogram(
+    raw_data, c(5000, 5001), c(2700, 2710), fill_gaps = TRUE)
+  close_raw_data(raw_data)
+
+  # assert
+  expect_equal(nrow(outside$chromatograms), 0)
+  expect_named(outside$mass_traces, c("rt", "mz"))
+  expect_equal(nrow(outside$mass_traces), 0)
+  expect_gt(nrow(no_mz$chromatograms), 0)
+  expect_true(all(no_mz$chromatograms$intensity == 0))
+  expect_named(no_mz$mass_traces, c("rt", "mz"))
+  expect_equal(nrow(no_mz$mass_traces), 0)
+})
