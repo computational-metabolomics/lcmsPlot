@@ -15,3 +15,4 @@ README.rst
 ^\.positai$
 ^\.claude$
 ^tools$
+^CONTRIBUTING\.md$

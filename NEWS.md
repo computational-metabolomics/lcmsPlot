@@ -1,3 +1,7 @@
+# lcmsPlot 1.1.17
+
+- Add `CONTRIBUTING.md` and update `README.md` with latest features.
+
 # lcmsPlot 1.1.16
 
 - **Data extraction from mzML, mzXML and CDF files is faster.** The scan

@@ -1,10 +1,9 @@
 # lcmsPlot
 
-`lcmsPlot` is an R package designed for visualising
-Liquid Chromatography-Mass Spectrometry (LC-MS) data with high-quality plots
-suitable for publication. The package enables users to generate and
+[lcmsPlot](https://bioconductor.org/packages/release/bioc/html/lcmsPlot.html) is an R/Bioconductor package designed to generate composable, reproducible, interoperable, and high-quality publication-ready visualisations of Liquid Chromatography-Mass Spectrometry (LC-MS) data and processing results. The package enables users to generate and
 customise chromatograms, mass traces, spectra, and more with fine-tuned
 aesthetics and annotation options.
+By facilitating clear, reproducible, and customisable figures, _lcmsPlot_ enhances interpretation and communication within LC-MS-based metabolomics analyses.
 
 ## Overview
 
@@ -15,12 +14,18 @@ Researchers frequently need **publication-quality** chromatograms, spectra, and 
 
 The lcmsPlot package addresses this gap by providing:
 
-- A consistent, intuitive interface for LC–MS visualizations.
-- Streamlined generation of high-quality, customisable plots.
+- A consistent, intuitive, ggplot2-like interface for LC–MS visualizations,
+  where plot layers are combined with `+`.
+- Streamlined generation of high-quality, customisable plots: chromatograms
+  (BPC, TIC, XIC), mass traces, spectra and mirror plots, intensity maps, peak
+  density, retention-time alignment, and precursor purity.
 - Improved reproducibility and reduced need for bespoke scripts.
-- Interoperability with the existing Bioconductor ecosystem (e.g., `MsExperiment`, `MSnbase`)
-and LC-MS ecosystem (e.g., `MZmine`, `Compound Discoverer`)
-- Better performance at scale.
+- Interoperability with raw files, Bioconductor objects, and third-party LC-MS
+  software (see [Interoperability](#interoperability)).
+- Better performance at scale, with parallel extraction (`BPPARAM`) and
+  batched plotting of large studies (`batch_size` + `iterate_plot_batches()`).
+- An interactive Shiny app for exploring data without writing code
+  (see [Interactive exploration](#interactive-exploration)).
 
 ### Example
 
@@ -94,8 +99,99 @@ if (!require("remotes", quietly = TRUE))
 remotes::install_github("computational-metabolomics/lcmsPlot")
 ```
 
+Optional features rely on suggested packages: `rawrr` for ThermoFisher `.raw`
+files, `msPurity` for precursor purity plots, and `shiny`/`shinytoastr` for
+the interactive app.
+
+## Interoperability
+
+lcmsPlot plots directly from the data you already have: raw files,
+Bioconductor objects, and the results of commonly used LC-MS software. The
+same `lp_*()` layers work for every input, so a figure can be reproduced
+whichever tool produced the data.
+
+### Supported inputs
+
+| Source | Input | How to plot it |
+|---|---|---|
+| **Raw files** | mzML, mzXML, netCDF (via `mzR`) | `lcmsPlot(c("a.mzML", "b.mzML"), metadata = ...)` |
+| | ThermoFisher `.raw` (via `rawrr`) | `lcmsPlot(c("a.raw", "b.raw"))` |
+| **Bioconductor** | `MsExperiment` / `XcmsExperiment`, `XCMSnExp` (*xcms*) | `lcmsPlot(xdata)` |
+| | `xcmsRaw` (legacy *xcms*) | `lcmsPlot(create_xcms_raw_list(files))` |
+| | `XChromatograms`, `XChromatogram`, `MChromatograms` | `lcmsPlot(chrs)` |
+| | `purityA` (*msPurity*) | `lcmsPlot(pa)` + `lp_purity_*()` / `lp_isolation_window()` |
+| **Compound Discoverer** | `.cdResult` files | `lcmsPlot("study.cdResult") + lp_compound_discoverer()` |
+| | Scripting-node exports | `CompoundDiscovererNodeSource()` |
+| **MZmine** (2+) | Feature lists | `MZmineFeatureListsSource()` |
+| **MS-DIAL** | Peak tables | `MsDialPeaksSource()` |
+| **LipidSearch** (4.2, 5.2) | Lipid result files | `LipidSearchSource()` + `lp_lipid_search()` |
+| **Spectral libraries** | MSP (via `MsBackendMsp`) or mzML reference spectra | `lp_spectra(spectral_match_db = "library.msp")` for mirror plots |
+
+Results from external software are paired with the raw files they were
+computed from (`sample_paths`), so chromatograms are extracted from the
+original data and the peaks reported by the software can be highlighted on
+top of them. For example, plotting the six most abundant lipids from a
+LipidSearch result:
+
+```r
+lipids <- LipidSearchSource(
+    results_path = "path/to/LIPIDS_POS_5ppm.txt",
+    sample_paths = c("path/to/sample_1.mzML", "path/to/sample_2.mzML"))
+
+lcmsPlot(lipids) +
+    lp_lipid_search(lipids_query = "lipid_rank <= 6") +
+    lp_chromatogram(highlight_peaks = TRUE, ppm = 5) +
+    lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
+```
+
+or only the compounds checked by hand in Compound Discoverer:
+
+```r
+lcmsPlot("study.cdResult") +
+    lp_compound_discoverer(compounds_query = "checked") +
+    lp_chromatogram(highlight_peaks = TRUE) +
+    lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
+```
+
+### Compound Discoverer scripting node
+
+lcmsPlot ships a ready-made Compound Discoverer post-processing node,
+**Compounds Chromatograms**. It renders one chromatogram per compound from the
+original `.raw` files and adds a clickable plot column to the Compounds table,
+so each compound links to its chromatogram inside Compound Discoverer. The
+node is installed with the package:
+
+```r
+system.file("compound-discoverer-nodes/CompoundsChromatograms",
+            package = "lcmsPlot")
+```
+
+See its [README](inst/compound-discoverer-nodes/CompoundsChromatograms/README.md)
+for installation and parameters.
+
+## Interactive exploration
+
+`lcmsPlotApp()` launches a Shiny dashboard for exploring data without writing
+code: BPC/TIC, extracted ion chromatograms, peak density and spectra, with
+options for faceting, grouping, legends and titles. It accepts mzML/CDF and
+ThermoFisher `.raw` files, Compound Discoverer `.cdResult` files, and
+`XCMSnExp`/`MsExperiment` objects saved as `.rds` or `.RData`.
+
+```r
+shiny::runApp(lcmsPlotApp())
+```
+
+The app needs the suggested packages `shiny` and `shinytoastr`.
+
 ## Resources
 
 - Package-level help page: `?\`lcmsPlot-package\``
 - Functions/classes help pages: `?<function>`
 - Vignettes: `browseVignettes("lcmsPlot")`
+- Changes between versions: [NEWS.md](NEWS.md)
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+the branch naming, commit message, and pull request conventions, and report
+bugs on the [issue tracker](https://github.com/computational-metabolomics/lcmsPlot/issues).
