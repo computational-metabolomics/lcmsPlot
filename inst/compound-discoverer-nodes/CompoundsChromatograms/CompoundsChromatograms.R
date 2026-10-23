@@ -329,7 +329,7 @@ main <- function() {
     id_by_name <- ds@compounds |>
         dplyr::distinct(name, compound_id)
 
-    names_to_plot <- unique(p@data@feature_metadata$name)
+    names_to_plot <- unique(Chromatograms::chromData(chromatograms(p))$name)
     log_msg("  ", length(names_to_plot), " compound(s) to plot")
 
     id_to_value <- list()
@@ -377,19 +377,10 @@ main <- function() {
 }
 
 # Render one compound's chromatograms (faceted by sample) to `out_path`, reusing
-# the already-extracted data in `p` by filtering its stored datasets to one
-# compound (by its unique `name`). Reaches into lcmsPlot's internal slots.
+# the already-extracted data in `p` by keeping only one compound (by its unique
+# `name`).
 render_compound_plot <- function(p, nm, out_path, title, width, height, dpi) {
-    fids <- p@data@feature_metadata$feature_metadata_id[
-        p@data@feature_metadata$name == nm]
-
-    pc <- p
-    pc@data@chromatograms <- dplyr::filter(
-        p@data@chromatograms, feature_metadata_id %in% fids)
-    pc@data@feature_metadata <- dplyr::filter(
-        p@data@feature_metadata, name == nm)
-    pc@data@detected_peaks <- dplyr::filter(
-        p@data@detected_peaks, name == nm)
+    pc <- subset_features(p, name == nm)
 
     pc@options$grid <- NULL
     pc@options$facets <- list(
