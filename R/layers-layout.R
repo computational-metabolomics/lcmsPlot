@@ -28,13 +28,13 @@
 #' p <- p + lp_arrange(group_by = "sample_id")
 #' p
 lp_arrange <- function(group_by) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_arrange",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$arrangement <- list(
-                group_by = group_by
-            )
+            obj@options$arrangement <- args
             return(obj)
         }
     )
@@ -79,17 +79,13 @@ lp_facets <- function(
     free_x = FALSE,
     free_y = FALSE
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_facets",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$facets <- list(
-                facets = facets,
-                ncol = ncol,
-                nrow = nrow,
-                free_x = free_x,
-                free_y = free_y
-            )
+            obj@options$facets <- args
             return(obj)
         }
     )
@@ -141,16 +137,13 @@ lp_facets <- function(
 #' p <- p + lp_grid(rows = "factor1", cols = "factor2")
 #' p
 lp_grid <- function(rows, cols, free_x = FALSE, free_y = FALSE) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_grid",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$grid <- list(
-                rows = rows,
-                cols = cols,
-                free_x = free_x,
-                free_y = free_y
-            )
+            obj@options$grid <- args
             return(obj)
         }
     )
@@ -189,14 +182,13 @@ lp_grid <- function(rows, cols, free_x = FALSE, free_y = FALSE) {
 #' p <- p + lp_labels(legend = "Sample")
 #' p
 lp_labels <- function(title = NULL, legend = NULL) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_labels",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$labels <- list(
-                title = title,
-                legend = legend
-            )
+            obj@options$labels <- args
             return(obj)
         }
     )
@@ -232,13 +224,13 @@ lp_labels <- function(title = NULL, legend = NULL) {
 #' p <- p + lp_legend(position = "bottom")
 #' p
 lp_legend <- function(position = NULL)  {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_legend",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$legend <- list(
-                position = position
-            )
+            obj@options$legend <- args
             return(obj)
         }
     )
@@ -277,18 +269,13 @@ lp_legend <- function(position = NULL)  {
 #' p <- p + lp_rt_line(intercept = 2800, line_type = 'solid', color = 'red')
 #' p
 lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_rt_line",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            rt_line_obj <- list(
-                intercept = intercept,
-                line_type = line_type,
-                color = color
-            )
-            obj@options$rt_lines <- append(
-                obj@options$rt_lines,
-                list(rt_line_obj))
+            obj@options$rt_lines <- append(obj@options$rt_lines, list(args))
             return(obj)
         }
     )
@@ -322,13 +309,13 @@ lp_rt_line <- function(intercept, line_type = 'dashed', color = 'black') {
 #' ## Customise panel layout to place chromatogram above spectra
 #' p <- p + lp_layout(design = "C\nS\nS")
 lp_layout <- function(design = NULL) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_layout",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            obj@options$layout <- list(
-                design = design
-            )
+            obj@options$layout <- args
             return(obj)
         }
     )

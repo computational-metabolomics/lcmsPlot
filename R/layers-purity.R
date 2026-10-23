@@ -42,24 +42,20 @@ lp_purity_overlay <- function(
         threshold = NULL,
         point_size = 2
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_purity_overlay",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@source)) {
-                stop("lp_purity_overlay requires a purityA data object")
-            }
+            .require_source(
+                obj, is_mspurity_data, "lp_purity_overlay requires a purityA data object")
 
             if (!isTRUE(obj@options$chromatograms$show)) {
                 stop("lp_purity_overlay must be called after lp_chromatogram()")
             }
 
-            obj@options$purity_overlay <- list(
-                show = TRUE,
-                sample_ids = sample_ids,
-                threshold = threshold,
-                point_size = point_size
-            )
+            obj@options$purity_overlay <- .layer_options(args, show = TRUE)
             obj@options$purity_scores_sample_ids <- sample_ids
 
             obj@data <- create_purity_scores(obj@data, obj@options)
@@ -113,19 +109,16 @@ lp_isolation_window <- function(
         half_width = 0.5,
         zoom_factor = 3
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_isolation_window",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@source)) {
-                stop("lp_isolation_window requires a purityA data object")
-            }
+            .require_source(
+                obj, is_mspurity_data, "lp_isolation_window requires a purityA data object")
 
-            obj@options$isolation_window <- list(
-                show = TRUE,
-                half_width = half_width,
-                zoom_factor = zoom_factor
-            )
+            obj@options$isolation_window <- .layer_options(args, show = TRUE)
             obj@options$spectra$show <- TRUE
 
             obj@data <- create_isolation_window(
@@ -168,19 +161,16 @@ lp_purity_timeline <- function(
         sample_ids = NULL,
         threshold = NULL
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_purity_timeline",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@source)) {
-                stop("lp_purity_timeline requires a purityA data object")
-            }
+            .require_source(
+                obj, is_mspurity_data, "lp_purity_timeline requires a purityA data object")
 
-            obj@options$purity_timeline <- list(
-                show = TRUE,
-                sample_ids = sample_ids,
-                threshold = threshold
-            )
+            obj@options$purity_timeline <- .layer_options(args, show = TRUE)
             obj@options$purity_scores_sample_ids <- sample_ids
 
             obj@data <- create_purity_scores(obj@data, obj@options)
@@ -225,20 +215,16 @@ lp_purity_distribution <- function(
         threshold = NULL,
         type = "violin"
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_purity_distribution",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@source)) {
-                stop("lp_purity_distribution requires a purityA data object")
-            }
+            .require_source(
+                obj, is_mspurity_data, "lp_purity_distribution requires a purityA data object")
 
-            obj@options$purity_distribution <- list(
-                show = TRUE,
-                sample_ids = sample_ids,
-                threshold = threshold,
-                type = type
-            )
+            obj@options$purity_distribution <- .layer_options(args, show = TRUE)
             obj@options$purity_scores_sample_ids <- sample_ids
 
             obj@data <- create_purity_scores(obj@data, obj@options)

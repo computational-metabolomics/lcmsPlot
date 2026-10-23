@@ -214,15 +214,8 @@ setMethod(
             stop("iterate_plot_batches requires batch_size")
         }
 
-        sample_ids <- sampleMetadata(object)$sample_id
-
-        if (length(sample_ids) > object@options$batch_size) {
-            split_f <- ceiling(
-                seq_along(sample_ids) / object@options$batch_size)
-            batches <- split(sample_ids, split_f)
-        } else {
-            batches <- list(sample_ids)
-        }
+        batches <- .sample_batches(
+            sampleMetadata(object)$sample_id, object@options$batch_size)
 
         object@options$batch_index <- 1
         for (batch in batches) {
@@ -292,6 +285,42 @@ setMethod(
         }
     }
 )
+
+# The samples split into batches of `batch_size`, in metadata order.
+.sample_batches <- function(sample_ids, batch_size) {
+    if (is.null(batch_size) || length(sample_ids) <= batch_size) {
+        return(list(sample_ids))
+    }
+    unname(split(sample_ids, ceiling(seq_along(sample_ids) / batch_size)))
+}
+
+# The samples of the current batch. Without batches, every sample.
+.batch_sample_ids <- function(obj, sample_ids) {
+    batches <- .sample_batches(sample_ids, obj@options$batch_size)
+    if (length(batches) == 1) {
+        return(batches[[1]])
+    }
+    batches[[obj@options$batch_index]]
+}
+
+# The requested samples, or every sample when none are requested.
+.default_sample_ids <- function(obj, sample_ids) {
+    if (is.null(sample_ids)) sampleMetadata(obj)$sample_id else sample_ids
+}
+
+# A layer's options: its arguments, with `...` replacing or adding entries.
+.layer_options <- function(args, ...) {
+    overrides <- list(...)
+    args[names(overrides)] <- overrides
+    args
+}
+
+# Stop unless the data source passes `predicate`.
+.require_source <- function(obj, predicate, message) {
+    if (!predicate(obj@data@source)) {
+        stop(message, call. = FALSE)
+    }
+}
 
 make_interface_function <- function(name, args_list, fn) {
     function(obj, record_history = TRUE) {

@@ -115,19 +115,20 @@
 #'   lp_legend(position = "bottom")
 #' p
 lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_compound_discoverer",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_cd_result(obj@data@source) &&
-                !is_cd_node_source(obj@data@source)) {
-                stop("lp_compound_discoverer: The data object is not a Compound Discoverer results connection or scripting-node source")
-            }
+            .require_source(
+                obj,
+                function(source) {
+                    is_cd_result(source) || is_cd_node_source(source)
+                },
+                "lp_compound_discoverer: The data object is not a Compound Discoverer results connection or scripting-node source")
 
-            obj@options$compound_discoverer <- list(
-                compounds_query = compounds_query,
-                rt_extend = rt_extend
-            )
+            obj@options$compound_discoverer <- args
 
             return(obj)
         }
@@ -235,18 +236,18 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
 #'   lp_legend(position = "bottom")
 #' p
 lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_lipid_search",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_lipid_search_source(obj@data@source)) {
-                stop("lp_lipid_search: The data object is not a LipidSearch source")
-            }
+            .require_source(
+                obj,
+                is_lipid_search_source,
+                "lp_lipid_search: The data object is not a LipidSearch source")
 
-            obj@options$lipid_search <- list(
-                lipids_query = lipids_query,
-                rt_extend = rt_extend
-            )
+            obj@options$lipid_search <- args
 
             return(obj)
         }

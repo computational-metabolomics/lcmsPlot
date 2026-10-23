@@ -134,44 +134,17 @@ lp_chromatogram <- function(
         stop("lp_chromatogram: 'stacked' must be a single numeric value.")
     }
 
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_chromatogram",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (is.null(sample_ids)) {
-                sample_ids <- sampleMetadata(obj)$sample_id
-            }
-
-            if (!is.null(obj@options$batch_size) &&
-                length(sample_ids) > obj@options$batch_size) {
-                split_f <- ceiling(
-                    seq_along(sample_ids) / obj@options$batch_size)
-                batches <- split(sample_ids, split_f)
-                batch_sample_ids <- batches[[obj@options$batch_index]]
-            } else {
-                batch_sample_ids <- sample_ids
-            }
-
-            obj@options$chromatograms <- list(
+            obj@options$chromatograms <- .layer_options(
+                args,
                 show = TRUE,
-                features = features,
-                sample_ids = batch_sample_ids,
-                ppm = ppm,
-                line_type = line_type,
-                rt_tol = rt_tol,
-                highlight_peaks = highlight_peaks,
-                highlight_peaks_color = highlight_peaks_color,
-                highlight_peaks_mode = highlight_peaks_mode,
-                highlight_peaks_factor = highlight_peaks_factor,
-                aggregation_fun = aggregation_fun,
-                rt_type = rt_type,
-                rt_unit = rt_unit,
-                intensity_unit = intensity_unit,
-                fill_gaps = fill_gaps,
-                highlight_apices = highlight_apices,
-                stacked = stacked,
-                transform = transform
-            )
+                sample_ids = .batch_sample_ids(
+                    obj, .default_sample_ids(obj, sample_ids)))
 
             obj@data <- create_chromatograms(
                 obj@data@source,
@@ -328,35 +301,21 @@ lp_spectra <- function(
 ) {
     mode <- match.arg(mode, c("closest_apex", "closest", "across_peak"))
 
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_spectra",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            is_standalone <- !obj@options$chromatograms$show
-
-            if  (is_standalone) {
-                if (is.null(sample_ids)) {
-                    sample_ids <- sampleMetadata(obj)$sample_id
-                }
-            } else {
+            # With chromatograms, the spectra follow their samples.
+            if (obj@options$chromatograms$show) {
                 sample_ids <- obj@options$chromatograms$sample_ids
             }
 
-            obj@options$spectra <- list(
+            obj@options$spectra <- .layer_options(
+                args,
                 show = TRUE,
-                sample_ids = sample_ids,
-                mode = mode,
-                ms_level = ms_level,
-                rt = rt,
-                scan_index = scan_index,
-                interval = interval,
-                spectral_match_db = spectral_match_db,
-                match_target_index = match_target_index,
-                peak_label_size = peak_label_size,
-                intensity_breaks_by = intensity_breaks_by,
-                mz_breaks_n = mz_breaks_n,
-                auto_facet = auto_facet
-            )
+                sample_ids = .default_sample_ids(obj, sample_ids))
 
             obj@data <- create_spectra(obj@data, obj@options)
             return(obj)
@@ -392,25 +351,24 @@ lp_spectra <- function(
 #'   lp_arrange(group_by = "sample_id")
 #' p
 lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_total_ion_current",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (!is_xcms_data(obj@data@source) &&
-                !is.character(obj@data@source) &&
-                !is(obj@data@source, "XcmsRawList")) {
-                stop("total_ion_current: to plot the total ion current the data object should be of class XcmsExperiment, MsExperiment, XCMSnExp, XcmsRawList, or a character vector of raw file paths.")
-            }
+            .require_source(
+                obj,
+                function(source) {
+                    is_xcms_data(source) || is.character(source) ||
+                        is(source, "XcmsRawList")
+                },
+                "total_ion_current: to plot the total ion current the data object should be of class XcmsExperiment, MsExperiment, XCMSnExp, XcmsRawList, or a character vector of raw file paths.")
 
-            if (is.null(sample_ids)) {
-                sample_ids <- sampleMetadata(obj)$sample_id
-            }
-
-            obj@options$total_ion_current <- list(
+            obj@options$total_ion_current <- .layer_options(
+                args,
                 show = TRUE,
-                sample_ids = sample_ids,
-                type = type
-            )
+                sample_ids = .default_sample_ids(obj, sample_ids))
 
             obj@data <- create_total_ion_current(obj@data, obj@options)
 
@@ -488,28 +446,16 @@ lp_intensity_map <- function(
     x_dim <- match.arg(x_dim, c("rt", "mz"))
     y_dim <- match.arg(y_dim, c("mz", "rt"))
 
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_intensity_map",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
-            if (is.null(sample_ids)) {
-                sample_ids <- sampleMetadata(obj)$sample_id
-            }
-
-            obj@options$intensity_maps <- list(
+            obj@options$intensity_maps <- .layer_options(
+                args,
                 show = TRUE,
-                sample_ids = sample_ids,
-                mz_range = mz_range,
-                rt_range = rt_range,
-                x_dim = x_dim,
-                y_dim = y_dim,
-                fill_scale = fill_scale,
-                geom = geom,
-                point_size = point_size,
-                bin_rt = bin_rt,
-                bin_mz = bin_mz,
-                colour_scale = colour_scale
-            )
+                sample_ids = .default_sample_ids(obj, sample_ids))
 
             obj@data <- create_intensity_map(obj@data, obj@options)
 
@@ -543,9 +489,10 @@ lp_rt_diff_plot <- function() {
         name = "lp_rt_diff_plot",
         args_list = list(),
         fn = function(obj) {
-            if (!is_xcms_data(obj@data@source)) {
-                stop("lp_rt_diff_plot: to plot the RT differences the data object should be either of class XcmsExperiment or XCMSnExp.")
-            }
+            .require_source(
+                obj,
+                is_xcms_data,
+                "lp_rt_diff_plot: to plot the RT differences the data object should be either of class XcmsExperiment or XCMSnExp.")
 
             if (!has_adjusted_rtime(obj@data)) {
                 stop("lp_rt_diff_plot: RT alignment was not performed.")
@@ -626,9 +573,11 @@ lp_peak_density <- function(
     rt_unit = "second",
     simulate = NULL
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_peak_density",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
             if (is.null(get_detected_peaks(obj@data@source))) {
                 stop(
@@ -662,17 +611,8 @@ lp_peak_density <- function(
             if (!"rtmin" %in% names(features)) features$rtmin <- NA_real_
             if (!"rtmax" %in% names(features)) features$rtmax <- NA_real_
 
-            obj@options$peak_density <- list(
-                show = TRUE,
-                features = features,
-                bw = bw,
-                min_fraction = min_fraction,
-                min_samples = min_samples,
-                sample_groups = sample_groups,
-                max_features = max_features,
-                rt_unit = rt_unit,
-                simulate = simulate
-            )
+            obj@options$peak_density <- .layer_options(
+                args, show = TRUE, features = features)
 
             obj@data <- create_peak_density(obj@data, obj@options)
 
@@ -727,9 +667,11 @@ lp_peak_count_image <- function(
         stop("lp_peak_count_image: 'bin_size' must be a positive number.")
     }
 
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_peak_count_image",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
             if (is.null(get_detected_peaks(obj@data@source))) {
                 stop(
@@ -739,14 +681,7 @@ lp_peak_count_image <- function(
                 )
             }
 
-            obj@options$peak_count_image <- list(
-                show = TRUE,
-                sample_ids = sample_ids,
-                bin_size = bin_size,
-                log = log,
-                rt_range = rt_range,
-                fill_scale = fill_scale
-            )
+            obj@options$peak_count_image <- .layer_options(args, show = TRUE)
 
             obj@data <- create_peak_count_image(obj@data, obj@options)
 
@@ -813,9 +748,11 @@ lp_chrom_peak_rects <- function(
         rt_range = NULL,
         mz_range = NULL
 ) {
+    args <- as.list(environment())
+
     make_interface_function(
         name = "lp_chrom_peak_rects",
-        args_list = as.list(environment()),
+        args_list = args,
         fn = function(obj) {
             has_map <- isTRUE(obj@options$intensity_maps$show)
             has_trace <- isTRUE(obj@options$mass_traces$show)
@@ -878,16 +815,8 @@ lp_chrom_peak_rects <- function(
                 }
             }
 
-            obj@options$chrom_peak_rects <- list(
-                show = TRUE,
-                sample_ids = sample_ids,
-                border = border,
-                fill = fill,
-                alpha = alpha,
-                linewidth = linewidth,
-                rt_range = rt_range,
-                mz_range = mz_range
-            )
+            obj@options$chrom_peak_rects <- .layer_options(
+                args, show = TRUE, sample_ids = sample_ids)
 
             return(obj)
         }
