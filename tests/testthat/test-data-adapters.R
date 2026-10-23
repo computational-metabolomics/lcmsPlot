@@ -65,14 +65,13 @@ test_that("get_metadata creates metadata from an MsExperiment object and existin
   expect_equal(metadata$test_column, c("S1", "S2"))
 })
 
-test_that("get_metadata creates metadata from an XCMSnExp object", {
+test_that("lcmsPlotDataContainer reads the metadata of an XCMSnExp object", {
   # arrange
-  sample_id_column <- "sample_name"
-  metadata <- NULL
   obj <- get_XCMSnExp_object()
 
   # act
-  metadata <- get_metadata(obj, sample_id_column, metadata)
+  container <- lcmsPlotDataContainer(obj, sample_id_column = "sample_name")
+  metadata <- sampleMetadata(container)
 
   # assert
   expect_equal(nrow(metadata), 2)
@@ -89,12 +88,13 @@ test_that("get_detected_peaks returns NULL for input paths", {
   expect_null(detected_peaks)
 })
 
-test_that("get_detected_peaks returns the detected peaks for an XCMSnExp object", {
-  # arrange
+test_that("get_detected_peaks returns the detected peaks of an XCMSnExp object", {
+  # arrange: XCMSnExp input is stored as an XcmsExperiment
   obj <- get_XCMSnExp_object(should_detect_peaks = TRUE)
+  container <- lcmsPlotDataContainer(obj, sample_id_column = "sample_name")
 
   # act
-  detected_peaks <- get_detected_peaks(obj)
+  detected_peaks <- get_detected_peaks(container@source)
 
   # assert
   expect_gt(nrow(detected_peaks), 0)

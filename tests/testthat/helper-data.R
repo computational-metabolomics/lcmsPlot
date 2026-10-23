@@ -1,14 +1,17 @@
-get_raw_data <- function(file_index = 1) {
-  raw_file <- dir(system.file("cdf", package = "faahKO"), full.names = TRUE, recursive = TRUE)[file_index]
-  new("MzrReader", connection = mzR::openMSfile(raw_file))
-}
-
-close_raw_data <- function(raw_data) {
-  ms_close(raw_data)
-}
-
 get_test_sample_paths <- function(indices = c(1, 7)) {
   dir(system.file("cdf", package = "faahKO"), full.names = TRUE, recursive = TRUE)[indices]
+}
+
+# An in-memory Spectra object from spectra data and per-spectrum peak lists.
+make_spectra <- function(spectra_data, mz, intensity) {
+  spectra_data$mz <- IRanges::NumericList(mz, compress = FALSE)
+  spectra_data$intensity <- IRanges::NumericList(intensity, compress = FALSE)
+  Spectra::Spectra(spectra_data)
+}
+
+# A data container over faahKO raw files, with its spectra loaded.
+get_raw_container <- function(indices = 1) {
+  ensure_spectra(lcmsPlotDataContainer(get_test_sample_paths(indices)))
 }
 
 get_MsExperiment_object <- function() {

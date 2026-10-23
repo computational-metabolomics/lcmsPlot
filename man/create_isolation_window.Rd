@@ -7,8 +7,8 @@
 create_isolation_window(obj, options, pid, sample_id)
 }
 \arguments{
-\item{obj}{An instance of class \code{lcmsPlotDataContainer} whose \code{data_obj}
-is a \code{purityA} object.}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer} whose source is a
+\code{purityA} object.}
 
 \item{options}{A \code{list} of plot options (reads \code{options$isolation_window}).}
 
@@ -19,14 +19,12 @@ event(s) to visualise. \code{NULL} selects all events.}
 Ignored when \code{pid} is provided. \code{NULL} selects all samples.}
 }
 \value{
-A modified \code{lcmsPlotDataContainer} with \code{spectra} and
-\code{feature_metadata} slots populated.
+A modified \code{lcmsPlotDataContainer} with its \code{spectra} slot set.
 }
 \description{
-Extracts the MS1 survey scan nearest to a fragmentation event from
-\code{purityA@puritydf}, reads the spectrum from the raw file, and stores it
-in the \code{spectra} slot. Isolation-window boundaries and the \code{inPurity} score
-are stored in \code{feature_metadata} for downstream annotation by
-\code{plot_isolation_window()}.
+Takes the MS1 survey scan nearest to each selected fragmentation event of
+\code{purityA@puritydf} and stores it in the \code{spectra} slot. The isolation
+window (\code{precursor_mz}, \code{isolation_window_half_width}) and the \code{in_purity}
+score are stored as spectra variables for \code{plot_isolation_window()}.
 }
 \keyword{internal}

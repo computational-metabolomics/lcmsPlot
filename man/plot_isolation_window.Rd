@@ -22,7 +22,7 @@ A \code{ggplot} object.
 Extends the standard spectrum plot by adding a semi-transparent rectangle
 spanning the isolation window and a dashed vertical line at the precursor
 m/z. Requires \code{in_purity}, \code{precursor_mz}, and
-\code{isolation_window_half_width} columns in the dataset (merged from
-\code{feature_metadata} by the render pipeline).
+\code{isolation_window_half_width} columns in the dataset (spectra variables
+set by \code{create_isolation_window()}).
 }
 \keyword{internal}

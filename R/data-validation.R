@@ -57,30 +57,3 @@ validate_data_frame <- function(df, fields, exact = FALSE) {
     TRUE
 }
 
-#' Validate the data frame slots of an S4 object
-#'
-#' Iterates over a named list of validator functions, applying each to the
-#' corresponding slot of `object`.
-#'
-#' @param object An S4 object whose slots are to be validated.
-#' @param validators A named `list` of functions, where each name matches a
-#' slot of `object` and each function accepts a `data.frame`/`tibble` and returns
-#' `TRUE` or a character error string (as produced by `validate_data_frame()`).
-#' @return `TRUE` if all validators pass, or a `character` string describing
-#' the first failure in the form `"@slot_name: <message>"`.
-#' @keywords internal
-validate_object <- function(object, validators) {
-    ret <- TRUE
-
-    for (validator_name in names(validators)) {
-        df <- slot(object, validator_name)
-        result <- validators[[validator_name]](df)
-
-        if (!isTRUE(result)) {
-            ret <- sprintf("@%s: %s", validator_name, result)
-            break
-        }
-    }
-
-    ret
-}

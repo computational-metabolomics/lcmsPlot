@@ -9,9 +9,9 @@
 #' @param obj An instance of class `lcmsPlotDataContainer`.
 #' @param options A `list` representing the plot object's options.
 #' @return An instance of class `lcmsPlotDataContainer` with the created
-#' peak density dataset. The `peak_density` slot is a `tibble` with columns
+#' peak density dataset in `summaries$peak_density`, a `tibble` with columns
 #' `rt`, `density`, `rtmin`, `rtmax`, `data_type` (`"density"` or `"rect"`),
-#' `mzmin`, `mzmax`, `metadata_index`, and `feature_metadata_id`.
+#' `mzmin`, `mzmax`, `feature_index` (the row of `features`), and `sample_index`.
 #' @keywords internal
 setGeneric(
     "create_peak_density",
@@ -38,7 +38,7 @@ setMethod(
     f = "create_peak_density",
     signature = c("lcmsPlotDataContainer", "list"),
     definition = function(obj, options) {
-        all_peaks <- get_detected_peaks(obj@data_obj)
+        all_peaks <- get_detected_peaks(obj@source)
 
         if (is.null(all_peaks) || nrow(all_peaks) == 0) {
             stop(
@@ -47,21 +47,11 @@ setMethod(
             )
         }
 
-        all_peaks <- as_tibble(all_peaks)
+        all_peaks <- normalise_peaks(all_peaks)
 
-        # XChromatogram reports sample_index as @fromFile, which need not line up
-        # with its single metadata row; collapse to a dense index so the
-        # renderer's ypos[sample_index] lookup stays in range.
-        if (!all(all_peaks$sample_index %in% obj@metadata$sample_index)) {
-            all_peaks$sample_index <- match(
-                all_peaks$sample_index,
-                sort(unique(all_peaks$sample_index)))
-        }
-
-        # Populate detected_peaks from data_obj if not already done
+        # Populate detected_peaks from the source if not already done
         if (nrow(obj@detected_peaks) == 0) {
-            obj@detected_peaks <- all_peaks |>
-                left_join(obj@metadata, by = "sample_index")
+            obj@detected_peaks <- all_peaks
         }
 
         opts <- options$peak_density
@@ -70,7 +60,7 @@ setMethod(
         min_fraction <- opts$min_fraction
         min_samples <- opts$min_samples
         max_features <- opts$max_features
-        n_samples <- nrow(obj@metadata)
+        n_samples <- nrow(MsExperiment::sampleData(obj@experiment))
 
         sample_groups <- if (is.null(opts$sample_groups)) {
             rep(1L, n_samples)
@@ -97,7 +87,7 @@ setMethod(
         }
 
         feature_definitions <- if (!simulate) {
-            get_feature_definitions(obj@data_obj)
+            get_feature_definitions(obj@source)
         } else {
             NULL
         }
@@ -154,8 +144,8 @@ setMethod(
                 data_type = "density",
                 mzmin = feat[["mzmin"]],
                 mzmax = feat[["mzmax"]],
-                metadata_index = NA_real_,
-                feature_metadata_id = as.integer(i)
+                feature_index = as.integer(i),
+                sample_index = NA_integer_
             )
 
             rect_rows <- if (simulate) {
@@ -193,8 +183,8 @@ setMethod(
                         data_type = "rect",
                         mzmin = feat[["mzmin"]],
                         mzmax = feat[["mzmax"]],
-                        metadata_index = NA_real_,
-                        feature_metadata_id = as.integer(i)
+                        feature_index = as.integer(i),
+                        sample_index = NA_integer_
                     )
                     snum <- snum + 1L
                 }
@@ -233,8 +223,8 @@ setMethod(
                         data_type = "rect",
                         mzmin = feat[["mzmin"]],
                         mzmax = feat[["mzmax"]],
-                        metadata_index = NA_real_,
-                        feature_metadata_id = as.integer(i)
+                        feature_index = as.integer(i),
+                        sample_index = NA_integer_
                     )
                 }
             } else {
@@ -244,10 +234,6 @@ setMethod(
             bind_rows(density_rows, rect_rows)
         })
 
-        obj@peak_density <- bind_rows(results)
-
-        validObject(obj)
-
-        return(obj)
+        .set_summary(obj, "peak_density", bind_rows(results))
     }
 )

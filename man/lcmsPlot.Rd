@@ -13,10 +13,12 @@ lcmsPlot(
 )
 }
 \arguments{
-\item{dataset}{An object of type \code{XCMSnExp}, \code{MsExperiment},
-\code{MZmineSource}, or \code{character}.
-If a \code{character} vector is supplied, it will be interpreted as a list
-of mzML paths.}
+\item{dataset}{The data to plot: an \code{XcmsExperiment}, \code{MsExperiment},
+\code{XCMSnExp}, \code{MChromatograms}, \code{XChromatograms}, \code{XChromatogram},
+\code{XcmsRawList}, \code{purityA}, a data source (see \code{MZmineFeatureListsSource()},
+\code{MsDialPeaksSource()}, \code{CompoundDiscovererNodeSource()},
+\code{LipidSearchSource()}), a Compound Discoverer \code{.cdResult} path, or a
+\code{character} vector of raw file paths (\code{.mzML}, \code{.mzXML}, \code{.CDF}, \code{.raw}).}
 
 \item{sample_id_column}{A \code{character} value indicating which column
 should be used as the sample ID. By default it is \code{"sample_id"}.}

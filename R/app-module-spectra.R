@@ -46,7 +46,7 @@
         output$sample <- shiny::renderUI({
             obj <- lcms_obj()
             shiny::req(obj)
-            ids <- obj@data@metadata$sample_id
+            ids <- sampleMetadata(obj)$sample_id
             shiny::selectInput(
                 inputId  = session$ns("sample_id"),
                 label    = "Sample",

@@ -12,8 +12,8 @@
 #' @param obj An instance of class `lcmsPlotDataContainer`.
 #' @param options A `list` representing the plot object's options.
 #' @return An instance of class `lcmsPlotDataContainer` with the created peak
-#' count image. The `peak_count_image` slot is a `tibble` with columns `rt` (the
-#' bin centre), `n_peaks`, `metadata_index`, and `feature_metadata_id`.
+#' count image in `summaries$peak_count_image`, a `tibble` with columns `rt` (the
+#' bin centre), `n_peaks`, and `sample_index`.
 #' @keywords internal
 setGeneric(
     "create_peak_count_image",
@@ -27,7 +27,7 @@ setMethod(
     definition = function(obj, options) {
         opts <- options$peak_count_image
 
-        peaks <- get_detected_peaks(obj@data_obj)
+        peaks <- get_detected_peaks(obj@source)
         if (is.null(peaks) || nrow(peaks) == 0) {
             stop(
                 "create_peak_count_image: the data object reports no ",
@@ -36,11 +36,7 @@ setMethod(
         }
         peaks <- as_tibble(peaks)
 
-        metadata <- obj@metadata
-        if (!is.null(opts$sample_ids)) {
-            metadata <- metadata |>
-                filter(.data$sample_id %in% opts$sample_ids)
-        }
+        metadata <- .select_samples(obj, opts$sample_ids)
         peaks <- peaks |>
             filter(.data$sample_index %in% metadata$sample_index)
 
@@ -49,7 +45,7 @@ setMethod(
         rt_range <- opts$rt_range
         if (is.null(rt_range)) {
             rt_range <- tryCatch({
-                rts <- xcms::rtime(obj@data_obj)
+                rts <- xcms::rtime(obj@source)
                 if (length(rts) > 0) range(rts, na.rm = TRUE) else NULL
             }, error = function(e) NULL)
         }
@@ -89,20 +85,15 @@ setMethod(
             sample_index = metadata$sample_index
         ))
 
-        obj@peak_count_image <- full_grid |>
+        peak_count_image <- full_grid |>
             left_join(counts, by = c("sample_index", "bin")) |>
             mutate(
                 rt = centres[.data$bin],
                 n_peaks = tidyr::replace_na(.data$n_peaks, 0),
-                metadata_index = .data$sample_index,
-                feature_metadata_id = NA_real_
+                sample_index = as.integer(.data$sample_index)
             ) |>
-            select(
-                "rt", "n_peaks", "metadata_index", "feature_metadata_id"
-            )
+            select("rt", "n_peaks", "sample_index")
 
-        validObject(obj)
-
-        return(obj)
+        .set_summary(obj, "peak_count_image", peak_count_image)
     }
 )

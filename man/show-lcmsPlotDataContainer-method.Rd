@@ -21,19 +21,5 @@ raw_files <- dir(
    full.names = TRUE,
    recursive = TRUE)[1:5]
 
-data_obj <- new("lcmsPlotDataContainer",
-    data_obj = raw_files,
-    metadata = tibble::tibble(),
-    chromatograms = tibble::tibble(),
-    mass_traces = tibble::tibble(),
-    spectra = tibble::tibble(),
-    peak_density = tibble::tibble(),
-    peak_count_image = tibble::tibble(),
-    total_ion_current = tibble::tibble(),
-    intensity_maps = tibble::tibble(),
-    rt_diff = tibble::tibble(),
-    feature_metadata = tibble::tibble(),
-    detected_peaks = tibble::tibble(),
-    purity_scores = tibble::tibble())
-data_obj
+lcmsPlotDataContainer(raw_files)
 }

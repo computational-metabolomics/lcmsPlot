@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.17
+Version: 1.1.18
 Authors@R: c(
     person(
         "Ossama",
@@ -38,8 +38,13 @@ Imports:
     MsExperiment,
     mzR,
     Spectra,
+    Chromatograms (>= 1.2.0),
+    MsCoreUtils,
+    ProtGenerics,
     MsBackendMsp,
     S4Vectors,
+    IRanges,
+    data.table,
     ggplot2,
     scales,
     patchwork,
@@ -53,6 +58,7 @@ Suggests:
     openxlsx,
     faahKO,
     rawrr,
+    MsBackendRawFileReader,
     msPurity,
     ggnewscale,
     htmltools,
@@ -65,8 +71,8 @@ Collate:
     'zzz.R'
     'helpers-data.R'
     'helpers-s4.R'
-    'raw-file-reader.R'
     'xcms-raw-list.R'
+    'raw-data.R'
     'options.R'
     'processing-xcms.R'
     'data-source.R'
@@ -75,11 +81,15 @@ Collate:
     'data-source-ms-dial.R'
     'data-source-compound-discoverer-node.R'
     'data-source-lipid-search.R'
-    'creators-purity.R'
-    'constructors-chromatograms.R'
-    'constructors-spectra.R'
     'data-validation.R'
     'data-adapters.R'
+    'lcmsPlotDataContainer-class.R'
+    'extract-chromatograms.R'
+    'extract-points.R'
+    'extract-spectra.R'
+    'creators-purity.R'
+    'creators-peak-density.R'
+    'creators-peak-count-image.R'
     'plot-units.R'
     'plot-chrom-peak-rects.R'
     'plot-chromatogram.R'
@@ -93,15 +103,9 @@ Collate:
     'plot-purity.R'
     'plot-variants.R'
     'plot.R'
-    'lcmsPlotDataContainer-class.R'
-    'creators-chromatograms.R'
-    'creators-intensity-map.R'
-    'creators-peak-density.R'
-    'creators-peak-count-image.R'
-    'creators-rt-diff.R'
-    'creators-spectra.R'
-    'creators-total-ion-current.R'
+    'plot-data.R'
     'lcmsPlot-class.R'
+    'subset-features.R'
     'app-utils.R'
     'app-options.R'
     'app-module-chromatogram.R'
@@ -116,4 +120,4 @@ Roxygen: list(markdown = TRUE)
 biocViews: Metabolomics, MassSpectrometry
 BugReports: https://github.com/computational-metabolomics/lcmsPlot/issues
 Config/testthat/edition: 3
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.1

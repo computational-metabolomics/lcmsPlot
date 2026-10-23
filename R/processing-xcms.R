@@ -1,11 +1,4 @@
 xcms_utils <- list(
-    has_rt_alignment_been_performed = function(xcms_obj) {
-        xcms::processHistory(xcms_obj) |>
-            lapply(function(p) p@type == "Retention time correction") |>
-            unlist() |>
-            any()
-    },
-
     # Feature identifiers come from the row names of the feature definitions,
     # i.e. whatever the user has set them to (or the "FT0001"-style defaults
     # xcms assigns during correspondence). Only when an object carries no row

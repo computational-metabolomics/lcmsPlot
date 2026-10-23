@@ -6,10 +6,12 @@
 #' The `lcmsPlot` function is the main entry point and the preferred approach
 #' to creating `lcmsPlotClass` objects.
 #'
-#' @param dataset An object of type `XCMSnExp`, `MsExperiment`,
-#' `MZmineSource`, or `character`.
-#' If a `character` vector is supplied, it will be interpreted as a list
-#' of mzML paths.
+#' @param dataset The data to plot: an `XcmsExperiment`, `MsExperiment`,
+#' `XCMSnExp`, `MChromatograms`, `XChromatograms`, `XChromatogram`,
+#' `XcmsRawList`, `purityA`, a data source (see `MZmineFeatureListsSource()`,
+#' `MsDialPeaksSource()`, `CompoundDiscovererNodeSource()`,
+#' `LipidSearchSource()`), a Compound Discoverer `.cdResult` path, or a
+#' `character` vector of raw file paths (`.mzML`, `.mzXML`, `.CDF`, `.raw`).
 #' @param sample_id_column A `character` value indicating which column
 #' should be used as the sample ID. By default it is `"sample_id"`.
 #' @param metadata A `data.frame` containing the samples metadata
@@ -45,7 +47,7 @@ lcmsPlot <- function(
 
     new("lcmsPlotClass",
         options = opts,
-        data = create_data_container_from_obj(
+        data = lcmsPlotDataContainer(
             dataset,
             sample_id_column,
             metadata),
@@ -91,119 +93,6 @@ setClass(
         plot = NULL
     )
 )
-
-.render_plot <- function(object, additional_datasets) {
-    dataset_types <- c(DATASET_TYPES, names(additional_datasets))
-    datasets <- lapply(dataset_types, function(dataset_name) {
-        if (object@options[[dataset_name]]$show) {
-            if (dataset_name %in% slotNames(object@data)) {
-                data_df <- slot(object@data, dataset_name)
-            } else {
-                data_df <- additional_datasets[[dataset_name]]
-            }
-
-            if (nrow(data_df) > 0) {
-                data_df <- merge_by_index(
-                    data_df,
-                    object@data@metadata,
-                    index_col = 'metadata_index'
-                )
-
-                if (nrow(object@data@feature_metadata) > 0) {
-                    data_df <- data_df |>
-                        left_join(
-                            object@data@feature_metadata,
-                            by = "feature_metadata_id"
-                        )
-                }
-
-                return(data_df)
-            } else {
-                warning("Empty dataset ", dataset_name)
-                return(NULL)
-            }
-        } else {
-            return(NULL)
-        }
-    })
-    names(datasets) <- dataset_types
-    datasets <- remove_null_elements(datasets)
-
-    object@plot <- plot_data(datasets, object)
-
-    return(object)
-}
-
-.has_data <- function(object) {
-    data_slots <- c(
-        "chromatograms",
-        "mass_traces",
-        "spectra",
-        "total_ion_current",
-        "intensity_maps",
-        "rt_diff",
-        "peak_density",
-        "peak_count_image",
-        "purity_scores"
-    )
-
-    has_slot_data <- any(vapply(
-        data_slots,
-        function(s) nrow(slot(object@data, s)),
-        integer(1)
-    ) > 0)
-
-    # A standalone peak-boundary panel is drawn from @detected_peaks, which is
-    # not a dataset slot of its own. Detected peaks alone are not a plot
-    # request, so the option has to be on as well.
-    has_slot_data ||
-        (isTRUE(object@options$chrom_peak_rects$show) &&
-            nrow(object@data@detected_peaks) > 0)
-}
-
-# Datasets that are derived from a slot at render time rather than living in one
-# of their own. `.render_plot()` appends these to DATASET_TYPES, so each name
-# needs a matching options entry carrying a logical `show`.
-.additional_datasets <- function(object) {
-    additional <- list()
-
-    if (nrow(object@data@purity_scores) > 0) {
-        if (isTRUE(object@options$purity_timeline$show)) {
-            additional$purity_timeline <- object@data@purity_scores
-        }
-        if (isTRUE(object@options$purity_distribution$show)) {
-            additional$purity_distribution <- object@data@purity_scores
-        }
-    }
-
-    # The peak rectangles own a panel only when there is no host layer to
-    # decorate. Deriving that here rather than at `+` time keeps it independent
-    # of the order the layers were added in.
-    has_host <- isTRUE(object@options$intensity_maps$show) ||
-        isTRUE(object@options$mass_traces$show)
-
-    if (isTRUE(object@options$chrom_peak_rects$show) && !has_host &&
-        nrow(object@data@detected_peaks) > 0) {
-        # Project down to the peak geometry plus the join keys. @detected_peaks
-        # already carries the metadata columns, and .render_plot() re-joins
-        # metadata unconditionally, so anything else here would come back
-        # suffixed .x/.y and break faceting and the sample filter.
-        additional$chrom_peak_rects <- object@data@detected_peaks |>
-            dplyr::transmute(
-                mz = .data$mz,
-                mzmin = .data$mzmin,
-                mzmax = .data$mzmax,
-                rt = .data$rt,
-                rtmin = .data$rtmin,
-                rtmax = .data$rtmax,
-                metadata_index = .data$sample_index,
-                feature_metadata_id = NA_real_
-            )
-    }
-
-    additional
-}
-
 
 #' Apply a function to an `lcmsPlotClass` object using the infix `+` operator
 #'
@@ -325,8 +214,7 @@ setMethod(
             stop("iterate_plot_batches requires batch_size")
         }
 
-        # TODO: needs to be reviewed
-        sample_ids <- object@data@metadata$sample_id
+        sample_ids <- sampleMetadata(object)$sample_id
 
         if (length(sample_ids) > object@options$batch_size) {
             split_f <- ceiling(
@@ -386,14 +274,15 @@ setMethod(
             object@options$bypass_plot_generation <- FALSE
             print(object@plot)
         } else {
+            sample_data <- sampleMetadata(object)
             cat("Object of class", class(object), "\n")
-            cat(" Data object type:", class(object@data@data_obj), "\n")
+            cat(" Source type:", class(object@data@source)[1], "\n")
             cat(
                 " Metadata:",
                 paste0(
-                    nrow(object@data@metadata),
+                    nrow(sample_data),
                     " rows, ",
-                    ncol(object@data@metadata),
+                    ncol(sample_data),
                     " columns"
                 ),
                 "\n"
@@ -557,7 +446,7 @@ lp_chromatogram <- function(
         args_list = as.list(environment()),
         fn = function(obj) {
             if (is.null(sample_ids)) {
-                sample_ids <- obj@data@metadata$sample_id
+                sample_ids <- sampleMetadata(obj)$sample_id
             }
 
             if (!is.null(obj@options$batch_size) &&
@@ -591,20 +480,23 @@ lp_chromatogram <- function(
                 transform = transform
             )
 
-            result <- create_chromatograms(
-                obj@data@data_obj,
-                obj@data@metadata,
+            obj@data <- create_chromatograms(
+                obj@data@source,
+                obj@data,
                 obj@options,
                 features)
 
-            obj@data@chromatograms <- if (na.rm) {
-                result$chromatograms[!is.na(result$chromatograms$intensity), ]
-            } else {
-                result$chromatograms
+            if (na.rm) {
+                obj@data@chromatograms <- drop_missing_intensities(
+                    obj@data@chromatograms)
             }
-            obj@data@mass_traces <- result$mass_traces
-            obj@data@feature_metadata <- result$feature_metadata
-            obj@data@detected_peaks <- result$detected_peaks
+
+            # Mass traces are built from the chromatograms' windows, by
+            # whichever of the two layers comes second.
+            if (isTRUE(obj@options$mass_traces$show)) {
+                obj@data <- create_mass_traces(obj@data, obj@options)
+            }
+
             validObject(obj@data)
 
             return(obj)
@@ -652,6 +544,11 @@ lp_mass_trace <- function() {
         args_list = list(),
         fn = function(obj) {
             obj@options$mass_traces$show <- TRUE
+
+            if (length(obj@data@chromatograms) > 0) {
+                obj@data <- create_mass_traces(obj@data, obj@options)
+            }
+
             return(obj)
         }
     )
@@ -746,7 +643,7 @@ lp_spectra <- function(
 
             if  (is_standalone) {
                 if (is.null(sample_ids)) {
-                    sample_ids <- obj@data@metadata$sample_id
+                    sample_ids <- sampleMetadata(obj)$sample_id
                 }
             } else {
                 sample_ids <- obj@options$chromatograms$sample_ids
@@ -845,11 +742,11 @@ lp_peak_density <- function(
         name = "lp_peak_density",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (is.null(get_detected_peaks(obj@data@data_obj))) {
+            if (is.null(get_detected_peaks(obj@data@source))) {
                 stop(
                     "lp_peak_density: the data object reports no ",
-                    "chromatographic peaks. Provide an XCMSnExp, ",
-                    "MsExperiment, XChromatograms, or XChromatogram object ",
+                    "chromatographic peaks. Provide an XcmsExperiment, ",
+                    "XCMSnExp, XChromatograms, or XChromatogram object ",
                     "with detected peaks."
                 )
             }
@@ -860,7 +757,7 @@ lp_peak_density <- function(
             if (is.null(features)) {
                 # Chromatogram objects already define one m/z window per EIC,
                 # which makes `features` redundant for them.
-                features <- get_feature_windows(obj@data@data_obj)
+                features <- get_feature_windows(obj@data@source)
             }
             if (is.null(features)) {
                 stop(
@@ -946,11 +843,11 @@ lp_peak_count_image <- function(
         name = "lp_peak_count_image",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (is.null(get_detected_peaks(obj@data@data_obj))) {
+            if (is.null(get_detected_peaks(obj@data@source))) {
                 stop(
                     "lp_peak_count_image: the data object reports no ",
-                    "chromatographic peaks. Provide an XCMSnExp or ",
-                    "MsExperiment object with detected peaks."
+                    "chromatographic peaks. Provide an XcmsExperiment or ",
+                    "XCMSnExp object with detected peaks."
                 )
             }
 
@@ -998,25 +895,31 @@ lp_peak_count_image <- function(
 #'   lp_arrange(group_by = "sample_id")
 #' p
 lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
-    function(obj) {
-        if (!is_xcms_data(obj@data@data_obj) && !is.character(obj@data@data_obj)) {
-            stop("total_ion_current: to plot the total ion current the data object should be of class XCMSnExp, MsExperiment, or a character vector of raw file paths.")
+    make_interface_function(
+        name = "lp_total_ion_current",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (!is_xcms_data(obj@data@source) &&
+                !is.character(obj@data@source) &&
+                !is(obj@data@source, "XcmsRawList")) {
+                stop("total_ion_current: to plot the total ion current the data object should be of class XcmsExperiment, MsExperiment, XCMSnExp, XcmsRawList, or a character vector of raw file paths.")
+            }
+
+            if (is.null(sample_ids)) {
+                sample_ids <- sampleMetadata(obj)$sample_id
+            }
+
+            obj@options$total_ion_current <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                type = type
+            )
+
+            obj@data <- create_total_ion_current(obj@data, obj@options)
+
+            return(obj)
         }
-
-        if (is.null(sample_ids)) {
-            sample_ids <- obj@data@metadata$sample_id
-        }
-
-        obj@options$total_ion_current <- list(
-            show = TRUE,
-            sample_ids = sample_ids,
-            type = type
-        )
-
-        obj@data <- create_total_ion_current(obj@data, obj@options)
-
-        return(obj)
-    }
+    )
 }
 
 #' Define a 2D intensity map
@@ -1088,30 +991,34 @@ lp_intensity_map <- function(
     x_dim <- match.arg(x_dim, c("rt", "mz"))
     y_dim <- match.arg(y_dim, c("mz", "rt"))
 
-    function(obj) {
-        if (is.null(sample_ids)) {
-            sample_ids <- obj@data@metadata$sample_id
+    make_interface_function(
+        name = "lp_intensity_map",
+        args_list = as.list(environment()),
+        fn = function(obj) {
+            if (is.null(sample_ids)) {
+                sample_ids <- sampleMetadata(obj)$sample_id
+            }
+
+            obj@options$intensity_maps <- list(
+                show = TRUE,
+                sample_ids = sample_ids,
+                mz_range = mz_range,
+                rt_range = rt_range,
+                x_dim = x_dim,
+                y_dim = y_dim,
+                fill_scale = fill_scale,
+                geom = geom,
+                point_size = point_size,
+                bin_rt = bin_rt,
+                bin_mz = bin_mz,
+                colour_scale = colour_scale
+            )
+
+            obj@data <- create_intensity_map(obj@data, obj@options)
+
+            return(obj)
         }
-
-        obj@options$intensity_maps <- list(
-            show = TRUE,
-            sample_ids = sample_ids,
-            mz_range = mz_range,
-            rt_range = rt_range,
-            x_dim = x_dim,
-            y_dim = y_dim,
-            fill_scale = fill_scale,
-            geom = geom,
-            point_size = point_size,
-            bin_rt = bin_rt,
-            bin_mz = bin_mz,
-            colour_scale = colour_scale
-        )
-
-        obj@data <- create_intensity_map(obj@data, obj@options)
-
-        return(obj)
-    }
+    )
 }
 
 #' Generate the retention time difference plot between raw and adjusted datasets
@@ -1135,20 +1042,24 @@ lp_intensity_map <- function(
 #'   lp_rt_diff_plot()
 #' p
 lp_rt_diff_plot <- function() {
-    function(obj) {
-        if (!is_xcms_data(obj@data@data_obj)) {
-            stop("lp_rt_diff_plot: to plot the RT differences the data object should be either of class XCMSnExp or MsExperiment.")
+    make_interface_function(
+        name = "lp_rt_diff_plot",
+        args_list = list(),
+        fn = function(obj) {
+            if (!is_xcms_data(obj@data@source)) {
+                stop("lp_rt_diff_plot: to plot the RT differences the data object should be either of class XcmsExperiment or XCMSnExp.")
+            }
+
+            if (!has_adjusted_rtime(obj@data)) {
+                stop("lp_rt_diff_plot: RT alignment was not performed.")
+            }
+
+            obj@options$rt_diff <- list(show = TRUE)
+            obj@data <- create_rt_diff(obj@data, obj@options)
+
+            return(obj)
         }
-
-        if (!xcms_utils$has_rt_alignment_been_performed(obj@data@data_obj)) {
-            stop("lp_rt_diff_plot: RT alignment was not performed.")
-        }
-
-        obj@options$rt_diff <- list(show = TRUE)
-        obj@data <- create_rt_diff(obj@data, obj@options)
-
-        return(obj)
-    }
+    )
 }
 
 #' Define the arrangement of chromatograms
@@ -1608,8 +1519,8 @@ lp_compound_discoverer <- function(compounds_query = NULL, rt_extend = 10) {
         name = "lp_compound_discoverer",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_cd_result(obj@data@data_obj) &&
-                !is_cd_node_source(obj@data@data_obj)) {
+            if (!is_cd_result(obj@data@source) &&
+                !is_cd_node_source(obj@data@source)) {
                 stop("lp_compound_discoverer: The data object is not a Compound Discoverer results connection or scripting-node source")
             }
 
@@ -1728,7 +1639,7 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
         name = "lp_lipid_search",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_lipid_search_source(obj@data@data_obj)) {
+            if (!is_lipid_search_source(obj@data@source)) {
                 stop("lp_lipid_search: The data object is not a LipidSearch source")
             }
 
@@ -1807,7 +1718,8 @@ lp_chrom_peak_rects <- function(
             has_map <- isTRUE(obj@options$intensity_maps$show)
             has_trace <- isTRUE(obj@options$mass_traces$show)
 
-            if (has_trace && !has_map && nrow(obj@data@mass_traces) == 0) {
+            if (has_trace && !has_map &&
+                nrow(.summary(obj@data, "mass_traces")) == 0) {
                 stop(
                     "lp_chrom_peak_rects: the mass trace panel is empty, so ",
                     "there is nothing to overlay. Mass traces are built from ",
@@ -1820,27 +1732,28 @@ lp_chrom_peak_rects <- function(
             # lp_intensity_map() does not extract peaks, so unlike the
             # chromatogram layers this overlay may have to populate them.
             if (nrow(obj@data@detected_peaks) == 0) {
-                peaks <- get_detected_peaks(obj@data@data_obj)
+                peaks <- .source_peaks(obj@data)
 
-                if (is.null(peaks) || nrow(peaks) == 0) {
+                if (nrow(peaks) == 0) {
                     stop(
                         "lp_chrom_peak_rects: the data object has no detected ",
-                        "peaks. Provide an XCMSnExp or MsExperiment object ",
+                        "peaks. Provide an XcmsExperiment or XCMSnExp object ",
                         "with chromatographic peaks."
                     )
                 }
 
-                obj@data@detected_peaks <- peaks |>
-                    left_join(obj@data@metadata, by = "sample_index")
+                obj@data@detected_peaks <- peaks
                 validObject(obj@data)
             }
 
             # Fail here rather than drawing nothing: an empty host panel is
             # dropped before the renderer runs, so a missing boundary column
             # would otherwise surface as a silently absent overlay.
-            missing_cols <- setdiff(
-                c("rtmin", "rtmax", "mzmin", "mzmax"),
-                names(obj@data@detected_peaks))
+            peaks <- obj@data@detected_peaks
+            bounds <- c("rtmin", "rtmax", "mzmin", "mzmax")
+            missing_cols <- bounds[vapply(bounds, function(col) {
+                !col %in% names(peaks) || all(is.na(peaks[[col]]))
+            }, logical(1))]
             if (length(missing_cols) > 0) {
                 stop(
                     "lp_chrom_peak_rects: the detected peaks are missing the ",
@@ -1927,7 +1840,7 @@ lp_purity_overlay <- function(
         name = "lp_purity_overlay",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@data_obj)) {
+            if (!is_mspurity_data(obj@data@source)) {
                 stop("lp_purity_overlay requires a purityA data object")
             }
 
@@ -1998,7 +1911,7 @@ lp_isolation_window <- function(
         name = "lp_isolation_window",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@data_obj)) {
+            if (!is_mspurity_data(obj@data@source)) {
                 stop("lp_isolation_window requires a purityA data object")
             }
 
@@ -2053,7 +1966,7 @@ lp_purity_timeline <- function(
         name = "lp_purity_timeline",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@data_obj)) {
+            if (!is_mspurity_data(obj@data@source)) {
                 stop("lp_purity_timeline requires a purityA data object")
             }
 
@@ -2110,7 +2023,7 @@ lp_purity_distribution <- function(
         name = "lp_purity_distribution",
         args_list = as.list(environment()),
         fn = function(obj) {
-            if (!is_mspurity_data(obj@data@data_obj)) {
+            if (!is_mspurity_data(obj@data@source)) {
                 stop("lp_purity_distribution requires a purityA data object")
             }
 
@@ -2165,3 +2078,33 @@ lp_get_plot <- function() {
         return(obj@plot)
     }
 }
+
+#' @rdname lcmsPlotDataContainer-accessors
+#' @export
+setMethod("sampleMetadata", "lcmsPlotClass", function(object, ...) {
+    sampleMetadata(object@data)
+})
+
+#' @rdname lcmsPlotDataContainer-accessors
+#' @export
+setMethod("spectra", "lcmsPlotClass", function(object, ...) {
+    spectra(object@data)
+})
+
+#' @rdname lcmsPlotDataContainer-accessors
+#' @export
+setMethod("chromatograms", "lcmsPlotClass", function(object, ...) {
+    chromatograms(object@data)
+})
+
+#' @rdname lcmsPlotDataContainer-accessors
+#' @export
+setMethod("detectedPeaks", "lcmsPlotClass", function(object, ...) {
+    detectedPeaks(object@data)
+})
+
+#' @rdname lcmsPlotDataContainer-accessors
+#' @export
+setMethod("summaries", "lcmsPlotClass", function(object, ...) {
+    summaries(object@data)
+})

@@ -176,3 +176,47 @@ test_that("plot_chromatogram leaves output untouched at the defaults", {
   expect_equal(a, b)
   expect_equal(names(a), names(b))
 })
+
+test_that("faceted panels only hold the rows of their facet value", {
+  # arrange: chromatograms and spectra of two features in two samples, with
+  # peaks for both features
+  datasets <- list(
+    chromatograms = tibble::tibble(
+      rt = rep(1:3, 4), intensity = 1,
+      feature_id = rep(c("A", "B"), each = 6),
+      sample_id = rep(rep(c("s1", "s2"), each = 3), 2)),
+    spectra = tibble::tibble(
+      mz = c(100, 200), intensity = 100, rt = 2, reference = FALSE,
+      feature_id = c("A", "B"), sample_id = "s1"))
+  obj <- lcmsPlot(get_test_sample_paths()) + lp_facets(facets = "feature_id")
+  obj@data@detected_peaks <- normalise_peaks(tibble::tibble(
+    mz = c(100, 200), rt = 2, rtmin = 1, rtmax = 3,
+    sample_index = 1L, feature_id = c("A", "B")))
+
+  seen <- list()
+  record <- function(name) {
+    function(datasets, supporting_datasets, options) {
+      seen[[length(seen) + 1]] <<- list(
+        dataset = name,
+        features = unique(datasets[[name]]$feature_id),
+        peaks = unique(supporting_datasets$detected_peaks$feature_id),
+        rows = nrow(datasets[[name]]))
+      ggplot2::ggplot()
+    }
+  }
+  plot_config <- list(
+    chromatograms = record("chromatograms"),
+    spectra = record("spectra"))
+
+  # act
+  plot_multiple_faceted_datasets(datasets, obj, plot_config)
+
+  # assert: one panel per feature, every dataset and peak narrowed to it
+  expect_length(seen, 4)
+  for (panel in seen) {
+    expect_length(panel$features, 1)
+    expect_equal(panel$peaks, panel$features)
+  }
+  expect_equal(
+    vapply(seen, `[[`, integer(1), "rows"), c(6L, 1L, 6L, 1L))
+})

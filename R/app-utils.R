@@ -79,7 +79,7 @@
 
 #' Classes the Shiny app accepts when loading a `.rds` or `.RData` payload
 #'
-#' These match the classes `lcmsPlot()` understands as `data_obj` (see
+#' These match the classes `lcmsPlot()` understands as `dataset` (see
 #' `R/lcmsPlotDataContainer-class.R`). Kept as a module-level constant so
 #' it's easy to extend in one place.
 #'

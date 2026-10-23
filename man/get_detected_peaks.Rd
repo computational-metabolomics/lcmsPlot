@@ -2,8 +2,8 @@
 % Please edit documentation in R/data-adapters.R
 \name{get_detected_peaks}
 \alias{get_detected_peaks}
+\alias{get_detected_peaks.default}
 \alias{get_detected_peaks.character}
-\alias{get_detected_peaks.XCMSnExp}
 \alias{get_detected_peaks.MsExperiment}
 \alias{get_detected_peaks.MChromatograms}
 \alias{get_detected_peaks.XChromatograms}
@@ -13,13 +13,13 @@
 \alias{get_detected_peaks.CompoundDiscovererNodeSource}
 \alias{get_detected_peaks.LipidSearchSource}
 \alias{get_detected_peaks.purityA}
-\title{Get the detected peaks from the data object (e.g. XCMSnExp)}
+\title{Get the detected peaks from the data object (e.g. XcmsExperiment)}
 \usage{
 get_detected_peaks(obj)
 
-\method{get_detected_peaks}{character}(obj)
+\method{get_detected_peaks}{default}(obj)
 
-\method{get_detected_peaks}{XCMSnExp}(obj)
+\method{get_detected_peaks}{character}(obj)
 
 \method{get_detected_peaks}{MsExperiment}(obj)
 
@@ -56,7 +56,8 @@ Supported inputs behave as follows:
 \itemize{
 \item \strong{\code{character}} – Assumed to represent sample paths; no peak detection
 information is available. Always returns \code{NULL}.
-\item \strong{\code{XCMSnExp}} and \strong{\code{MsExperiment}} – If the object is processed and
+\item \strong{\code{MsExperiment}} (including \code{XcmsExperiment}) – If the object is
+processed and
 contains chromatographic peaks, extracts \code{xcms::chromPeaks(obj)} and
 returns it as a data frame.
 The column \code{sample} is renamed to \code{sample_index}.

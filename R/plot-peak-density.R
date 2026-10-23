@@ -65,11 +65,11 @@ plot_peak_density <- function(
         mutate(feature_label = make_label(.data$mzmin, .data$mzmax))
 
     fid_to_label <- density_data |>
-        distinct(.data$feature_metadata_id, .data$feature_label)
+        distinct(.data$feature_index, .data$feature_label)
 
     # Per-feature max density (for rect ymax when faceting with free scales)
     feat_max_density <- density_data |>
-        group_by(.data$feature_metadata_id) |>
+        group_by(.data$feature_index) |>
         summarize(feat_max_density = max(.data$density), .groups = "drop")
 
     # Assign y positions and feature labels to detected peaks per feature
@@ -97,20 +97,20 @@ plot_peak_density <- function(
             mutate(
                 rt_plot = .data$rt / rt_scale,
                 y_pos = ypos[.data$sample_index],
-                feature_metadata_id = as.integer(i)
+                feature_index = as.integer(i)
             )
     })
     peaks_by_feature <- bind_rows(remove_null_elements(peaks_by_feature))
 
     if (nrow(peaks_by_feature) > 0) {
         peaks_by_feature <- peaks_by_feature |>
-            left_join(fid_to_label, by = "feature_metadata_id")
+            left_join(fid_to_label, by = "feature_index")
     }
 
     if (nrow(rect_data) > 0) {
         rect_data <- rect_data |>
-            left_join(fid_to_label, by = "feature_metadata_id") |>
-            left_join(feat_max_density, by = "feature_metadata_id") |>
+            left_join(fid_to_label, by = "feature_index") |>
+            left_join(feat_max_density, by = "feature_index") |>
             mutate(
                 rtmin_plot = .data$rtmin / rt_scale,
                 rtmax_plot = .data$rtmax / rt_scale
@@ -161,7 +161,7 @@ plot_peak_density <- function(
         )
     }
 
-    n_features <- length(unique(density_data$feature_metadata_id))
+    n_features <- length(unique(density_data$feature_index))
     auto_facet <- n_features > 1 &&
         single &&
         is.null(options$facets$facets) &&

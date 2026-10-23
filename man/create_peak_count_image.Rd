@@ -17,8 +17,8 @@ create_peak_count_image(obj, options)
 }
 \value{
 An instance of class \code{lcmsPlotDataContainer} with the created peak
-count image. The \code{peak_count_image} slot is a \code{tibble} with columns \code{rt} (the
-bin centre), \code{n_peaks}, \code{metadata_index}, and \code{feature_metadata_id}.
+count image in \code{summaries$peak_count_image}, a \code{tibble} with columns \code{rt} (the
+bin centre), \code{n_peaks}, and \code{sample_index}.
 }
 \description{
 This function creates an \code{lcmsPlotDataContainer} object holding the number of
