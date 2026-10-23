@@ -114,62 +114,6 @@ spectra_targets <- function(obj, samples, opt, is_standalone) {
         target_rt = unlist(rts))
 }
 
-#' Read the spectra of the target scans
-#'
-#' @param obj An `lcmsPlotDataContainer` whose spectra are loaded.
-#' @param targets A `data.frame` as returned by [spectra_targets()].
-#' @param ms_level The MS level of the scans matched by retention time.
-#' @return An in-memory `Spectra` object, one spectrum per target, with
-#' spectra variables `sample_index`, `feature_id`, and `reference`.
-#' @keywords internal
-select_target_spectra <- function(obj, targets, ms_level) {
-    if (nrow(targets) == 0) {
-        return(Spectra::Spectra())
-    }
-
-    by_sample <- split(
-        seq_len(nrow(targets)),
-        factor(targets$sample_index, levels = unique(targets$sample_index)))
-
-    parts <- lapply(names(by_sample), function(sample_key) {
-        rows <- by_sample[[sample_key]]
-        target <- targets[rows, , drop = FALSE]
-
-        if ("scan_index" %in% colnames(target)) {
-            sps <- raw_spectra(obj, as.integer(sample_key))
-            idx <- target$scan_index
-        } else {
-            sps <- raw_spectra(obj, as.integer(sample_key), ms_level)
-            if (length(sps) == 0) {
-                stop("No scans found with the specified MS level.")
-            }
-            idx <- .closest_scans(Spectra::rtime(sps), target$target_rt)
-        }
-
-        selected <- sps[idx]
-        selected$feature_id <- target$feature_id
-        selected
-    })
-
-    sps <- Spectra::setBackend(
-        do.call(c, unname(parts)), Spectra::MsBackendMemory())
-    sps$reference <- FALSE
-    sps
-}
-
-# The index of the scan closest to each target retention time.
-.closest_scans <- function(scan_rt, target_rt) {
-    scan_order <- order(scan_rt)
-    target_order <- order(target_rt)
-    idx <- integer(length(target_rt))
-    idx[target_order] <- scan_order[MsCoreUtils::closest(
-        target_rt[target_order],
-        scan_rt[scan_order],
-        tolerance = Inf,
-        duplicates = "keep")]
-    idx
-}
-
 read_spectral_library <- function(paths) {
     source <- if (length(paths) == 1 && all(endsWith(paths, ".msp"))) {
         MsBackendMsp::MsBackendMsp()
