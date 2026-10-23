@@ -1,3 +1,55 @@
+# lcmsPlot 1.1.18
+
+- **Breaking: `lcmsPlotDataContainer` now holds RforMassSpectrometry data
+  structures** (#52). The sample metadata is the `sampleData()` of an
+  `MsExperiment`, chromatograms are a `Chromatograms` object, and spectra are
+  a `Spectra` object. Every dataset is keyed by `sample_index`, and feature
+  annotations (`feature_id`, `name`, `formula`, ...) are carried by the
+  chromatograms, spectra, and peaks they describe. Migrating:
+  - `create_data_container_from_obj()` is replaced by
+    `lcmsPlotDataContainer()`.
+  - The slots `data_obj`, `metadata`, `feature_metadata`, and the per-dataset
+    data frames are gone. Use the accessors `sampleMetadata()`,
+    `chromatograms()`, `spectra()`, `detectedPeaks()`, and `summaries()`
+    (mass traces, intensity maps, total ion current, RT differences, peak
+    density, peak counts, and purity scores) on an `lcmsPlot` object or its
+    container.
+  - The `metadata_index` and `feature_metadata_id` columns are replaced by
+    `sample_index` and the annotation columns themselves.
+  - `XCMSnExp` input is converted to an `XcmsExperiment`.
+  - `aggregation_fun = "mean"` on an `XcmsRawList` is now the mean of each
+    scan's centroids; the profile matrix is no longer used.
+  - The internal raw file readers (`MsRawReader` and its subclasses) are
+    removed; raw data is read through `Spectra` backends.
+    `MsBackendRawFileReader` is needed to read the spectra of ThermoFisher
+    `.raw` files, while their chromatograms are still extracted with `rawrr`.
+- New `subset_features()` keeps the data matching a condition on its
+  annotations without reading the raw data again, for example to draw one
+  plot per compound out of a single extraction.
+- **Plot data is computed much faster.** All windows of a sample are
+  extracted in one pass over its raw file, and intensity maps are binned with
+  `data.table`. On three faahKO files, 100 extracted ion chromatograms take
+  about 2 s instead of 15.1 s, `closest_apex` spectra 0.6 s instead of 12.2 s,
+  and an intensity map 2.0 s instead of 28.0 s.
+- **Spectra line up with the chromatograms' features.** Each detected peak
+  gives one spectrum, labelled with the feature its peak belongs to; spectra
+  were previously read again for every overlapping feature window and paired
+  with features by position.
+- **Compound Discoverer `.cdResult` chromatograms are no longer duplicated**
+  once per sample.
+- Faceted plots draw only the panels the data has, and highlight only the
+  peaks of each panel's facet value.
+- Raw files are only read once a layer needs them, file connections are
+  always closed, and corrected retention times are applied without matching
+  scan counts.
+- `lp_total_ion_current()` now sums each scan's peaks for netCDF files
+  whatever the input object. `XcmsExperiment`, `MsExperiment`, and
+  `XCMSnExp` input used the file header's total ion current, which netCDF
+  files do not report as the sum of the scan's peaks.
+- `lp_total_ion_current()`, `lp_intensity_map()`, and `lp_rt_diff_plot()` are
+  now replayed by `iterate_plot_batches()` and `next_plot()`, and
+  `lp_total_ion_current()` honours `sample_ids`.
+
 # lcmsPlot 1.1.17
 
 - Add `CONTRIBUTING.md` and update `README.md` with latest features.
