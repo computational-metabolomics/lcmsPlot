@@ -16,3 +16,5 @@ README.rst
 ^\.claude$
 ^tools$
 ^CONTRIBUTING\.md$
+^tests/baseline$
+^tests/benchmarks$
