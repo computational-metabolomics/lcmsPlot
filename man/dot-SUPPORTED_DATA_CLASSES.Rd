@@ -7,7 +7,7 @@
 .SUPPORTED_DATA_CLASSES
 }
 \description{
-These match the classes \code{lcmsPlot()} understands as \code{data_obj} (see
+These match the classes \code{lcmsPlot()} understands as \code{dataset} (see
 \code{R/lcmsPlotDataContainer-class.R}). Kept as a module-level constant so
 it's easy to extend in one place.
 }

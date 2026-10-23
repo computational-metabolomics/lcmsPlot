@@ -6,7 +6,7 @@
 #'
 #' @param p A `ggplot` object (a chromatogram).
 #' @param purity_scores A `data.frame` with columns `rt`, `in_purity`,
-#'   `metadata_index`, and any additional sample columns merged in by the
+#'   `sample_index`, and any additional sample columns merged in by the
 #'   render pipeline.
 #' @param options A `list` of plot options (reads `options$purity_overlay`).
 #' @return The modified `ggplot` object.
@@ -177,8 +177,8 @@ plot_purity_distribution <- function(
 #' Extends the standard spectrum plot by adding a semi-transparent rectangle
 #' spanning the isolation window and a dashed vertical line at the precursor
 #' m/z. Requires `in_purity`, `precursor_mz`, and
-#' `isolation_window_half_width` columns in the dataset (merged from
-#' `feature_metadata` by the render pipeline).
+#' `isolation_window_half_width` columns in the dataset (spectra variables
+#' set by `create_isolation_window()`).
 #'
 #' @param datasets A named `list` containing a `spectra` element.
 #' @param supporting_datasets Unused; present for API consistency.
@@ -206,11 +206,11 @@ plot_isolation_window <- function(
 
     window_data <- dataset |>
         dplyr::distinct(
-            .data$feature_metadata_id,
+            .data$feature_id,
             .keep_all = TRUE
         ) |>
         dplyr::select(
-            "feature_metadata_id",
+            "feature_id",
             "precursor_mz",
             "isolation_window_half_width",
             dplyr::any_of("in_purity")

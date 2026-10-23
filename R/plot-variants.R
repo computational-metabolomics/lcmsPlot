@@ -19,9 +19,7 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
 
     plt <- plot_config[[dataset_name]](
         datasets = datasets,
-        supporting_datasets = list(
-                detected_peaks = obj@data@detected_peaks,
-                purity_scores = obj@data@purity_scores),
+        supporting_datasets = .supporting_datasets(obj),
         options = obj@options,
         single = TRUE
     )
@@ -47,11 +45,12 @@ plot_single_dataset <- function(datasets, obj, plot_config) {
 #' @return A `patchwork` object combining all generated plots.
 #' @keywords internal
 plot_multiple_datasets <- function(datasets, obj, plot_config) {
+    supporting <- .supporting_datasets(obj)["detected_peaks"]
+
     datasets_plots <- lapply(names(datasets), function (ds_name) {
         plot_config[[ds_name]](
             datasets = datasets,
-            supporting_datasets = list(
-                detected_peaks = obj@data@detected_peaks),
+            supporting_datasets = supporting,
             options = obj@options
         )
     })
@@ -69,7 +68,8 @@ plot_multiple_datasets <- function(datasets, obj, plot_config) {
 #' `plot_multiple_faceted_datasets()` generates plots for multiple dataset types
 #' and arranges them into a faceted grid. Datasets are split according to the
 #' faceting variables defined in `obj@options$facets`, with each facet panel
-#' containing a vertically stacked set of dataset-specific plots.
+#' containing a vertically stacked set of dataset-specific plots. The panels
+#' are the combinations of facet values found in the datasets.
 #'
 #' @param datasets A named `list` of data frames, where each element represents
 #' a dataset to be plotted. The names must match the supported dataset types
@@ -83,33 +83,46 @@ plot_multiple_datasets <- function(datasets, obj, plot_config) {
 plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
     facets_options <- obj@options$facets
     facets <- facets_options$facets
+    detected_peaks <- .supporting_datasets(obj)$detected_peaks
 
-    if (nrow(obj@data@feature_metadata) == 0) {
-        metadata <- obj@data@metadata
-    } else {
-        metadata <- left_join(
-            obj@data@feature_metadata,
-            obj@data@metadata,
-            by = c("metadata_index" = "sample_index")
-        )
+    # One panel per combination of facet values found in the datasets. Every
+    # dataset (and the detected peaks) is narrowed to the facet columns it
+    # carries, so a dataset without a facet column is drawn in every panel.
+    facet_keys <- bind_rows(lapply(datasets, function(ds) {
+        if (!all(facets %in% colnames(ds))) {
+            return(NULL)
+        }
+        distinct(ds[, facets, drop = FALSE])
+    })) |>
+        distinct()
+
+    if (nrow(facet_keys) == 0) {
+        stop(
+            "None of the datasets carries all the facet column(s): ",
+            paste(facets, collapse = ", "))
     }
 
-    all_plots <- metadata |>
+    narrow <- function(ds, key) {
+        by <- intersect(facets, colnames(ds))
+        if (length(by) == 0 || nrow(ds) == 0) {
+            return(ds)
+        }
+        semi_join(ds, key[, by, drop = FALSE], by = by)
+    }
+
+    all_plots <- facet_keys |>
         group_by(!!!syms(facets)) |>
         group_map(~ {
             metadata_df <- .y
 
-            datasets_subset <- lapply(datasets, function (ds) {
-                # This keeps only rows in 'ds' that match the values
-                # in 'metadata_df' for the columns listed in 'facets'
-                inner_join(ds, metadata_df, by = facets)
-            })
+            datasets_subset <- lapply(datasets, narrow, key = metadata_df)
+            supporting <- list(
+                detected_peaks = narrow(detected_peaks, metadata_df))
 
             datasets_plots <- lapply(names(datasets_subset), function (dsn) {
                 plot_config[[dsn]](
                     datasets = datasets_subset,
-                    supporting_datasets = list(
-                        detected_peaks = obj@data@detected_peaks),
+                    supporting_datasets = supporting,
                     options = obj@options
                 )
             })

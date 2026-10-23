@@ -17,9 +17,9 @@ create_peak_density(obj, options)
 }
 \value{
 An instance of class \code{lcmsPlotDataContainer} with the created
-peak density dataset. The \code{peak_density} slot is a \code{tibble} with columns
+peak density dataset in \code{summaries$peak_density}, a \code{tibble} with columns
 \code{rt}, \code{density}, \code{rtmin}, \code{rtmax}, \code{data_type} (\code{"density"} or \code{"rect"}),
-\code{mzmin}, \code{mzmax}, \code{metadata_index}, and \code{feature_metadata_id}.
+\code{mzmin}, \code{mzmax}, \code{feature_index} (the row of \code{features}), and \code{sample_index}.
 }
 \description{
 This function creates an \code{lcmsPlotDataContainer} object from

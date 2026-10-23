@@ -5,47 +5,47 @@
 \alias{lcmsPlotDataContainer-class}
 \title{A unified storing mechanism for LC-MS data}
 \description{
-The \code{lcmsPlotDataContainer} class allows the storage of different
-types of LC-MS data.
-This class can be used independently from the plotting utilities,
-however the preferred approach is to use it with the \code{lcmsPlotClass} class.
+The \code{lcmsPlotDataContainer} class holds the input data and every dataset
+derived from it for plotting, using the RforMassSpectrometry data structures
+where one exists.
+}
+\details{
+Every dataset is keyed by \code{sample_index}, the row of the sample metadata
+(\code{sampleMetadata()}) it belongs to. Feature annotations (such as \code{feature_id}, \code{name}, or \code{formula})
+are carried by the rows they describe: \code{chromData()} columns of the
+chromatograms, spectra variables of the spectra, or columns of the
+summaries. Sample metadata is joined in once, when the plot is rendered.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{data_obj}}{The data object. One of: \code{XCMSnExp}, \code{MsExperiment},
-\code{MChromatograms}, \code{XChromatograms}, \code{XChromatogram}, \code{XcmsRawList},
-\code{purityA}, or \code{character} representing mzML paths.}
+\item{\code{experiment}}{An \code{MsExperiment} whose \code{sampleData()} holds the sample
+metadata, with columns \code{sample_index} (the row number), \code{sample_id}, and
+\code{sample_path}. Its spectra are only loaded once a layer needs the raw data.}
 
-\item{\code{metadata}}{A \code{data.frame} containing the sample metadata.}
+\item{\code{source}}{The input object, kept for the information that has no
+RforMassSpectrometry counterpart (detected peaks, feature definitions,
+compound tables, or purity scores). One of: \code{XcmsExperiment},
+\code{MsExperiment}, \code{MChromatograms}, \code{XChromatograms}, \code{XChromatogram},
+\code{XcmsRawList}, \code{ExternalDataSource}, \code{CompoundDiscovererNodeSource},
+\code{LipidSearchSource}, \code{DBIConnection}, \code{purityA}, or \code{character} (raw file
+paths). \code{XCMSnExp} input is stored as an \code{XcmsExperiment}.}
 
-\item{\code{chromatograms}}{A \code{data.frame} containing the chromatograms.}
+\item{\code{chromatograms}}{A \code{Chromatograms} object with the extracted
+chromatograms, held in memory.}
 
-\item{\code{mass_traces}}{A \code{data.frame} containing the mass traces.}
+\item{\code{spectra}}{A \code{Spectra} object with the extracted spectra, held in memory.
+Spectra variables \code{sample_index}, \code{feature_id}, and \code{reference} link each
+spectrum to its sample, feature, and library match.}
 
-\item{\code{spectra}}{A \code{data.frame} containing the spectra.}
+\item{\code{detected_peaks}}{A \code{data.frame} of the detected peaks selected by the
+chromatogram layer, with columns \code{mz}, \code{mzmin}, \code{mzmax}, \code{rt}, \code{rtmin},
+\code{rtmax}, \code{into}, \code{maxo}, and \code{sample_index}, plus \code{feature_id} when the peak
+was matched to a feature.}
 
-\item{\code{peak_density}}{A \code{data.frame} containing peak density curve data and
-optional feature-group rectangles, as produced by \code{lp_peak_density()}.}
-
-\item{\code{peak_count_image}}{A \code{data.frame} containing the number of
-chromatographic peaks per sample per retention-time bin, as produced by
-\code{lp_peak_count_image()}.}
-
-\item{\code{total_ion_current}}{A \code{data.frame} containing the total ion current.}
-
-\item{\code{intensity_maps}}{A \code{data.frame} containing the 2D intensity maps
-representing the distribution of detected peaks across m/z and RT.}
-
-\item{\code{rt_diff}}{A \code{data.frame} containing the raw and adjusted RT values.}
-
-\item{\code{feature_metadata}}{A \code{data.frame} containing feature/compound annotations
-attached to datasets through a column called \code{feature_metadata_id}.}
-
-\item{\code{detected_peaks}}{A \code{data.frame} containing the detected peaks from
-an \code{XCMSnExp}, \code{MsExperiment}, or \code{purityA} object.}
-
-\item{\code{purity_scores}}{A \code{data.frame} containing per-scan precursor ion purity
-scores from a \code{purityA} object, populated by the msPurity layer functions.}
+\item{\code{summaries}}{A named \code{list} of \code{data.frame}s holding the derived datasets
+that have no RforMassSpectrometry counterpart: \code{mass_traces},
+\code{intensity_maps}, \code{total_ion_current}, \code{rt_diff}, \code{peak_density},
+\code{peak_count_image}, and \code{purity_scores}.}
 }}
 

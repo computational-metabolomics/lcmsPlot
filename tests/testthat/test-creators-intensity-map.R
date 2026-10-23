@@ -8,7 +8,7 @@ test_that("create_intensity_map survives a window matching one peak per scan", {
     lp_intensity_map(mz_range = c(495.7, 496.7), rt_range = c(2500, 3500))
 
   # assert
-  expect_gt(nrow(obj@data@intensity_maps), 0)
+  expect_gt(nrow(summaries(obj)$intensity_maps), 0)
 })
 
 test_that("create_intensity_map emits the columns the slot validator pins", {
@@ -21,8 +21,8 @@ test_that("create_intensity_map emits the columns the slot validator pins", {
 
   # assert
   expect_equal(
-    colnames(obj@data@intensity_maps),
-    c("rt", "mz", "intensity", "metadata_index", "feature_metadata_id"))
+    colnames(summaries(obj)$intensity_maps),
+    c("rt", "mz", "intensity", "sample_index"))
 })
 
 test_that("create_intensity_map skips binning for the point geom", {
@@ -38,13 +38,13 @@ test_that("create_intensity_map skips binning for the point geom", {
 
   # assert
   expect_equal(
-    colnames(pointed@data@intensity_maps),
-    colnames(tiled@data@intensity_maps))
+    colnames(summaries(pointed)$intensity_maps),
+    colnames(summaries(tiled)$intensity_maps))
   # binned m/z values sit on the 0.1 grid; raw centroids do not
-  expect_true(all(tiled@data@intensity_maps$mz ==
-                    round(tiled@data@intensity_maps$mz, 1)))
-  expect_false(all(pointed@data@intensity_maps$mz ==
-                     round(pointed@data@intensity_maps$mz, 1)))
+  expect_true(all(summaries(tiled)$intensity_maps$mz ==
+                    round(summaries(tiled)$intensity_maps$mz, 1)))
+  expect_false(all(summaries(pointed)$intensity_maps$mz ==
+                     round(summaries(pointed)$intensity_maps$mz, 1)))
 })
 
 test_that("create_intensity_map honours the bin widths", {
@@ -57,8 +57,8 @@ test_that("create_intensity_map honours the bin widths", {
                      bin_rt = 10, bin_mz = 1)
 
   # assert
-  expect_true(all(coarse@data@intensity_maps$mz %% 1 == 0))
-  expect_true(all(coarse@data@intensity_maps$rt %% 10 == 0))
+  expect_true(all(summaries(coarse)$intensity_maps$mz %% 1 == 0))
+  expect_true(all(summaries(coarse)$intensity_maps$rt %% 10 == 0))
 })
 
 test_that("bin_coordinate matches round() for power-of-ten widths", {
@@ -78,7 +78,7 @@ test_that("plot_intensity_map dispatches on the geom option", {
   dataset <- list(intensity_maps = data.frame(
     rt = c(100, 100, 200), mz = c(300.1, 300.2, 300.1),
     intensity = c(10, 20, 30),
-    metadata_index = 1, feature_metadata_id = 1))
+    sample_index = 1))
   opts <- lcmsPlot:::default_options()
 
   geom_of <- function(geom) {
@@ -98,7 +98,7 @@ test_that("lp_intensity_map records the geom and rejects unknown ones", {
   dataset <- list(intensity_maps = data.frame(
     rt = c(100, 100, 200), mz = c(300.1, 300.2, 300.1),
     intensity = c(10, 20, 30),
-    metadata_index = 1, feature_metadata_id = 1))
+    sample_index = 1))
 
   build <- function(...) {
     obj <- lcmsPlot(get_test_sample_paths(1))

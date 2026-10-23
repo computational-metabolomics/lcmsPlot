@@ -24,6 +24,7 @@ A \code{patchwork} object combining all generated plots.
 \code{plot_multiple_faceted_datasets()} generates plots for multiple dataset types
 and arranges them into a faceted grid. Datasets are split according to the
 faceting variables defined in \code{obj@options$facets}, with each facet panel
-containing a vertically stacked set of dataset-specific plots.
+containing a vertically stacked set of dataset-specific plots. The panels
+are the combinations of facet values found in the datasets.
 }
 \keyword{internal}

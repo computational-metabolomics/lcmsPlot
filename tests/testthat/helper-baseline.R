@@ -158,6 +158,20 @@ normalise_baseline_dataset <- function(df) {
     df
 }
 
+# Deliberate differences from the recorded baseline, by scenario and dataset.
+# `ignore` lists columns whose recorded values were wrong; `distinct` compares
+# the distinct rows only, for datasets that used to repeat rows.
+baseline_changes <- list(
+    xcms_spectra_closest_apex = list(
+        # Spectra used to be read for every peak inside each feature's RT
+        # window, so the peaks of neighbouring features were read again, and
+        # paired with features by a counter that did not follow the
+        # chromatograms. Now each detected peak gives one spectrum, labelled
+        # with the feature its peak was matched to.
+        spectra = list(ignore = "feature_id", distinct = TRUE)
+    )
+)
+
 baseline_path <- function(name) {
     testthat::test_path("fixtures", "baseline", paste0(name, ".rds"))
 }

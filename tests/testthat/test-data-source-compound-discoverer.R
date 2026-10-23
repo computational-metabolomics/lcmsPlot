@@ -166,3 +166,43 @@ test_that("retention times are converted to seconds", {
     expect_equal(unique(res$rtmin), 0.80 * 60)
     expect_equal(unique(res$rtmax), 0.92 * 60)
 })
+
+test_that("a .cdResult gives one chromatogram per compound and sample", {
+    conn <- .write_cd_result_db(checked = NULL)
+    on.exit(DBI::dbDisconnect(conn), add = TRUE)
+    DBI::dbWriteTable(conn, "WorkflowInputFiles", data.frame(
+        StudyFileID = c(1L, 2L),
+        PhysicalFileName = c("s1.raw", "s2.raw")
+    ))
+    # Every stored trace decodes to the same 40-60 s ramp.
+    local_mocked_bindings(parse_trace = function(data) {
+        tibble::tibble(rt = seq(40, 60), intensity = seq_len(21))
+    })
+
+    # act
+    p <- lcmsPlot(conn) +
+        lp_compound_discoverer(rt_extend = 0) +
+        lp_chromatogram(highlight_peaks = TRUE)
+    chrom_data <- as.data.frame(Chromatograms::chromData(chromatograms(p)))
+    plotted <- capture_plot_datasets(p)$chromatograms
+
+    # assert: the annotations live on the chromatograms themselves
+    expect_equal(nrow(chrom_data), 4)
+    expect_setequal(
+        paste(chrom_data$sample_index, chrom_data$name),
+        c("1 Betaine", "2 Betaine", "1 Creatine", "2 Creatine"))
+    expect_equal(
+        chrom_data$formula[chrom_data$name == "Creatine"],
+        rep("C4 H9 N3 O2", 2))
+
+    # assert: each trace is plotted once, clipped to its compound's window
+    # (Betaine 48-55.2 s, Creatine 50.4-57.6 s)
+    expect_equal(nrow(plotted), 2 * (8 + 7))
+    expect_equal(
+        sort(unique(plotted$rt[plotted$name == "Betaine"])), 48:55)
+    expect_setequal(unique(plotted$sample_id), c(1L, 2L))
+
+    # assert: the reported peaks are the compound/sample pairs
+    expect_equal(nrow(detectedPeaks(p)), 4)
+    expect_setequal(detectedPeaks(p)$feature_id, c("Betaine", "Creatine"))
+})

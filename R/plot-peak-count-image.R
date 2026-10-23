@@ -39,7 +39,7 @@ plot_peak_count_image <- function(
             dataset$sample_id,
             levels = levels_in_order)
     } else {
-        dataset$sample_label <- factor(dataset$metadata_index)
+        dataset$sample_label <- factor(dataset$sample_index)
     }
 
     if (isTRUE(opts$log)) {

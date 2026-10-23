@@ -167,19 +167,6 @@ get_XCMSnExp_object_example <- function(
     xdata
 }
 
-#' Merge two data frames using a row-index match
-#'
-#' @param a The left data frame.
-#' @param b The right data frame whose row order defines the index.
-#' @param index_col The name of the column in `a` that contains row indices
-#' referring to `b`.
-#' @return A `tibble` resulting from a left join of `a` and the indexed `b`.
-#' @keywords internal
-merge_by_index <- function(a, b, index_col) {
-    b_mod <- b |> mutate(row_id = row_number())
-    a |> left_join(b_mod, by = setNames("row_id", index_col))
-}
-
 #' Remove `NULL` elements from a list
 #'
 #' @param lst A `list` from which `NULL` entries should be removed.
@@ -414,37 +401,6 @@ get_features <- function(
     }
 
     return(features)
-}
-
-#' Retrieve raw and adjusted retention times from an xcms object
-#'
-#' Extracts raw and adjusted retention times from an xcms-processed object
-#' when retention time correction has been performed.
-#'
-#' If the object is not an xcms processed data object, or if retention time
-#' adjustment has not been applied, the function returns \code{NULL}.
-#'
-#' @param obj An object potentially containing xcms-processed LC-MS data.
-#' @return A `tibble` with one row per scan, containing:
-#' \describe{
-#'   \item{file_index}{Index of the originating raw data file.}
-#'   \item{raw_rt}{Original (unadjusted) retention time.}
-#'   \item{adj_rt}{Adjusted retention time after RT correction.}
-#' }
-#' If no adjusted retention times are available, \code{NULL} is returned.
-#' @keywords internal
-get_adjusted_rts <- function(obj) {
-    if (is_xcms_processed_data(obj) && xcms::hasAdjustedRtime(obj)) {
-        adjusted_rt <- xcms::adjustedRtime(obj)
-        file_indices <- xcms::fromFile(obj)
-        return(tibble(
-            file_index = file_indices,
-            raw_rt = xcms::rtime(obj, adjusted = FALSE),
-            adj_rt = adjusted_rt
-        ))
-    } else {
-        return(NULL)
-    }
 }
 
 #' Detect field separator from file extension

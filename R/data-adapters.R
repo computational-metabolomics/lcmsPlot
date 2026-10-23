@@ -5,7 +5,7 @@
 #'
 #' Depending on the class of `obj`, metadata may be:
 #' - **constructed** (e.g., from character vectors of file paths), or
-#' - **extracted and optionally replaced** (e.g., from `XCMSnExp` or
+#' - **extracted and optionally replaced** (e.g., from `XcmsExperiment` or
 #'   `MsExperiment` objects).
 #'
 #' Across all methods, the returned metadata is enriched with:
@@ -31,18 +31,10 @@
 #' * `sample_path`: the input paths from `obj`
 #'
 #'
-#' @section `XCMSnExp` input:
-#' Metadata is taken from `xcms::phenoData(obj)`.
-#'
-#' **If `metadata` is provided:**
-#' It replaces the existing `phenoData`.
-#'
-#' The returned metadata always includes:
-#' * `sample_index`: row number
-#' * `sample_id`: extracted using `sample_id_column`
-#' * `sample_path`: values from `xcms::fileNames(obj)`
-#'
 #' @section `MsExperiment` input:
+#' This includes `XcmsExperiment` objects, and `XCMSnExp` objects, which are
+#' converted to `XcmsExperiment` before their metadata is read.
+#'
 #' Metadata is taken from `MsExperiment::sampleData(obj)`.
 #'
 #' **If `metadata` is provided:**
@@ -161,30 +153,6 @@ get_metadata.character <- function(obj, sample_id_column, metadata) {
                 sample_path = obj
             )
     }
-}
-
-#' @rdname get_metadata
-#' @keywords internal
-#' @exportS3Method
-get_metadata.XCMSnExp <- function(obj, sample_id_column, metadata) {
-    if (!is.null(metadata)) {
-        xcms::phenoData(obj) <- new("AnnotatedDataFrame", metadata)
-    }
-
-    paths <- xcms::fileNames(obj)
-    df <- as_tibble(xcms::phenoData(obj)@data)
-    df |>
-        mutate(
-            sample_index = row_number(),
-            sample_id = if (
-                !is.null(sample_id_column) && sample_id_column %in% colnames(df)
-            ) {
-                df[[sample_id_column]]
-            } else {
-                tools::file_path_sans_ext(basename(paths))
-            },
-            sample_path = paths
-        )
 }
 
 #' @rdname get_metadata
@@ -459,7 +427,7 @@ get_metadata.purityA <- function(obj, sample_id_column, metadata) {
     }
 }
 
-#' Get the detected peaks from the data object (e.g. XCMSnExp)
+#' Get the detected peaks from the data object (e.g. XcmsExperiment)
 #'
 #' `get_detected_peaks()` is an internal helper that standardises extraction of
 #' detected chromatographic peaks across different object types commonly used in
@@ -470,7 +438,8 @@ get_metadata.purityA <- function(obj, sample_id_column, metadata) {
 #' - **`character`** – Assumed to represent sample paths; no peak detection
 #' information is available. Always returns `NULL`.
 #'
-#' - **`XCMSnExp`** and **`MsExperiment`** – If the object is processed and
+#' - **`MsExperiment`** (including `XcmsExperiment`) – If the object is
+#' processed and
 #' contains chromatographic peaks, extracts `xcms::chromPeaks(obj)` and
 #' returns it as a data frame.
 #' The column `sample` is renamed to `sample_index`.
@@ -497,15 +466,15 @@ get_detected_peaks <- function(obj) {
 #' @rdname get_detected_peaks
 #' @keywords internal
 #' @exportS3Method
-get_detected_peaks.character <- function(obj) {
+get_detected_peaks.default <- function(obj) {
     NULL
 }
 
 #' @rdname get_detected_peaks
 #' @keywords internal
 #' @exportS3Method
-get_detected_peaks.XCMSnExp <- function(obj) {
-    .get_detected_peaks_xcms(obj)
+get_detected_peaks.character <- function(obj) {
+    NULL
 }
 
 #' @rdname get_detected_peaks
@@ -552,10 +521,11 @@ get_detected_peaks.XChromatograms <- function(obj) {
 get_detected_peaks.XChromatogram <- function(obj) {
     if (xcms::hasChromPeaks(obj)) {
         mz_range <- MSnbase::mz(obj)
+        # An XChromatogram is a single sample, whatever file it came from.
         as_tibble(xcms::chromPeaks(obj)) |>
             mutate(
                 mz = mean(mz_range),
-                sample_index = obj@fromFile
+                sample_index = 1L
             )
     } else {
         NULL
@@ -639,13 +609,6 @@ get_grouped_peaks.default <- function(obj) {
     } else {
         NULL
     }
-}
-
-#' @rdname get_grouped_peaks
-#' @keywords internal
-#' @exportS3Method
-get_grouped_peaks.XCMSnExp <- function(obj) {
-    .get_grouped_peaks_xcms(obj)
 }
 
 #' @rdname get_grouped_peaks
@@ -776,13 +739,6 @@ get_feature_definitions <- function(obj) {
 #' @exportS3Method
 get_feature_definitions.default <- function(obj) {
     NULL
-}
-
-#' @rdname get_feature_definitions
-#' @keywords internal
-#' @exportS3Method
-get_feature_definitions.XCMSnExp <- function(obj) {
-    .get_feature_definitions_xcms(obj)
 }
 
 #' @rdname get_feature_definitions

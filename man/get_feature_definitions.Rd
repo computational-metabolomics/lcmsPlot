@@ -3,7 +3,6 @@
 \name{get_feature_definitions}
 \alias{get_feature_definitions}
 \alias{get_feature_definitions.default}
-\alias{get_feature_definitions.XCMSnExp}
 \alias{get_feature_definitions.XcmsExperiment}
 \alias{get_feature_definitions.MsExperiment}
 \alias{get_feature_definitions.XChromatograms}
@@ -12,8 +11,6 @@
 get_feature_definitions(obj)
 
 \method{get_feature_definitions}{default}(obj)
-
-\method{get_feature_definitions}{XCMSnExp}(obj)
 
 \method{get_feature_definitions}{XcmsExperiment}(obj)
 

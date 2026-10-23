@@ -76,7 +76,7 @@
         metadata_cols <- shiny::reactive({
             obj <- lcms_obj()
             if (is.null(obj)) character(0)
-            else colnames(obj@data@metadata)
+            else colnames(sampleMetadata(obj))
         })
 
         output$sample_picker <- shiny::renderUI({
@@ -86,7 +86,7 @@
                     class = "text-xs text-slate-400",
                     "Load files to see samples."))
             }
-            ids <- obj@data@metadata$sample_id
+            ids <- sampleMetadata(obj)$sample_id
             shiny::checkboxGroupInput(
                 inputId  = "samples",
                 label    = NULL,
@@ -96,7 +96,7 @@
 
         output$samples_chip <- shiny::renderUI({
             obj <- lcms_obj()
-            n <- if (is.null(obj)) 0L else length(obj@data@metadata$sample_id)
+            n <- if (is.null(obj)) 0L else length(sampleMetadata(obj)$sample_id)
             shiny::tags$span(
                 class = "lp-chip",
                 shiny::icon("vial"),

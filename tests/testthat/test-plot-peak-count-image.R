@@ -3,8 +3,7 @@ generate_peak_count_image <- function() {
   data.frame(
     rt = rep(c(15, 45, 75), times = 2),
     n_peaks = c(4, 7, 2, 3, 0, 5),
-    metadata_index = rep(c(1, 2), each = 3),
-    feature_metadata_id = NA_real_,
+    sample_index = rep(c(1, 2), each = 3),
     sample_id = rep(c("wt15", "ko15"), each = 3),
     sample_index = rep(c(1, 2), each = 3)
   )
@@ -58,18 +57,18 @@ test_that("create_peak_count_image counts peaks per bin and keeps empty bins", {
   # act
   obj <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
     lp_peak_count_image(bin_size = 30)
-  counts <- obj@data@peak_count_image
+  counts <- summaries(obj)$peak_count_image
 
   # assert
   expect_equal(
     colnames(counts),
-    c("rt", "n_peaks", "metadata_index", "feature_metadata_id"))
+    c("rt", "n_peaks", "sample_index"))
   expect_equal(sum(counts$n_peaks), nrow(xcms::chromPeaks(data_obj)))
   expect_true(any(counts$n_peaks == 0))
   # every sample is present in every bin
   expect_equal(
     nrow(counts),
-    length(unique(counts$rt)) * length(unique(counts$metadata_index)))
+    length(unique(counts$rt)) * length(unique(counts$sample_index)))
 })
 
 test_that("create_peak_count_image bins the way xcms::plotChromPeakImage does", {
@@ -90,13 +89,14 @@ test_that("create_peak_count_image bins the way xcms::plotChromPeakImage does", 
     numeric(length(brks) - 1))
 
   # act
-  counts <- (lcmsPlot(data_obj, sample_id_column = "sample_name") +
-    lp_peak_count_image(bin_size = bin_size))@data@peak_count_image
+  obj <- lcmsPlot(data_obj, sample_id_column = "sample_name") +
+    lp_peak_count_image(bin_size = bin_size)
+  counts <- summaries(obj)$peak_count_image
 
   got <- vapply(
-    sort(unique(counts$metadata_index)),
+    sort(unique(counts$sample_index)),
     function(s) {
-      sub <- counts[counts$metadata_index == s, ]
+      sub <- counts[counts$sample_index == s, ]
       sub$n_peaks[order(sub$rt)]
     },
     numeric(length(brks) - 1))

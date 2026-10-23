@@ -3,7 +3,6 @@
 \name{get_grouped_peaks}
 \alias{get_grouped_peaks}
 \alias{get_grouped_peaks.default}
-\alias{get_grouped_peaks.XCMSnExp}
 \alias{get_grouped_peaks.XcmsExperiment}
 \alias{get_grouped_peaks.MsExperiment}
 \alias{get_grouped_peaks.purityA}
@@ -12,8 +11,6 @@
 get_grouped_peaks(obj)
 
 \method{get_grouped_peaks}{default}(obj)
-
-\method{get_grouped_peaks}{XCMSnExp}(obj)
 
 \method{get_grouped_peaks}{XcmsExperiment}(obj)
 

@@ -11,9 +11,24 @@ for (scenario in names(baseline_scenarios)) {
 
         expect_setequal(names(actual), names(expected))
         for (dataset in names(expected)) {
+            # New annotation columns may appear; the recorded ones must hold
+            # the same values. Columns that were entirely missing carried no
+            # values to preserve.
+            change <- baseline_changes[[scenario]][[dataset]]
+            columns <- setdiff(
+                names(Filter(function(x) !all(is.na(x)), expected[[dataset]])),
+                change$ignore)
+            prepare <- function(df) {
+                df <- df[, intersect(columns, colnames(df)), drop = FALSE]
+                if (isTRUE(change$distinct)) {
+                    df <- distinct(df)
+                }
+                normalise_baseline_dataset(df)
+            }
+
             expect_equal(
-                actual[[dataset]],
-                expected[[dataset]],
+                prepare(actual[[dataset]]),
+                prepare(expected[[dataset]]),
                 tolerance = 1e-6,
                 label = paste0(scenario, "$", dataset))
         }

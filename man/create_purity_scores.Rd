@@ -2,22 +2,24 @@
 % Please edit documentation in R/creators-purity.R
 \name{create_purity_scores}
 \alias{create_purity_scores}
-\title{Populate the \code{purity_scores} slot from a \code{purityA} object}
+\title{Create the purity scores of a \code{purityA} source}
 \usage{
 create_purity_scores(obj, options)
 }
 \arguments{
-\item{obj}{An instance of class \code{lcmsPlotDataContainer} whose \code{data_obj}
-slot is a \code{purityA} object.}
+\item{obj}{An instance of class \code{lcmsPlotDataContainer} whose source is a
+\code{purityA} object.}
 
 \item{options}{A \code{list} of plot options.}
 }
 \value{
-A modified \code{lcmsPlotDataContainer} with the \code{purity_scores} slot
-populated.
+A modified \code{lcmsPlotDataContainer} with \code{summaries$purity_scores}
+set: a \code{tibble} with columns \code{rt}, \code{in_purity}, \code{precursor_mz}, and
+\code{sample_index}.
 }
 \description{
-Extracts per-scan precursor ion purity scores from \code{purityA@puritydf} and
-stores them in the \code{purity_scores} slot of the data container.
+Extracts per-scan precursor ion purity scores from \code{purityA@puritydf},
+restricted to the retention time range of the chromatograms when there are
+any.
 }
 \keyword{internal}

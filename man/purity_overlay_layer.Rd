@@ -10,7 +10,7 @@ purity_overlay_layer(p, purity_scores, options)
 \item{p}{A \code{ggplot} object (a chromatogram).}
 
 \item{purity_scores}{A \code{data.frame} with columns \code{rt}, \code{in_purity},
-\code{metadata_index}, and any additional sample columns merged in by the
+\code{sample_index}, and any additional sample columns merged in by the
 render pipeline.}
 
 \item{options}{A \code{list} of plot options (reads \code{options$purity_overlay}).}

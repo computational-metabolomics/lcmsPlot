@@ -3,7 +3,6 @@
 \name{get_metadata}
 \alias{get_metadata}
 \alias{get_metadata.character}
-\alias{get_metadata.XCMSnExp}
 \alias{get_metadata.MsExperiment}
 \alias{get_metadata.MChromatograms}
 \alias{get_metadata.XChromatograms}
@@ -19,8 +18,6 @@
 get_metadata(obj, sample_id_column, metadata)
 
 \method{get_metadata}{character}(obj, sample_id_column, metadata)
-
-\method{get_metadata}{XCMSnExp}(obj, sample_id_column, metadata)
 
 \method{get_metadata}{MsExperiment}(obj, sample_id_column, metadata)
 
@@ -63,7 +60,7 @@ metadata extraction across different classes of input objects.
 Depending on the class of \code{obj}, metadata may be:
 \itemize{
 \item \strong{constructed} (e.g., from character vectors of file paths), or
-\item \strong{extracted and optionally replaced} (e.g., from \code{XCMSnExp} or
+\item \strong{extracted and optionally replaced} (e.g., from \code{XcmsExperiment} or
 \code{MsExperiment} objects).
 }
 
@@ -97,22 +94,10 @@ The supplied \code{metadata} is used and the following columns are added:
 }
 }
 
-\section{\code{XCMSnExp} input}{
-
-Metadata is taken from \code{xcms::phenoData(obj)}.
-
-\strong{If \code{metadata} is provided:}
-It replaces the existing \code{phenoData}.
-
-The returned metadata always includes:
-\itemize{
-\item \code{sample_index}: row number
-\item \code{sample_id}: extracted using \code{sample_id_column}
-\item \code{sample_path}: values from \code{xcms::fileNames(obj)}
-}
-}
-
 \section{\code{MsExperiment} input}{
+
+This includes \code{XcmsExperiment} objects, and \code{XCMSnExp} objects, which are
+converted to \code{XcmsExperiment} before their metadata is read.
 
 Metadata is taken from \code{MsExperiment::sampleData(obj)}.
 

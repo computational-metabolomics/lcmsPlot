@@ -237,8 +237,8 @@ test_that("lp_chrom_peak_rects rejects objects without detected peaks", {
 test_that("lp_chrom_peak_rects follows the host panel's samples", {
   # arrange
   data_obj <- get_XCMSnExp_object_example(indices = 1:2, should_group_peaks = TRUE)
-  host_samples <- lcmsPlot:::get_metadata(
-    data_obj, "sample_name", NULL)$sample_id[1]
+  host_samples <- sampleMetadata(
+    lcmsPlot(data_obj, sample_id_column = "sample_name"))$sample_id[1]
 
   # act: the host restricts the samples, the overlay is left at its default
   obj <- lcmsPlot(data_obj, sample_id_column = "sample_name") +

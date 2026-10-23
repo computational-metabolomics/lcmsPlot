@@ -21,7 +21,7 @@ test_that("lp_peak_density accepts an XChromatograms object", {
   # act
   obj <- lcmsPlot(fixture$chromatograms) +
     lp_peak_density(bw = 30, min_fraction = 0.4)
-  pd <- obj@data@peak_density
+  pd <- summaries(obj)$peak_density
 
   # assert
   expect_gt(nrow(pd), 0)
@@ -37,8 +37,8 @@ test_that("lp_peak_density derives the m/z window from the chromatograms", {
   obj <- lcmsPlot(fixture$chromatograms) + lp_peak_density(bw = 30)
 
   # assert
-  expect_equal(unique(obj@data@peak_density$mzmin), as.numeric(mz_window[, 1]))
-  expect_equal(unique(obj@data@peak_density$mzmax), as.numeric(mz_window[, 2]))
+  expect_equal(unique(summaries(obj)$peak_density$mzmin), as.numeric(mz_window[, 1]))
+  expect_equal(unique(summaries(obj)$peak_density$mzmax), as.numeric(mz_window[, 2]))
 })
 
 test_that("lp_peak_density accepts a single XChromatogram", {
@@ -50,7 +50,7 @@ test_that("lp_peak_density accepts a single XChromatogram", {
     lp_peak_density(bw = 30, min_fraction = 0.4)
 
   # assert
-  expect_gt(nrow(obj@data@peak_density), 0)
+  expect_gt(nrow(summaries(obj)$peak_density), 0)
 })
 
 test_that("lp_peak_density(simulate = FALSE) draws the stored features", {
@@ -62,7 +62,7 @@ test_that("lp_peak_density(simulate = FALSE) draws the stored features", {
   # act
   obj <- lcmsPlot(fixture$chromatograms) +
     lp_peak_density(bw = 30, simulate = FALSE)
-  rects <- obj@data@peak_density[obj@data@peak_density$data_type == "rect", ]
+  rects <- summaries(obj)$peak_density[summaries(obj)$peak_density$data_type == "rect", ]
 
   # assert
   expect_equal(nrow(rects), nrow(stored))
@@ -85,7 +85,7 @@ test_that("lp_peak_density still works on an XCMSnExp with explicit features", {
       bw = 30, min_fraction = 0.4)
 
   # assert
-  expect_gt(nrow(obj@data@peak_density), 0)
+  expect_gt(nrow(summaries(obj)$peak_density), 0)
 })
 
 test_that("lp_peak_density rejects objects without chromatographic peaks", {
@@ -137,7 +137,7 @@ test_that("simulate = TRUE yields one rectangle per supported feature group", {
   # act
   obj <- lcmsPlot(fixture$chromatograms) +
     lp_peak_density(bw = 30, min_fraction = 0.5, simulate = TRUE)
-  rects <- obj@data@peak_density
+  rects <- summaries(obj)$peak_density
   rects <- rects[rects$data_type == "rect", ]
 
   # assert: rectangles must not share a left edge, which is what happened when
