@@ -48,8 +48,6 @@ summaries(object, ...)
 \item{object}{An \code{lcmsPlotDataContainer} or \code{lcmsPlotClass} object.}
 
 \item{...}{Ignored.}
-
-\item{x}{An \code{lcmsPlotDataContainer} or \code{lcmsPlotClass} object.}
 }
 \value{
 See the description.

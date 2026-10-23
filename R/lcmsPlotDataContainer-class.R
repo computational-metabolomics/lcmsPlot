@@ -282,7 +282,6 @@ setMethod(
 #'   `data.frame`s.
 #'
 #' @param object An `lcmsPlotDataContainer` or `lcmsPlotClass` object.
-#' @param x An `lcmsPlotDataContainer` or `lcmsPlotClass` object.
 #' @param ... Ignored.
 #' @return See the description.
 #' @name lcmsPlotDataContainer-accessors
