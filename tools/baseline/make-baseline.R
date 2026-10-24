@@ -1,7 +1,7 @@
 # Regenerate the plot-data baselines used by test-baseline-regression.R.
 #
 # Run from the package root:
-#   Rscript tests/baseline/make-baseline.R
+#   Rscript tools/baseline/make-baseline.R
 #
 # The baselines were recorded on devel before the data container refactor
 # (issue #52); only regenerate them for deliberate changes in plotted values.

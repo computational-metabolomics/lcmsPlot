@@ -1,6 +1,6 @@
 # The values handed to the plotting functions must not change when the data
 # structures behind them do. Each scenario is compared against the reference
-# recorded by tests/baseline/make-baseline.R.
+# recorded by tools/baseline/make-baseline.R.
 
 for (scenario in names(baseline_scenarios)) {
     test_that(paste("plot data matches the baseline:", scenario), {

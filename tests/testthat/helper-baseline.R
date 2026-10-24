@@ -3,7 +3,7 @@
 # Each scenario builds an lcmsPlotClass object. `capture_plot_datasets()` returns
 # the tidy datasets that would be handed to plot_data(), and the reference
 # output recorded before the data container refactor (issue #52) lives in
-# tests/testthat/fixtures/baseline. tests/baseline/make-baseline.R regenerates
+# tests/testthat/fixtures/baseline. tools/baseline/make-baseline.R regenerates
 # it.
 
 .baseline_cache <- new.env(parent = emptyenv())
