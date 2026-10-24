@@ -1,7 +1,7 @@
 # Time how long each layer takes to compute its plot data.
 #
 # Run from the package root on two branches and compare:
-#   Rscript tests/benchmarks/bench-data-structures.R
+#   Rscript tools/benchmarks/bench-data-structures.R
 #
 # Timings cover data creation and the conversion into the tidy datasets handed
 # to plot_data(); ggplot construction is excluded.
