@@ -1,3 +1,17 @@
+# lcmsPlot 1.1.19
+
+- New `MzTabMSource()` reads mzTab-M 2.0 files (as exported by MS-DIAL,
+  MZmine, OpenMS, ...) alongside their raw files (#51). Small molecule
+  features (SMF) become peaks with their `feature_id`, `adduct_ion` and
+  `charge`, annotated with the `name`, `formula`, `database_identifier` and
+  `reliability` of the summary (SML) rows that reference them. The new
+  `lp_mztab()` layer selects the features to plot, e.g.
+  `lp_mztab(features_query = "reliability <= 2")`.
+- The vignette plots a real mzTab-M example: the HUPO-PSI MTBLS263 file
+  (Progenesis QI) with the MetaboLights raw files it describes, cut down to
+  eight features. Both ship in `inst/extdata` (`MTBLS263.mztab`,
+  `mtbls263-mzml.zip`); `tools/mztab/make-mtbls263-example.R` rebuilds them.
+
 # lcmsPlot 1.1.18
 
 - **Breaking: `lcmsPlotDataContainer` now holds RforMassSpectrometry data

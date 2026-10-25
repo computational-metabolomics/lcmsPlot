@@ -5,6 +5,7 @@
 \alias{create_chromatograms,DBIConnection,ANY,ANY,NULL-method}
 \alias{create_chromatograms,CompoundDiscovererNodeSource,ANY,ANY,NULL-method}
 \alias{create_chromatograms,LipidSearchSource,ANY,ANY,NULL-method}
+\alias{create_chromatograms,MzTabMSource,ANY,ANY,NULL-method}
 \alias{create_chromatograms,MChromatograms,ANY,ANY,NULL-method}
 \alias{create_chromatograms,XChromatograms,ANY,ANY,NULL-method}
 \alias{create_chromatograms,XChromatogram,ANY,ANY,NULL-method}
@@ -20,6 +21,8 @@ create_chromatograms(source, container, options, features)
 \S4method{create_chromatograms}{CompoundDiscovererNodeSource,ANY,ANY,NULL}(source, container, options, features)
 
 \S4method{create_chromatograms}{LipidSearchSource,ANY,ANY,NULL}(source, container, options, features)
+
+\S4method{create_chromatograms}{MzTabMSource,ANY,ANY,NULL}(source, container, options, features)
 
 \S4method{create_chromatograms}{MChromatograms,ANY,ANY,NULL}(source, container, options, features)
 

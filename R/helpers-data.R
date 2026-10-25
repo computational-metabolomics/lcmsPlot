@@ -70,6 +70,16 @@ is_lipid_search_source <- function(obj) {
     inherits(obj, "LipidSearchSource")
 }
 
+#' Check whether an object is an mzTab-M data source
+#'
+#' @param obj An object to test.
+#' @return A `logical` value indicating whether the object is a
+#' `MzTabMSource`.
+#' @keywords internal
+is_mztab_source <- function(obj) {
+    inherits(obj, "MzTabMSource")
+}
+
 #' Resolve the first matching column name in a data frame
 #'
 #' Vendor exports name the same logical field differently between versions, so

@@ -390,3 +390,135 @@ test_that("create_chromatograms applies the LipidSearch query per lipid, not per
     "No lipids matched"
   )
 })
+
+mztab_standards <- function(features_query = NULL) {
+  mzml_dir <- file.path(tempdir(), "mztab-standards")
+  utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir
+  )
+  sample_paths <- file.path(
+    mzml_dir, "mzml", c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML"))
+
+  # Proline is found in its own run only; kynurenine is reported as two
+  # features (the monoisotopic ion and its 13C isotopologue) under one SML row,
+  # in its own run only.
+  path <- .write_mztab(
+    locations = paste0("file:///data/", basename(sample_paths)),
+    sml = data.frame(
+      SML_ID = c(1, 2),
+      SMF_ID_REFS = c("1", "2 | 3"),
+      chemical_name = c("L-Proline", "L-Kynurenine"),
+      chemical_formula = c("C5H9NO2", "C10H12N2O3"),
+      reliability = c(1, 3)
+    ),
+    smf = data.frame(
+      SMF_ID = c(1, 2, 3),
+      adduct_ion = c("[M+H]1+", "[M+H]1+", "[M+H]1+"),
+      exp_mass_to_charge = c(116.0706, 209.0921, 210.0955),
+      charge = c(1, 1, 1),
+      retention_time_in_seconds = c(426, 365, 365),
+      retention_time_in_seconds_start = c(417, 359, 359),
+      retention_time_in_seconds_end = c(435, 371, 371),
+      "abundance_assay[1]" = c(24050, NA, NA),
+      "abundance_assay[2]" = c(NA, 18700, 2100),
+      check.names = FALSE
+    )
+  )
+
+  container <- lcmsPlotDataContainer(
+    MzTabMSource(path, sample_paths),
+    sample_id_column = "sample_id")
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$sample_ids <- sampleMetadata(container)$sample_id
+  opts$chromatograms$ppm <- 20
+  opts$mztab$rt_extend <- 120
+  opts$mztab$features_query <- features_query
+
+  list(container = container, opts = opts)
+}
+
+test_that("create_chromatograms extracts every mzTab-M feature from every sample", {
+  # arrange
+  standards <- mztab_standards()
+
+  # act
+  result <- run_create_chromatograms(
+    standards$container, standards$opts, NULL)
+
+  # assert - 3 features x 2 samples, keyed by SMF_ID even where two features
+  # share a compound name.
+  chrom_data <- result$chrom_data
+  expect_equal(nrow(chrom_data), 6)
+  expect_setequal(chrom_data$feature_id, c("1", "2", "3"))
+  expect_equal(
+    sort(unique(chrom_data$name[chrom_data$feature_id %in% c("2", "3")])),
+    "L-Kynurenine")
+  expect_true(all(c("adduct_ion", "charge", "reliability") %in%
+    colnames(chrom_data)))
+
+  proline <- result$chromatograms[
+    result$chromatograms$feature_id == "1" &
+      result$chromatograms$sample_index == 1, ]
+  expect_gt(max(proline$intensity, na.rm = TRUE), 0)
+
+  # Only features with an abundance in a sample are highlightable peaks.
+  peaks <- result$detected_peaks
+  expect_equal(nrow(peaks), 3)
+  expect_setequal(
+    paste(peaks$feature_id, peaks$sample_index), c("1 1", "2 2", "3 2"))
+})
+
+test_that("create_chromatograms applies the mzTab-M query per feature", {
+  # arrange - only proline is identified with reliability <= 2.
+  standards <- mztab_standards(features_query = "reliability <= 2")
+  opts <- standards$opts
+
+  # act
+  result <- run_create_chromatograms(standards$container, opts, NULL)
+
+  # assert - proline is still extracted from both samples, though it has an
+  # abundance in one only.
+  expect_equal(unique(result$chrom_data$name), "L-Proline")
+  expect_setequal(unique(result$chrom_data$sample_index), c(1, 2))
+
+  # A query that matches nothing is an error.
+  opts$mztab$features_query <- 'name == "does-not-exist"'
+  expect_error(
+    run_create_chromatograms(standards$container, opts, NULL),
+    "No features matched"
+  )
+})
+
+test_that("create_chromatograms extracts the MTBLS263 mzTab-M example shipped with the package", {
+  # arrange
+  mzml_dir <- file.path(tempdir(), "mtbls263-example")
+  utils::unzip(
+    system.file("extdata", "mtbls263-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir
+  )
+  container <- lcmsPlotDataContainer(
+    MzTabMSource(
+      system.file("extdata", "MTBLS263.mztab", package = "lcmsPlot"),
+      list.files(file.path(mzml_dir, "mzml"), full.names = TRUE)),
+    sample_id_column = "sample_id")
+
+  opts <- lcmsPlot:::default_options()
+  opts$chromatograms$sample_ids <- sampleMetadata(container)$sample_id
+  opts$chromatograms$ppm <- 10
+  opts$mztab$features_query <- 'name == "Creatinine"'
+
+  # act
+  result <- run_create_chromatograms(container, opts, NULL)
+
+  # assert - both creatinine adducts, in all six runs, each peaking inside
+  # the feature's reported window.
+  expect_setequal(result$chrom_data$feature_id, c("6", "937"))
+  expect_equal(nrow(result$chrom_data), 12)
+  apex <- result$chromatograms |>
+    dplyr::group_by(feature_id, sample_index) |>
+    dplyr::slice_max(intensity, n = 1, with_ties = FALSE)
+  expect_true(all(apex$rt > 400 & apex$rt < 430))
+  expect_equal(nrow(result$detected_peaks), 12)
+})

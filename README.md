@@ -125,6 +125,7 @@ whichever tool produced the data.
 | **MZmine** (2+) | Feature lists | `MZmineFeatureListsSource()` |
 | **MS-DIAL** | Peak tables | `MsDialPeaksSource()` |
 | **LipidSearch** (4.2, 5.2) | Lipid result files | `LipidSearchSource()` + `lp_lipid_search()` |
+| **mzTab-M** (2.0) | Exports from MS-DIAL, MZmine, OpenMS, ... | `MzTabMSource()` + `lp_mztab()` |
 | **Spectral libraries** | MSP (via `MsBackendMsp`) or mzML reference spectra | `lp_spectra(spectral_match_db = "library.msp")` for mirror plots |
 
 Results from external software are paired with the raw files they were
