@@ -4,7 +4,7 @@
 \alias{lp_total_ion_current}
 \title{Define the total ion current (TIC)}
 \usage{
-lp_total_ion_current(sample_ids = NULL, type = "boxplot")
+lp_total_ion_current(sample_ids = NULL, type = "boxplot", initial = TRUE)
 }
 \arguments{
 \item{sample_ids}{A \code{character} vector specifying the sample IDs
@@ -13,6 +13,15 @@ specified in the \code{lcmsPlot} object.}
 
 \item{type}{A \code{character} value indicating the type of plot;
 one of \code{"boxplot"}, \code{"violin"}, \code{"jitter"}.}
+
+\item{initial}{A \code{logical} value, as in \code{Spectra::tic()}. With \code{TRUE}
+(the default) each scan's TIC is the one recorded in the file's scan
+header; with \code{FALSE} it is the sum of the scan's peak intensities. The two
+can differ widely: netCDF headers report the instrument's total ion
+current, which includes signal that is not among the stored peaks. TIC
+chromatograms (\code{lp_chromatogram(aggregation_fun = "sum")}) sum the peaks of
+netCDF files, so on such files they match \code{initial = FALSE}. Scans whose
+header reports no TIC are always summed from their peaks.}
 }
 \value{
 This function returns another function that takes an \code{lcmsPlot}
@@ -24,10 +33,11 @@ adding new data or visual components.
 }
 \description{
 The \code{lp_total_ion_current} generates summary data for the
-total ion current (TIC) of the selected samples. It works both with
-XCMS objects (\code{XCMSnExp}, \code{MsExperiment}) and with raw files passed
-directly to \code{lcmsPlot()} (a \code{character} vector of \code{.mzML}, \code{.mzXML},
-\code{.CDF}, or \code{.raw} paths).
+total ion current (TIC) of the selected samples: one value per MS1 scan.
+It works both with XCMS objects (\code{XcmsExperiment}, \code{MsExperiment},
+\code{XCMSnExp}), \code{XcmsRawList} objects, and with raw files passed directly to
+\code{lcmsPlot()} (a \code{character} vector of \code{.mzML}, \code{.mzXML}, \code{.CDF}, or \code{.raw}
+paths).
 }
 \examples{
 data_obj <- get_XCMSnExp_object_example()

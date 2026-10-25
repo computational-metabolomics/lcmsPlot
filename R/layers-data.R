@@ -326,16 +326,25 @@ lp_spectra <- function(
 #' Define the total ion current (TIC)
 #'
 #' The `lp_total_ion_current` generates summary data for the
-#' total ion current (TIC) of the selected samples. It works both with
-#' XCMS objects (`XCMSnExp`, `MsExperiment`) and with raw files passed
-#' directly to `lcmsPlot()` (a `character` vector of `.mzML`, `.mzXML`,
-#' `.CDF`, or `.raw` paths).
+#' total ion current (TIC) of the selected samples: one value per MS1 scan.
+#' It works both with XCMS objects (`XcmsExperiment`, `MsExperiment`,
+#' `XCMSnExp`), `XcmsRawList` objects, and with raw files passed directly to
+#' `lcmsPlot()` (a `character` vector of `.mzML`, `.mzXML`, `.CDF`, or `.raw`
+#' paths).
 #'
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object.
 #' @param type A `character` value indicating the type of plot;
 #' one of `"boxplot"`, `"violin"`, `"jitter"`.
+#' @param initial A `logical` value, as in `Spectra::tic()`. With `TRUE`
+#' (the default) each scan's TIC is the one recorded in the file's scan
+#' header; with `FALSE` it is the sum of the scan's peak intensities. The two
+#' can differ widely: netCDF headers report the instrument's total ion
+#' current, which includes signal that is not among the stored peaks. TIC
+#' chromatograms (`lp_chromatogram(aggregation_fun = "sum")`) sum the peaks of
+#' netCDF files, so on such files they match `initial = FALSE`. Scans whose
+#' header reports no TIC are always summed from their peaks.
 #' @return This function returns another function that takes an `lcmsPlot`
 #' object and produces a modified version containing the generated
 #' total ion current (TIC) in its `data` slot. It is designed to be used
@@ -350,7 +359,15 @@ lp_spectra <- function(
 #'   lp_total_ion_current(type = "violin") +
 #'   lp_arrange(group_by = "sample_id")
 #' p
-lp_total_ion_current <- function(sample_ids = NULL, type = "boxplot") {
+lp_total_ion_current <- function(
+    sample_ids = NULL,
+    type = "boxplot",
+    initial = TRUE
+) {
+    if (!is.logical(initial) || length(initial) != 1L || is.na(initial)) {
+        stop("lp_total_ion_current: 'initial' must be TRUE or FALSE.")
+    }
+
     args <- as.list(environment())
 
     make_interface_function(

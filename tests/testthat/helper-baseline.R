@@ -108,7 +108,9 @@ baseline_scenarios <- list(
             lp_chromatogram(highlight_peaks = TRUE)
     },
     total_ion_current = function() {
-        lcmsPlot(get_test_sample_paths()) + lp_total_ion_current()
+        # devel summed the peaks of netCDF files given as paths.
+        lcmsPlot(get_test_sample_paths()) +
+            lp_total_ion_current(initial = FALSE)
     },
     intensity_map = function() {
         lcmsPlot(get_test_sample_paths()) +

@@ -16,8 +16,8 @@ The \code{lcmsPlotDataContainer} with \code{summaries$total_ion_current} set:
 a \code{tibble} with columns \code{intensity} and \code{sample_index}.
 }
 \description{
-One value per MS1 scan and sample: the scan's total ion current. It is read
-from the scan header when the format reports it reliably, and summed from
-the scan's peaks otherwise (netCDF files).
+One value per MS1 scan and sample: the scan's total ion current, read from
+the scan header or, with \code{options$total_ion_current$initial = FALSE}, summed
+from the scan's peaks (see \code{lp_total_ion_current()}).
 }
 \keyword{internal}
