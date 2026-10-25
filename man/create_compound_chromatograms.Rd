@@ -4,19 +4,29 @@
 \alias{create_compound_chromatograms}
 \title{Create chromatograms for compound tables}
 \usage{
-create_compound_chromatograms(container, all_compounds, options, rt_extend)
+create_compound_chromatograms(
+  container,
+  all_compounds,
+  options,
+  rt_extend,
+  key = "name"
+)
 }
 \arguments{
 \item{container}{An \code{lcmsPlotDataContainer}.}
 
 \item{all_compounds}{A \code{data.frame} with at least \code{name}, \code{mz}, \code{rt},
 \code{rtmin}, \code{rtmax}, \code{into}, \code{maxo}, and \code{sample_index} columns. \code{formula},
-\code{adduct}, \code{class}, \code{sub_class}, and \code{detected} are used when present.}
+\code{adduct}, \code{adduct_ion}, \code{charge}, \code{reliability}, \code{class}, \code{sub_class}, and
+\code{detected} are used when present.}
 
 \item{options}{A \code{list} of plot options.}
 
 \item{rt_extend}{A \code{numeric} value indicating how much (in seconds) to extend
 the RT window on each side of the compound peak.}
+
+\item{key}{A \code{character} value naming the column that identifies a compound;
+it becomes the \code{feature_id} of its chromatograms and peaks.}
 }
 \value{
 The \code{lcmsPlotDataContainer} with its \code{chromatograms} and
@@ -24,8 +34,8 @@ The \code{lcmsPlotDataContainer} with its \code{chromatograms} and
 }
 \description{
 Shared by the compound-centric data sources (Compound Discoverer scripting
-node, LipidSearch). Each row of \code{all_compounds} describes where to extract a
-compound in one sample: an \code{mz}, an \code{rtmin}/\code{rtmax} window, and the
+node, LipidSearch, mzTab-M). Each row of \code{all_compounds} describes where to
+extract a compound in one sample: an \code{mz}, an \code{rtmin}/\code{rtmax} window, and the
 \code{sample_index} it belongs to.
 }
 \details{

@@ -959,7 +959,8 @@ used LC-MS data processing software. This allows users to visualise processed
 results directly in R, without the need to manually reformat outputs or
 reprocess raw data.
 Below we illustrate interoperability with four widely used tools:
-**Compound Discoverer**, **MZmine**, **MS-DIAL**, and **LipidSearch**.
+**Compound Discoverer**, **MZmine**, **MS-DIAL**, and **LipidSearch**, and with
+the **mzTab-M** exchange format.
 
 Note: These examples are for illustration only and require real data
 to function properly.
@@ -1152,6 +1153,71 @@ lcmsPlot(lipid_search_example) +
     lp_chromatogram(highlight_peaks = TRUE, ppm = 5) +
     lp_grid(rows = "sample_id", cols = "name", free_x = TRUE)
 ```
+
+## mzTab-M
+
+[mzTab-M 2.0](https://github.com/HUPO-PSI/mzTab) is a standard exchange format
+for metabolomics results, exported by MS-DIAL, MZmine and OpenMS among others.
+`MzTabMSource()` reads its small molecule features (the `SMF` section) and
+pairs them with the raw files they were computed from. Each `ms_run` location
+declared in the file's metadata is matched to `sample_paths` by file basename,
+ignoring the extension when there is no exact match.
+
+lcmsPlot ships a real example: the mzTab-M file that the HUPO-PSI
+mzTab repository provides for MetaboLights study
+[MTBLS263](https://www.ebi.ac.uk/metabolights/MTBLS263) (human blood, processed
+with Progenesis QI), together with the six positive-mode runs it describes.
+Both are cut down to the eight features that elute between 380 and 680
+seconds, and the raw files to the retention times and m/z values of those
+features.
+
+```{r load-mztab-results}
+mzml_dir <- file.path(tempdir(), "mtbls263")
+utils::unzip(
+    system.file("extdata", "mtbls263-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir
+)
+
+mztab_example <- MzTabMSource(
+    mztab_path = system.file("extdata", "MTBLS263.mztab", package = "lcmsPlot"),
+    sample_paths = list.files(file.path(mzml_dir, "mzml"), full.names = TRUE)
+)
+
+mztab_example
+```
+
+Features are annotated from the small molecule summary (`SML`) rows that
+reference them, so a feature carries the `name`, `formula`,
+`database_identifier` and `reliability` of its identification. `lp_mztab()`
+selects features with a query on these columns, for example
+`features_query = "reliability <= 2"` to plot only confident identifications.
+Here, we select three compounds by name:
+
+```{r plot-mztab-results, fig.height=6.5, fig.width=9}
+lcmsPlot(mztab_example) +
+    lp_mztab(
+        features_query = 'name %in% c("Creatinine", "Leucine", "Urate")',
+        rt_extend = 20
+    ) +
+    lp_chromatogram(highlight_peaks = TRUE, ppm = 10) +
+    lp_facets(
+        facets = c("name", "feature_id"),
+        ncol = 2,
+        free_x = TRUE,
+        free_y = TRUE
+    ) +
+    lp_labels(title = "MTBLS263 (Progenesis QI)", legend = "Sample") +
+    lp_legend(position = "bottom")
+```
+
+Every selected feature is extracted from every sample, and the samples in which
+it has an abundance are highlighted. Several features can share a compound
+name: creatinine is reported as two features, its `[M+H]+` (6) and `[M+Na]+`
+(937) ions, so chromatograms are identified by `feature_id`, the feature's
+`SMF_ID`. mzTab-M reports one retention time window per feature, shared by all
+samples. The plot shows what that hides: the leucine feature's window takes in a
+second, later peak at the same m/z, and urate elutes about ten seconds earlier
+in the three sample preparations than in the three injections.
 
 # Session Info
 

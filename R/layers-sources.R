@@ -253,3 +253,98 @@ lp_lipid_search <- function(lipids_query = NULL, rt_extend = 30) {
         }
     )
 }
+
+#' Define the options to use when plotting LC-MS data coming from
+#' an mzTab-M file.
+#'
+#' @param features_query A `character` value indicating the expression used to
+#' select which features to plot. The expression is evaluated on the feature
+#' table and can reference the following columns:
+#' \describe{
+#'   \item{feature_id}{The feature's `SMF_ID`.}
+#'   \item{name}{Compound name (`chemical_name` of the SML row referencing the
+#'   feature); `NA` for unannotated features.}
+#'   \item{formula}{Chemical formula (`chemical_formula`).}
+#'   \item{database_identifier}{Database identifier of the compound.}
+#'   \item{reliability}{Identification reliability, e.g. `1` to `4`.}
+#'   \item{sml_id}{The `SML_ID` of the annotation.}
+#'   \item{ambiguous}{`TRUE` when several SML rows reference the feature.}
+#'   \item{adduct_ion, charge}{Adduct ion and charge of the feature.}
+#'   \item{mz}{Mass-to-charge ratio (`exp_mass_to_charge`).}
+#'   \item{rt, rtmin, rtmax}{Retention time and its bounds, in seconds.}
+#'   \item{into}{Abundance in the sample; `NA` where the feature has none.}
+#'   \item{detected}{Whether the feature has an abundance in the sample.}
+#' }
+#'
+#' The query selects *features*, not feature/sample rows: a predicate such as
+#' `into > 1e6` keeps the features above that abundance in at least one
+#' sample, and each of them is then extracted from **every** sample.
+#' @param rt_extend A `numeric` value indicating how much (in seconds) the
+#' retention time window should be extended on each side of the feature when
+#' extracting and plotting chromatograms.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified mzTab-M options stored in `options$mztab`. It is
+#' intended for use with the `+` operator, which incrementally layers new data
+#' or visual components onto the `lcmsPlot` object.
+#' @seealso [MzTabMSource()]
+#' @export
+#' @examples
+#' ## A minimal mzTab-M file; see [MzTabMSource()] for the format details.
+#' mzml_dir <- file.path(tempdir(), "mztab-layer-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' mztab_path <- file.path(tempdir(), "standards-layer.mzTab")
+#' writeLines(
+#'     c(
+#'         "MTD\tms_run[1]-location\tfile:///data/l-proline-MS1.mzML",
+#'         "MTD\tms_run[2]-location\tfile:///data/l-kynurenine-MS1.mzML",
+#'         "MTD\tassay[1]-ms_run_ref\tms_run[1]",
+#'         "MTD\tassay[2]-ms_run_ref\tms_run[2]",
+#'         paste(
+#'             "SMH", "SML_ID", "SMF_ID_REFS", "chemical_name",
+#'             "reliability", sep = "\t"),
+#'         paste("SML", 1, 1, "L-Proline", 1, sep = "\t"),
+#'         paste("SML", 2, 2, "L-Kynurenine", 3, sep = "\t"),
+#'         paste(
+#'             "SFH", "SMF_ID", "exp_mass_to_charge",
+#'             "retention_time_in_seconds", "retention_time_in_seconds_start",
+#'             "retention_time_in_seconds_end", "abundance_assay[1]",
+#'             "abundance_assay[2]", sep = "\t"),
+#'         paste("SMF", 1, 116.0706, 426, 417, 435, 24050, "null", sep = "\t"),
+#'         paste("SMF", 2, 209.0921, 366, 357, 375, "null", 18700, sep = "\t")),
+#'     mztab_path)
+#'
+#' ds <- MzTabMSource(
+#'     mztab_path,
+#'     sample_paths = file.path(
+#'         mzml_dir, "mzml",
+#'         c("l-proline-MS1.mzML", "l-kynurenine-MS1.mzML")))
+#'
+#' ## Only the confidently identified features.
+#' p <- lcmsPlot(ds) +
+#'   lp_mztab(features_query = "reliability <= 2", rt_extend = 30) +
+#'   lp_chromatogram(highlight_peaks = TRUE) +
+#'   lp_grid(rows = "sample_id", cols = "name", free_x = TRUE) +
+#'   lp_labels(title = "mzTab-M example", legend = "Sample") +
+#'   lp_legend(position = "bottom")
+#' p
+lp_mztab <- function(features_query = NULL, rt_extend = 10) {
+    args <- as.list(environment())
+
+    make_interface_function(
+        name = "lp_mztab",
+        args_list = args,
+        fn = function(obj) {
+            .require_source(
+                obj,
+                is_mztab_source,
+                "lp_mztab: The data object is not an mzTab-M source")
+
+            obj@options$mztab <- args
+
+            return(obj)
+        }
+    )
+}

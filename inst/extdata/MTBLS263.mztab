@@ -1,0 +1,103 @@
+MTD	mzTab-version	2.0.0-M																						
+MTD	mzTab-ID	JetBike Test																						
+MTD	software[1]	[MS,MS:1002879,Progenesis QI,2.4.6505.48857]																						
+MTD	ms_run[1]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3injections_inj1_POS.mzML																						
+MTD	ms_run[1]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[1]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[1]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	ms_run[2]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3injections_inj2_POS.mzML																						
+MTD	ms_run[2]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[2]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[2]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	ms_run[3]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3injections_inj3_POS.mzML																						
+MTD	ms_run[3]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[3]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[3]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	ms_run[4]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3samples_sampl1_POS.mzML																						
+MTD	ms_run[4]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[4]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[4]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	ms_run[5]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3samples_sampl2_POS.mzML																						
+MTD	ms_run[5]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[5]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[5]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	ms_run[6]-location	file:///D:/Data%20Sets/Metabolomics/MTBLS263/3samples_sampl3_POS.mzML																						
+MTD	ms_run[6]-scan_polarity[1]	[MS,MS:1000130,positive scan,]																						
+MTD	ms_run[6]-format	[MS, MS:1000584, mzML file, ]																						
+MTD	ms_run[6]-id_format	[MS, MS:1000768, Thermo nativeID format, ]																						
+MTD	sample[1]	3injections_POS																						
+MTD	sample[2]	3samples_sampl1_POS																						
+MTD	sample[3]	3samples_sampl2_POS																						
+MTD	sample[4]	3samples_sampl3_POS																						
+MTD	assay[1]	3injections_inj1_POS																						
+MTD	assay[1]-sample_ref	sample[1]																						
+MTD	assay[1]-ms_run_ref	ms_run[1]																						
+MTD	assay[2]	3injections_inj2_POS																						
+MTD	assay[2]-sample_ref	sample[1]																						
+MTD	assay[2]-ms_run_ref	ms_run[2]																						
+MTD	assay[3]	3injections_inj3_POS																						
+MTD	assay[3]-sample_ref	sample[1]																						
+MTD	assay[3]-ms_run_ref	ms_run[3]																						
+MTD	assay[4]	3samples_sampl1_POS																						
+MTD	assay[4]-sample_ref	sample[2]																						
+MTD	assay[4]-ms_run_ref	ms_run[4]																						
+MTD	assay[5]	3samples_sampl2_POS																						
+MTD	assay[5]-sample_ref	sample[3]																						
+MTD	assay[5]-ms_run_ref	ms_run[5]																						
+MTD	assay[6]	3samples_sampl3_POS																						
+MTD	assay[6]-sample_ref	sample[4]																						
+MTD	assay[6]-ms_run_ref	ms_run[6]																						
+MTD	study_variable[1]	Replicates																						
+MTD	study_variable[1]-description	Replicates																						
+MTD	study_variable[1]-assay_refs	assay[1] | assay[2] | assay[3]																						
+MTD	study_variable[2]	Samples																						
+MTD	study_variable[2]-description	Samples																						
+MTD	study_variable[2]-assay_refs	assay[4] | assay[5] | assay[6]																						
+MTD	cv[1]-label	MS																						
+MTD	cv[1]-full_name	PSI-MS controlled vocabulary																						
+MTD	cv[1]-version	4.0.9																						
+MTD	cv[1]-uri	https://raw.githubusercontent.com/HUPO-PSI/psi-ms-CV/master/psi-ms.obo																						
+MTD	database[1]	[, , no database, null]																						
+MTD	database[1]-prefix	null																						
+MTD	database[1]-version	Unknown																						
+MTD	database[1]-uri	null																						
+MTD	database[2]	[, , Local CHEBI copy, ]																						
+MTD	database[2]-prefix	CHEBI																						
+MTD	database[2]-version	Unknown																						
+MTD	database[2]-uri	file:///E:/Projects/MTBLS263/MTLBS263.sdf																						
+MTD	small_molecule-quantification_unit	[,,Progenesis QI Normalised Abundance,]																						
+MTD	small_molecule_feature-quantification_unit	[,,Progenesis QI Normalised Abundance,]																						
+MTD	id_confidence_measure[1]	[MS,MS:1002889,Progenesis MetaScope score,]																						
+MTD	id_confidence_measure[2]	[MS,MS:1002890,fragmentation score,]																						
+MTD	id_confidence_measure[3]	[MS,MS:1002891,isotopic fit score,]																						
+MTD	small_molecule-identification_reliability	[MS, MS:1002896, compound identification confidence level, ]																						
+MTD	quantification_method	[MS, MS:1001834, LC-MS label-free quantitation analysis, ]																						
+																								
+SMH	SML_ID	SMF_ID_REFS	database_identifier	chemical_formula	smiles	inchi	chemical_name	uri	theoretical_neutral_mass	adduct_ions	reliability	best_id_confidence_measure	best_id_confidence_value	abundance_assay[1]	abundance_assay[2]	abundance_assay[3]	abundance_assay[4]	abundance_assay[5]	abundance_assay[6]	abundance_study_variable[1]	abundance_variation_study_variable[1]	abundance_study_variable[2]	abundance_variation_study_variable[2]	opt_global_Progenesis_identifier
+SML	469	6 | 937	CHEBI:16737	C4H7N3O	null	null	Creatinine	null	113.0589	[M+H]+ | [M+Na]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	56.4424	59809754.62	63773291.22	61630638.37	59131129.43	63874747.95	66320708.84	185213684.2	3.2135	189326586.2	5.7923	6.90_113.0582n
+SML	495	782	CHEBI:17368	C5H4N4O	null	null	Hypoxanthine	null	136.0385	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	44.0249	1164487.316	1376477.974	1531498.698	1398304.361	1633581.631	2129396.512	4072463.988	13.5722	5161282.504	21.6925	7.34_137.0452m/z
+SML	528	13	CHEBI:25017	C6H13NO2	null	null	Leucine	null	131.0946	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	48.2759	65543883.46	65475290.35	67694647.59	59237651.35	56077561.47	54207405.41	198713821.4	1.9053	169522618.2	4.4995	8.06_132.1014m/z
+SML	546	117	CHEBI:16811	C5H11NO2S	null	null	Methionine	null	149.051	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	47.6054	8419806.046	7954686.919	8318226.561	8007517.592	7319791.067	7367477.802	24692719.53	2.9711	22694786.46	5.0765	8.56_150.0578m/z
+SML	598	18	CHEBI:27266	C5H11NO2	null	null	Valine	null	117.079	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	48.7105	21775405.56	23532222.57	24850183.03	18841152.12	22892660.2	21760739.43	70157811.17	6.5963	63494551.76	9.877	9.74_118.0857m/z
+SML	615	7	CHEBI:26271	C5H9NO2	null	null	Proline	null	115.0633	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	45.8868	59134552.3	57461952.47	60069535.6	55657781.22	56998852.39	60837200.27	176666040.4	2.2433	173493833.9	4.6483	10.13_116.0699m/z
+SML	643	153	CHEBI:17775	C5H4N4O3	null	null	Urate	null	168.0283	[M+H]+	2	[MS,MS:1002889,Progenesis MetaScope score,]	44.5238	6594546.767	6679574.386	6147241.614	6238970.002	6287508.483	7032912.143	19421362.77	4.4174	19559390.63	6.8259	10.90_169.0349m/z
+																								
+SFH	SMF_ID	SME_ID_REFS	SME_ID_REF_ambiguity_code	adduct_ion	isotopomer	exp_mass_to_charge	charge	retention_time_in_seconds	retention_time_in_seconds_start	retention_time_in_seconds_end	abundance_assay[1]	abundance_assay[2]	abundance_assay[3]	abundance_assay[4]	abundance_assay[5]	abundance_assay[6]								
+SMF	6	1	null	[M+H]+	null	114.0654	1	413.81	393.55	447.87	59579140.67	63545698.19	61393680.89	59131129.43	63693769.3	66308065.78								
+SMF	7	7	null	null	null	116.0699	1	607.75	587.39	648.11	59134552.3	57461952.47	60069535.6	55657781.22	56998852.39	60837200.27								
+SMF	13	4	null	null	null	132.1014	1	483.77	455.72	541.07	65543883.46	65475290.35	67694647.59	59237651.35	56077561.47	54207405.41								
+SMF	18	6	null	null	null	118.0857	1	584.32	558.3	621.66	21775405.56	23532222.57	24850183.03	18841152.12	22892660.2	21760739.43								
+SMF	117	5	null	null	null	150.0578	1	513.76	496.87	555.22	8419806.046	7954686.919	8318226.561	8007517.592	7319791.067	7367477.802								
+SMF	153	8	null	null	null	169.0349	1	653.98	630.69	667.64	6594546.767	6679574.386	6147241.614	6238970.002	6287508.483	7032912.143								
+SMF	782	3	null	null	null	137.0452	1	440.1	429.32	455.72	1164487.316	1376477.974	1531498.698	1398304.361	1633581.631	2129396.512								
+SMF	937	2	null	[M+Na]+	null	136.0475	1	413.81	402.83	419.78	230613.9561	227593.0281	236957.4883	0	180978.6531	12643.0648								
+																								
+SEH	SME_ID	evidence_input_id	database_identifier	chemical_formula	smiles	inchi	chemical_name	uri	derivatized_form	adduct_ion	exp_mass_to_charge	charge	theoretical_mass_to_charge	spectra_ref	identification_method	ms_level	id_confidence_measure[1]	id_confidence_measure[2]	id_confidence_measure[3]	rank	opt_global_retention_time_in_seconds	opt_global_retention_time_in_seconds_database		
+SME	1	413.81_114.0654m/z	CHEBI:16737	C4H7N3O	null	null	Creatinine	null	null	[M+H]+	114.0654	1	114.0662	ms_run[1]:controllerType=0 controllerNumber=1 scan=274 | ms_run[1]:controllerType=0 controllerNumber=1 scan=290 | ms_run[2]:controllerType=0 controllerNumber=1 scan=274 | ms_run[2]:controllerType=0 controllerNumber=1 scan=290 | ms_run[3]:controllerType=0 controllerNumber=1 scan=270 | ms_run[3]:controllerType=0 controllerNumber=1 scan=288 | ms_run[4]:controllerType=0 controllerNumber=1 scan=268 | ms_run[4]:controllerType=0 controllerNumber=1 scan=284 | ms_run[5]:controllerType=0 controllerNumber=1 scan=266 | ms_run[5]:controllerType=0 controllerNumber=1 scan=282 | ms_run[6]:controllerType=0 controllerNumber=1 scan=266 | ms_run[6]:controllerType=0 controllerNumber=1 scan=282	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	56.4424	0	99.6059	1	413.81	414		
+SME	2	413.81_136.0475m/z	CHEBI:16737	C4H7N3O	null	null	Creatinine	null	null	[M+Na]+	136.0475	1	136.0481	ms_run[1]:controllerType=0 controllerNumber=1 scan=281 | ms_run[2]:controllerType=0 controllerNumber=1 scan=277 | ms_run[3]:controllerType=0 controllerNumber=1 scan=279 | ms_run[4]:controllerType=0 controllerNumber=1 scan=273 | ms_run[5]:controllerType=0 controllerNumber=1 scan=271 | ms_run[6]:controllerType=0 controllerNumber=1 scan=271	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,1]	56.4424	0	99.6059	1	413.81	414		
+SME	3	440.10_137.0452m/z	CHEBI:17368	C5H4N4O	null	null	Hypoxanthine	null	null	[M+H]+	137.0452	1	137.0458	ms_run[1]:controllerType=0 controllerNumber=1 scan=301 | ms_run[2]:controllerType=0 controllerNumber=1 scan=297 | ms_run[3]:controllerType=0 controllerNumber=1 scan=299 | ms_run[4]:controllerType=0 controllerNumber=1 scan=291 | ms_run[5]:controllerType=0 controllerNumber=1 scan=289 | ms_run[6]:controllerType=0 controllerNumber=1 scan=289	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,1]	44.0249	0	93.1371	1	440.1	444		
+SME	4	483.77_132.1014m/z	CHEBI:25017	C6H13NO2	null	null	Leucine	null	null	[M+H]+	132.1014	1	132.1019	ms_run[1]:controllerType=0 controllerNumber=1 scan=326 | ms_run[1]:controllerType=0 controllerNumber=1 scan=342 | ms_run[1]:controllerType=0 controllerNumber=1 scan=362 | ms_run[2]:controllerType=0 controllerNumber=1 scan=324 | ms_run[2]:controllerType=0 controllerNumber=1 scan=342 | ms_run[2]:controllerType=0 controllerNumber=1 scan=360 | ms_run[3]:controllerType=0 controllerNumber=1 scan=324 | ms_run[3]:controllerType=0 controllerNumber=1 scan=340 | ms_run[3]:controllerType=0 controllerNumber=1 scan=360 | ms_run[4]:controllerType=0 controllerNumber=1 scan=320 | ms_run[4]:controllerType=0 controllerNumber=1 scan=342 | ms_run[5]:controllerType=0 controllerNumber=1 scan=312 | ms_run[5]:controllerType=0 controllerNumber=1 scan=328 | ms_run[5]:controllerType=0 controllerNumber=1 scan=344 | ms_run[6]:controllerType=0 controllerNumber=1 scan=314 | ms_run[6]:controllerType=0 controllerNumber=1 scan=330 | ms_run[6]:controllerType=0 controllerNumber=1 scan=346	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	48.2759	0	98.8384	1	483.77	486		
+SME	5	513.76_150.0578m/z	CHEBI:16811	C5H11NO2S	null	null	Methionine	null	null	[M+H]+	150.0578	1	150.0583	ms_run[1]:controllerType=0 controllerNumber=1 scan=354 | ms_run[2]:controllerType=0 controllerNumber=1 scan=352 | ms_run[3]:controllerType=0 controllerNumber=1 scan=352 | ms_run[4]:controllerType=0 controllerNumber=1 scan=346 | ms_run[5]:controllerType=0 controllerNumber=1 scan=340 | ms_run[6]:controllerType=0 controllerNumber=1 scan=344	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	47.6054	0	93.7529	1	513.76	516		
+SME	6	584.32_118.0857m/z	CHEBI:27266	C5H11NO2	null	null	Valine	null	null	[M+H]+	118.0857	1	118.0863	ms_run[1]:controllerType=0 controllerNumber=1 scan=400 | ms_run[2]:controllerType=0 controllerNumber=1 scan=400 | ms_run[3]:controllerType=0 controllerNumber=1 scan=400 | ms_run[4]:controllerType=0 controllerNumber=1 scan=394 | ms_run[5]:controllerType=0 controllerNumber=1 scan=386 | ms_run[6]:controllerType=0 controllerNumber=1 scan=386	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	48.7105	0	98.9488	1	584.32	582		
+SME	7	607.75_116.0699m/z	CHEBI:26271	C5H9NO2	null	null	Proline	null	null	[M+H]+	116.0699	1	116.0706	ms_run[1]:controllerType=0 controllerNumber=1 scan=416 | ms_run[1]:controllerType=0 controllerNumber=1 scan=432 | ms_run[1]:controllerType=0 controllerNumber=1 scan=448 | ms_run[2]:controllerType=0 controllerNumber=1 scan=416 | ms_run[2]:controllerType=0 controllerNumber=1 scan=432 | ms_run[3]:controllerType=0 controllerNumber=1 scan=416 | ms_run[3]:controllerType=0 controllerNumber=1 scan=432 | ms_run[4]:controllerType=0 controllerNumber=1 scan=406 | ms_run[4]:controllerType=0 controllerNumber=1 scan=422 | ms_run[5]:controllerType=0 controllerNumber=1 scan=402 | ms_run[5]:controllerType=0 controllerNumber=1 scan=418 | ms_run[6]:controllerType=0 controllerNumber=1 scan=402 | ms_run[6]:controllerType=0 controllerNumber=1 scan=418	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	45.8868	0	99.7575	1	607.75	612		
+SME	8	653.98_169.0349m/z	CHEBI:17775	C5H4N4O3	null	null	Urate	null	null	[M+H]+	169.0349	1	169.0356	ms_run[1]:controllerType=0 controllerNumber=1 scan=456 | ms_run[2]:controllerType=0 controllerNumber=1 scan=456 | ms_run[3]:controllerType=0 controllerNumber=1 scan=458 | ms_run[4]:controllerType=0 controllerNumber=1 scan=436 | ms_run[5]:controllerType=0 controllerNumber=1 scan=430 | ms_run[6]:controllerType=0 controllerNumber=1 scan=432	[,,Progenesis MetaScope,]	[MS,MS:1000511,ms level,2]	44.5238	0	97.0874	1	653.98	648		

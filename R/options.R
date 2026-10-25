@@ -132,6 +132,10 @@ default_options <- function() {
             lipids_query = NULL,
             rt_extend = 30
         ),
+        mztab = list(
+            features_query = NULL,
+            rt_extend = 10
+        ),
         chrom_peak_rects = list(
             show = FALSE,
             sample_ids = NULL,

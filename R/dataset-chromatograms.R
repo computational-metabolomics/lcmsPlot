@@ -131,6 +131,35 @@ setMethod(
 #' @rdname create_chromatograms
 setMethod(
     f = "create_chromatograms",
+    signature = c(source = "MzTabMSource", features = "NULL"),
+    definition = function(source, container, options, features) {
+        mt_opts <- options$mztab
+        all_compounds <- source@compounds
+
+        # The query selects *features*, not feature/sample rows: every
+        # requested sample keeps its extraction row for a matched feature.
+        if (!is.null(mt_opts$features_query)) {
+            features_query <- rlang::parse_expr(mt_opts$features_query)
+            matched <- all_compounds |> filter(!!features_query)
+            all_compounds <- all_compounds |>
+                filter(.data$feature_id %in% matched$feature_id)
+        }
+
+        if (nrow(all_compounds) == 0) {
+            stop("No features matched the supplied 'features_query'.")
+        }
+
+        # Several features can share a name (one compound seen as several
+        # adducts, or no annotation at all), so they are keyed by SMF_ID.
+        create_compound_chromatograms(
+            container, all_compounds, options, mt_opts$rt_extend,
+            key = "feature_id")
+    }
+)
+
+#' @rdname create_chromatograms
+setMethod(
+    f = "create_chromatograms",
     signature = c(source = "MChromatograms", features = "NULL"),
     definition = function(source, container, options, features) {
         samples <- .select_samples(
@@ -404,8 +433,8 @@ create_total_chromatograms <- function(
 #' Create chromatograms for compound tables
 #'
 #' Shared by the compound-centric data sources (Compound Discoverer scripting
-#' node, LipidSearch). Each row of `all_compounds` describes where to extract a
-#' compound in one sample: an `mz`, an `rtmin`/`rtmax` window, and the
+#' node, LipidSearch, mzTab-M). Each row of `all_compounds` describes where to
+#' extract a compound in one sample: an `mz`, an `rtmin`/`rtmax` window, and the
 #' `sample_index` it belongs to.
 #'
 #' Compounds with no `mz` or no RT window are skipped, as are compounds absent
@@ -417,10 +446,13 @@ create_total_chromatograms <- function(
 #' @param container An `lcmsPlotDataContainer`.
 #' @param all_compounds A `data.frame` with at least `name`, `mz`, `rt`,
 #' `rtmin`, `rtmax`, `into`, `maxo`, and `sample_index` columns. `formula`,
-#' `adduct`, `class`, `sub_class`, and `detected` are used when present.
+#' `adduct`, `adduct_ion`, `charge`, `reliability`, `class`, `sub_class`, and
+#' `detected` are used when present.
 #' @param options A `list` of plot options.
 #' @param rt_extend A `numeric` value indicating how much (in seconds) to extend
 #' the RT window on each side of the compound peak.
+#' @param key A `character` value naming the column that identifies a compound;
+#' it becomes the `feature_id` of its chromatograms and peaks.
 #' @return The `lcmsPlotDataContainer` with its `chromatograms` and
 #' `detected_peaks` slots set.
 #' @keywords internal
@@ -428,27 +460,30 @@ create_compound_chromatograms <- function(
     container,
     all_compounds,
     options,
-    rt_extend
+    rt_extend,
+    key = "name"
 ) {
     opts <- options$chromatograms
     samples <- .select_samples(container, opts$sample_ids)
     annotation_cols <- intersect(
-        c("name", "formula", "adduct", "mz", "class", "sub_class"),
+        c("name", "formula", "adduct", "adduct_ion", "charge", "reliability",
+          "mz", "class", "sub_class"),
         colnames(all_compounds))
-    compound_names <- unique(all_compounds$name)
+    compound_keys <- unique(all_compounds[[key]])
 
     entries <- all_compounds |>
         filter(.data$sample_index %in% samples$sample_index) |>
-        distinct(.data$sample_index, .data$name, .keep_all = TRUE) |>
+        distinct(
+            across(all_of(c("sample_index", key))), .keep_all = TRUE) |>
         filter(!is.na(.data$mz), !is.na(.data$rtmin), !is.na(.data$rtmax)) |>
         arrange(
             match(.data$sample_index, samples$sample_index),
-            match(.data$name, compound_names))
+            match(.data[[key]], compound_keys))
 
     windows <- entries |>
         select(all_of(c("sample_index", annotation_cols))) |>
         mutate(
-            feature_id = .data$name,
+            feature_id = entries[[key]],
             mzMin = entries$mz - entries$mz * opts$ppm / 1e6,
             mzMax = entries$mz + entries$mz * opts$ppm / 1e6,
             rtMin = entries$rtmin - rt_extend,
@@ -472,7 +507,7 @@ create_compound_chromatograms <- function(
 
     container@detected_peaks <- normalise_peaks(
         detected |>
-            mutate(feature_id = .data$name) |>
+            mutate(feature_id = .data[[key]]) |>
             select(all_of(c(
                 "name", "feature_id", "mz", "rt", "rtmin", "rtmax", "into",
                 "maxo", "sample_index"))))
