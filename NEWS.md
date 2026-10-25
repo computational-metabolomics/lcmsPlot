@@ -42,10 +42,13 @@
 - Raw files are only read once a layer needs them, file connections are
   always closed, and corrected retention times are applied without matching
   scan counts.
-- `lp_total_ion_current()` now sums each scan's peaks for netCDF files
-  whatever the input object. `XcmsExperiment`, `MsExperiment`, and
-  `XCMSnExp` input used the file header's total ion current, which netCDF
-  files do not report as the sum of the scan's peaks.
+- `lp_total_ion_current()` gains `initial`, as in `Spectra::tic()`. The
+  default (`TRUE`) plots the total ion current recorded in each scan's
+  header for every input; `FALSE` sums each scan's peaks. Raw netCDF files
+  given as paths used to be summed, so their plot changes unless
+  `initial = FALSE` is set. netCDF headers include signal that is not among
+  the stored peaks, so on faahKO the header values are about twice the
+  sums.
 - `lp_total_ion_current()`, `lp_intensity_map()`, and `lp_rt_diff_plot()` are
   now replayed by `iterate_plot_batches()` and `next_plot()`, and
   `lp_total_ion_current()` honours `sample_ids`.

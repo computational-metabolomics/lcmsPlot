@@ -78,7 +78,8 @@ default_options <- function() {
         total_ion_current = list(
             show = FALSE,
             sample_ids = NULL,
-            type = "boxplot"
+            type = "boxplot",
+            initial = TRUE
         ),
         intensity_maps = list(
             show = FALSE,
