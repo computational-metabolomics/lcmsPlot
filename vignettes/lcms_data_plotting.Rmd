@@ -930,6 +930,52 @@ lcmsPlot(faahko, sample_id_column = 'sample_name') +
     lp_layout(design = "C\nS\nS\nS\nS\nS\nS\nS")
 ```
 
+## Select the MS2 spectra of a feature by precursor
+
+With data-dependent acquisition (DDA), the instrument fragments the most
+abundant ions of each survey scan. `mode = "precursor"` links each feature to
+its fragmentation scans: the MS2 scans whose precursor m/z lies within `ppm`
+of the feature's m/z and whose retention time falls inside its detected peak
+(or, without a detected peak, inside the feature's extraction window).
+`select` decides which of the matching scans are plotted: the one with the
+most intense precursor (`"most_intense"`, the default), the one closest to
+the peak apex (`"closest_apex"`), all of them (`"all"`), or a single
+consensus spectrum combining them (`"consensus"`). The precursor m/z is
+marked with a diamond on the m/z axis and shown in the panel title.
+
+lcmsPlot ships two DDA runs of the standards L-proline and L-kynurenine. In
+the example below, each feature's MS1 chromatogram is plotted above its MS2
+spectrum. Adding `spectral_match_db` to `lp_spectra()` would mirror each
+spectrum against its best match in a spectral library.
+
+```{r plot-spectra-precursor, fig.height=6, fig.width=10}
+mzml_dir <- file.path(tempdir(), "dda-standards")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+dda_files <- file.path(
+    mzml_dir, "mzml", c("l-proline-MS2.mzML", "l-kynurenine-MS2.mzML"))
+
+lcmsPlot(dda_files) +
+    lp_chromatogram(
+        features = data.frame(
+            sample_id = c("l-proline-MS2", "l-kynurenine-MS2"),
+            feature_id = c("L-proline", "L-kynurenine"),
+            mz = c(116.0705, 209.0918),
+            rt = c(426, 365)),
+        rt_tol = 15) +
+    lp_spectra(
+        mode = "precursor",
+        ppm = 10,
+        select = "most_intense",
+        precursor_marker_shape = "triangle down filled",
+        precursor_marker_position = "top",
+        precursor_marker_color = "red") +
+    lp_facets(facets = "feature_id", ncol = 2) +
+    lp_layout(design = "C\nS")
+```
+
 ## Plot standalone spectra
 
 So far, spectra have been displayed alongside chromatograms to

@@ -19,6 +19,7 @@ without chromatograms.}
 \value{
 A \code{tibble} with columns \code{sample_index}, \code{feature_id}, and either
 \code{scan_index} (the position of the scan in its sample) or \code{target_rt}.
+Precursor targets add a \code{group} column, one value per feature and sample.
 }
 \description{
 Determine the scans to read the spectra from

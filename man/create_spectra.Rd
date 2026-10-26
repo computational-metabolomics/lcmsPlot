@@ -13,19 +13,22 @@ create_spectra(obj, options)
 }
 \value{
 The \code{lcmsPlotDataContainer} with its \code{spectra} slot set: a
-\code{Spectra} object with spectra variables \code{sample_index}, \code{feature_id}, and
-\code{reference}.
+\code{Spectra} object with spectra variables \code{sample_index}, \code{feature_id},
+\code{reference}, and, for MS2 spectra, \code{precursor_mz}.
 }
 \description{
 Every spectra mode is reduced to one table of target scans (by scan index,
 or by the retention time closest to a target), from which the spectra are
 taken in a single subset of the raw \code{Spectra} and held in memory. Spectra
 read at detected peaks carry the peak's \code{feature_id}, so they line up with
-the chromatograms the peaks were matched to.
+the chromatograms the peaks were matched to. When the data has adjusted
+retention times, as the detected peaks do, these spectra are selected and
+reported on them; spectra read by scan index or at a given RT are not.
 }
 \details{
 Intensities are scaled to a maximum of 100 per spectrum. When a spectral
 library is given, the best matching library spectrum of each spectrum is
-added with \code{reference = TRUE}.
+added with \code{reference = TRUE}. MS2 spectra carry their precursor m/z in a
+\code{precursor_mz} spectra variable.
 }
 \keyword{internal}

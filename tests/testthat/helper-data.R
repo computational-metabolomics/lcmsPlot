@@ -2,6 +2,17 @@ get_test_sample_paths <- function(indices = c(1, 7)) {
   dir(system.file("cdf", package = "faahKO"), full.names = TRUE, recursive = TRUE)[indices]
 }
 
+# The DDA standards shipped with the package: per standard, 21 MS1 scans and
+# 3 MS2 scans of its [M+H]+ (proline 116.0705 at RT 422-430 s, kynurenine
+# 209.092 at RT 361-368 s).
+get_dda_sample_paths <- function(standards = c("l-proline", "l-kynurenine")) {
+  mzml_dir <- file.path(tempdir(), "dda-standards")
+  utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+  file.path(mzml_dir, "mzml", paste0(standards, "-MS2.mzML"))
+}
+
 # An in-memory Spectra object from spectra data and per-spectrum peak lists.
 make_spectra <- function(spectra_data, mz, intensity) {
   spectra_data$mz <- IRanges::NumericList(mz, compress = FALSE)

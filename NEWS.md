@@ -1,3 +1,29 @@
+# lcmsPlot 1.1.20
+
+- `lp_spectra(mode = "precursor")` plots the MS2 spectra of each feature from
+  data-dependent acquisition (#54): the MS2 scans whose precursor m/z lies
+  within `ppm` of the m/z of the feature's detected peak and whose retention
+  time lies within the peak, or within the feature's extraction window in
+  samples where it has no detected peak. `select` keeps the scan with the
+  most intense precursor (`"most_intense"`, falling back to the total ion
+  current), the scan closest to the apex (`"closest_apex"`), every scan
+  (`"all"`), or one consensus spectrum per feature and sample
+  (`"consensus"`, tuned by `consensus_ppm` and `consensus_min_prop`).
+  Spectra keep their `feature_id`, mirror plots against `spectral_match_db`
+  work as before, and features without a matching MS2 scan are skipped with
+  a single warning listing them.
+- MS2 spectra mark their precursor m/z with a diamond on the m/z axis and in
+  the panel title. The marker's shape, position (on the m/z axis or on top of
+  the precursor's peak), and color are set with the `precursor_marker_shape`,
+  `precursor_marker_position`, and `precursor_marker_color` arguments of
+  `lp_spectra()`.
+- `lp_spectra(mode = "closest_apex")` and `mode = "across_peak"` now select
+  and report scans on the adjusted retention times when the data has them,
+  as the detected peaks and feature chromatograms already did. They used to
+  look up raw scan times with adjusted peak times, so the spectra could come
+  from a scan next to the apex and their RT lines sat slightly off the
+  chromatogram. The `xcms_spectra_closest_apex` baseline was re-recorded.
+
 # lcmsPlot 1.1.19
 
 - New `MzTabMSource()` reads mzTab-M 2.0 files (as exported by MS-DIAL,
