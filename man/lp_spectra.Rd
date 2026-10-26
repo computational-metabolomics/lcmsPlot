@@ -11,6 +11,13 @@ lp_spectra(
   rt = NULL,
   scan_index = NULL,
   interval = 3,
+  ppm = 10,
+  select = "most_intense",
+  consensus_ppm = 20,
+  consensus_min_prop = 0.5,
+  precursor_marker_shape = 23,
+  precursor_marker_position = "bottom",
+  precursor_marker_color = "black",
   spectral_match_db = NULL,
   match_target_index = NULL,
   peak_label_size = 3,
@@ -28,10 +35,13 @@ specified in the \code{lcmsPlot} object or the \code{lp_chromatogram} function.}
 One of: \code{closest}, the closest scan to the specified RT - \code{rt} parameter);
 \code{closest_apex}, the closest scan to a detected peak;
 \code{across_peak}, selects scans across a detected peak at a certain interval
-specified in the \code{interval} parameter.
+specified in the \code{interval} parameter;
+\code{precursor}, the MS2 scans fragmenting the precursor of each feature (see
+the section above).
 \code{mode} is not applicable to standalone spectra.}
 
-\item{ms_level}{The MS level to consider for the scan.}
+\item{ms_level}{The MS level to consider for the scan. Ignored by
+\code{mode = "precursor"}, which always reads MS2 scans.}
 
 \item{rt}{When \code{mode = "closest"}, the RT to consider.}
 
@@ -39,6 +49,38 @@ specified in the \code{interval} parameter.
 \code{scan_index} and \code{mode} are mutually exclusive.}
 
 \item{interval}{When \code{mode = "across_peak."} The RT interval to consider.}
+
+\item{ppm}{When \code{mode = "precursor"}, the tolerance (in ppm) between a
+scan's precursor m/z and the m/z of the feature's detected peak.
+Defaults to \code{10}.}
+
+\item{select}{When \code{mode = "precursor"}, which of a feature's matching MS2
+scans to plot in each sample. One of \code{"most_intense"} (default), the scan
+with the most intense precursor, or with the highest total ion current
+when the file does not report precursor intensities; \code{"closest_apex"}, the
+scan closest to the peak apex; \code{"all"}, every matching scan; or
+\code{"consensus"}, one spectrum combining the matching scans.}
+
+\item{consensus_ppm}{When \code{select = "consensus"}, the tolerance (in ppm)
+within which fragments of different scans are combined. Defaults to \code{20}.}
+
+\item{consensus_min_prop}{When \code{select = "consensus"}, the minimum
+proportion of the combined scans a fragment must be found in to be kept.
+Defaults to \code{0.5}.}
+
+\item{precursor_marker_shape}{The shape of the marker drawn at the
+precursor m/z of MS2 spectra, as a ggplot2 point shape: a number from 0 to
+25 or a name such as \code{"triangle down filled"}. Defaults to \code{23} (a filled
+diamond).}
+
+\item{precursor_marker_position}{Where the precursor marker is drawn: on the
+m/z axis (\code{"bottom"}, the default) or on top of the precursor's peak
+(\code{"top"}), the highest peak within \code{ppm} of the precursor m/z. A spectrum
+in which the precursor left no peak has its marker on the m/z axis.}
+
+\item{precursor_marker_color}{A \code{character} value giving the color of the
+precursor marker, used for both its outline and its fill. Defaults to
+\code{"black"}.}
 
 \item{spectral_match_db}{The database containing reference spectra used
 for matching and comparison with the input spectra.}
@@ -87,6 +129,22 @@ Standalone spectra can also be generated, provided no chromatograms
 are present (i.e., lp_chromatogram has not been used).
 }
 
+\section{MS2 spectra of a feature}{
+
+With data-dependent acquisition (DDA), \code{mode = "precursor"} plots the
+fragmentation spectra of each feature: the MS2 scans whose precursor m/z
+lies within \code{ppm} of the m/z of the feature's detected peak and whose RT
+lies within the peak's \verb{[rtmin, rtmax]}. In a sample where the feature has
+no detected peak, the extraction window given to
+\code{lp_chromatogram(features = )} is used instead. \code{select} decides which of
+the matching scans are plotted. Each spectrum keeps the \code{feature_id} of its
+feature, and its precursor m/z is marked, by default with a diamond on the
+m/z axis (see the \verb{precursor_marker_*} parameters).
+Features with no matching MS2 scan are skipped with a warning.
+Data-independent acquisition (MS2 scans without a defined precursor) is not
+supported.
+}
+
 \examples{
 raw_files <- dir(
    system.file("cdf", package = "faahKO"),
@@ -100,5 +158,20 @@ p <- lcmsPlot(raw_files) +
     rtmin = 2700,
     rtmax = 2900))) +
   lp_spectra(mode = "closest", rt = 2785)
+p
+
+## The MS2 spectrum of a feature, from data-dependent acquisition
+mzml_dir <- file.path(tempdir(), "precursor-example")
+utils::unzip(
+    system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+    exdir = mzml_dir)
+
+ms2_file <- file.path(mzml_dir, "mzml", "l-kynurenine-MS2.mzML")
+
+p <- lcmsPlot(ms2_file) +
+  lp_chromatogram(
+    features = rbind(kynurenine = c(mz = 209.0918, rt = 365)),
+    rt_tol = 15) +
+  lp_spectra(mode = "precursor")
 p
 }

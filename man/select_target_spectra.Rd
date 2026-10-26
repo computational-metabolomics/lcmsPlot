@@ -4,7 +4,7 @@
 \alias{select_target_spectra}
 \title{Read the spectra of the target scans}
 \usage{
-select_target_spectra(obj, targets, ms_level)
+select_target_spectra(obj, targets, ms_level, adjusted = FALSE)
 }
 \arguments{
 \item{obj}{An \code{lcmsPlotDataContainer} whose spectra are loaded.}
@@ -12,10 +12,14 @@ select_target_spectra(obj, targets, ms_level)
 \item{targets}{A \code{data.frame} as returned by \code{\link[=spectra_targets]{spectra_targets()}}.}
 
 \item{ms_level}{The MS level of the scans matched by retention time.}
+
+\item{adjusted}{A \code{logical} value indicating whether to use the adjusted
+retention times.}
 }
 \value{
 An in-memory \code{Spectra} object, one spectrum per target, with
-spectra variables \code{sample_index}, \code{feature_id}, and \code{reference}.
+spectra variables \code{sample_index}, \code{feature_id}, and \code{reference}. Targets
+ordered by sample come back in their order.
 }
 \description{
 Read the spectra of the target scans

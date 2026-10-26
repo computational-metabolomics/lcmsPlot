@@ -17,8 +17,8 @@ for the best match, \code{2} for the second best, and so on.}
 }
 \value{
 An in-memory \code{Spectra} with the matching library spectra, carrying
-the \code{rtime}, \code{sample_index}, and \code{feature_id} of their query spectrum and
-\code{reference = TRUE}.
+the \code{rtime}, \code{sample_index}, \code{feature_id}, and \code{precursor_mz} (when set) of
+their query spectrum and \code{reference = TRUE}.
 }
 \description{
 Find the library spectra matching each query spectrum

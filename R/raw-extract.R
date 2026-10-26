@@ -275,10 +275,13 @@ extract_points <- function(
 #' @param obj An `lcmsPlotDataContainer` whose spectra are loaded.
 #' @param targets A `data.frame` as returned by [spectra_targets()].
 #' @param ms_level The MS level of the scans matched by retention time.
+#' @param adjusted A `logical` value indicating whether to use the adjusted
+#' retention times.
 #' @return An in-memory `Spectra` object, one spectrum per target, with
-#' spectra variables `sample_index`, `feature_id`, and `reference`.
+#' spectra variables `sample_index`, `feature_id`, and `reference`. Targets
+#' ordered by sample come back in their order.
 #' @keywords internal
-select_target_spectra <- function(obj, targets, ms_level) {
+select_target_spectra <- function(obj, targets, ms_level, adjusted = FALSE) {
     if (nrow(targets) == 0) {
         return(Spectra::Spectra())
     }
@@ -292,10 +295,12 @@ select_target_spectra <- function(obj, targets, ms_level) {
         target <- targets[rows, , drop = FALSE]
 
         if ("scan_index" %in% colnames(target)) {
-            sps <- raw_spectra(obj, as.integer(sample_key))
+            sps <- select_rtime(
+                raw_spectra(obj, as.integer(sample_key)), adjusted)
             idx <- target$scan_index
         } else {
-            sps <- raw_spectra(obj, as.integer(sample_key), ms_level)
+            sps <- select_rtime(
+                raw_spectra(obj, as.integer(sample_key), ms_level), adjusted)
             if (length(sps) == 0) {
                 stop("No scans found with the specified MS level.")
             }

@@ -237,6 +237,20 @@ lp_mass_trace <- function() {
 #' Standalone spectra can also be generated, provided no chromatograms
 #' are present (i.e., lp_chromatogram has not been used).
 #'
+#' @section MS2 spectra of a feature:
+#' With data-dependent acquisition (DDA), `mode = "precursor"` plots the
+#' fragmentation spectra of each feature: the MS2 scans whose precursor m/z
+#' lies within `ppm` of the m/z of the feature's detected peak and whose RT
+#' lies within the peak's `[rtmin, rtmax]`. In a sample where the feature has
+#' no detected peak, the extraction window given to
+#' `lp_chromatogram(features = )` is used instead. `select` decides which of
+#' the matching scans are plotted. Each spectrum keeps the `feature_id` of its
+#' feature, and its precursor m/z is marked, by default with a diamond on the
+#' m/z axis (see the `precursor_marker_*` parameters).
+#' Features with no matching MS2 scan are skipped with a warning.
+#' Data-independent acquisition (MS2 scans without a defined precursor) is not
+#' supported.
+#'
 #' @param sample_ids A `character` vector specifying the sample IDs
 #' to include in the plot. If `NULL`, the function uses the sample IDs
 #' specified in the `lcmsPlot` object or the `lp_chromatogram` function.
@@ -244,13 +258,41 @@ lp_mass_trace <- function() {
 #' One of: `closest`, the closest scan to the specified RT - `rt` parameter);
 #' `closest_apex`, the closest scan to a detected peak;
 #' `across_peak`, selects scans across a detected peak at a certain interval
-#' specified in the `interval` parameter.
+#' specified in the `interval` parameter;
+#' `precursor`, the MS2 scans fragmenting the precursor of each feature (see
+#' the section above).
 #' `mode` is not applicable to standalone spectra.
-#' @param ms_level The MS level to consider for the scan.
+#' @param ms_level The MS level to consider for the scan. Ignored by
+#' `mode = "precursor"`, which always reads MS2 scans.
 #' @param rt When `mode = "closest"`, the RT to consider.
 #' @param scan_index The exact scan index to consider for extracting a spectrum.
 #' `scan_index` and `mode` are mutually exclusive.
 #' @param interval When `mode = "across_peak."` The RT interval to consider.
+#' @param ppm When `mode = "precursor"`, the tolerance (in ppm) between a
+#' scan's precursor m/z and the m/z of the feature's detected peak.
+#' Defaults to `10`.
+#' @param select When `mode = "precursor"`, which of a feature's matching MS2
+#' scans to plot in each sample. One of `"most_intense"` (default), the scan
+#' with the most intense precursor, or with the highest total ion current
+#' when the file does not report precursor intensities; `"closest_apex"`, the
+#' scan closest to the peak apex; `"all"`, every matching scan; or
+#' `"consensus"`, one spectrum combining the matching scans.
+#' @param consensus_ppm When `select = "consensus"`, the tolerance (in ppm)
+#' within which fragments of different scans are combined. Defaults to `20`.
+#' @param consensus_min_prop When `select = "consensus"`, the minimum
+#' proportion of the combined scans a fragment must be found in to be kept.
+#' Defaults to `0.5`.
+#' @param precursor_marker_shape The shape of the marker drawn at the
+#' precursor m/z of MS2 spectra, as a ggplot2 point shape: a number from 0 to
+#' 25 or a name such as `"triangle down filled"`. Defaults to `23` (a filled
+#' diamond).
+#' @param precursor_marker_position Where the precursor marker is drawn: on the
+#' m/z axis (`"bottom"`, the default) or on top of the precursor's peak
+#' (`"top"`), the highest peak within `ppm` of the precursor m/z. A spectrum
+#' in which the precursor left no peak has its marker on the m/z axis.
+#' @param precursor_marker_color A `character` value giving the color of the
+#' precursor marker, used for both its outline and its fill. Defaults to
+#' `"black"`.
 #' @param spectral_match_db The database containing reference spectra used
 #' for matching and comparison with the input spectra.
 #' @param match_target_index The index, ranked by descending match score,
@@ -285,6 +327,21 @@ lp_mass_trace <- function() {
 #'     rtmax = 2900))) +
 #'   lp_spectra(mode = "closest", rt = 2785)
 #' p
+#'
+#' ## The MS2 spectrum of a feature, from data-dependent acquisition
+#' mzml_dir <- file.path(tempdir(), "precursor-example")
+#' utils::unzip(
+#'     system.file("extdata", "standards-mzml.zip", package = "lcmsPlot"),
+#'     exdir = mzml_dir)
+#'
+#' ms2_file <- file.path(mzml_dir, "mzml", "l-kynurenine-MS2.mzML")
+#'
+#' p <- lcmsPlot(ms2_file) +
+#'   lp_chromatogram(
+#'     features = rbind(kynurenine = c(mz = 209.0918, rt = 365)),
+#'     rt_tol = 15) +
+#'   lp_spectra(mode = "precursor")
+#' p
 lp_spectra <- function(
     sample_ids = NULL,
     mode = 'closest_apex',
@@ -292,6 +349,13 @@ lp_spectra <- function(
     rt = NULL,
     scan_index = NULL,
     interval = 3,
+    ppm = 10,
+    select = "most_intense",
+    consensus_ppm = 20,
+    consensus_min_prop = 0.5,
+    precursor_marker_shape = 23,
+    precursor_marker_position = "bottom",
+    precursor_marker_color = "black",
     spectral_match_db = NULL,
     match_target_index = NULL,
     peak_label_size = 3,
@@ -299,7 +363,12 @@ lp_spectra <- function(
     mz_breaks_n = 6,
     auto_facet = TRUE
 ) {
-    mode <- match.arg(mode, c("closest_apex", "closest", "across_peak"))
+    mode <- match.arg(
+        mode, c("closest_apex", "closest", "across_peak", "precursor"))
+    select <- match.arg(
+        select, c("most_intense", "closest_apex", "all", "consensus"))
+    precursor_marker_position <- match.arg(
+        precursor_marker_position, c("bottom", "top"))
 
     args <- as.list(environment())
 

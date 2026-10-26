@@ -44,11 +44,19 @@ default_options <- function() {
         spectra = list(
             show = FALSE,
             sample_ids = NULL,
-            mode = 'closest_apex', # One of: closest, closest_apex, across_peak
+            # One of: closest, closest_apex, across_peak, precursor
+            mode = 'closest_apex',
             ms_level = 1,
             rt = NULL, # For mode=closest
             scan_index = NULL,
             interval = 3, # mode=across_peak
+            ppm = 10, # mode=precursor
+            select = "most_intense", # mode=precursor
+            consensus_ppm = 20, # mode=precursor, select=consensus
+            consensus_min_prop = 0.5, # mode=precursor, select=consensus
+            precursor_marker_shape = 23,
+            precursor_marker_position = "bottom", # One of: bottom, top
+            precursor_marker_color = "black",
             spectral_match_db = NULL,
             match_target_index = 1,
             peak_label_size = 3,
