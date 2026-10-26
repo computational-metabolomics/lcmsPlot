@@ -10,23 +10,17 @@
         shiny::tags$section(
             class = "lp-plot-card",
             shiny::tags$div(
-                class = "flex items-center justify-between mb-4",
+                class = "lp-toolbar",
                 shiny::tags$div(
-                    shiny::tags$h2(
-                        class = "text-2xl mt-0 mb-2 font-semibold text-slate-800",
-                        "Total ion current per sample"),
-                    shiny::tags$p(
-                        class = "text-lg text-slate-500",
-                        paste("Distribution of ion currents per sample.",
-                              "Requires XCMSnExp / MsExperiment."))),
-                shiny::radioButtons(
-                    inputId  = ns("type"),
-                    label    = NULL,
-                    choices  = c("Boxplot" = "boxplot",
-                                 "Violin"  = "violin",
-                                 "Jitter"  = "jitter"),
-                    selected = "boxplot",
-                    inline   = TRUE)),
+                    class = "lp-segmented",
+                    shiny::radioButtons(
+                        inputId  = ns("type"),
+                        label    = "Plot type",
+                        choices  = c("Boxplot" = "boxplot",
+                                     "Violin"  = "violin",
+                                     "Jitter"  = "jitter"),
+                        selected = "boxplot",
+                        inline   = TRUE))),
             shiny::plotOutput(ns("plot"), height = "520px")),
         .options_ui(ns("opts"))
     )
@@ -46,7 +40,9 @@
 
         output$plot <- shiny::renderPlot({
             obj <- lcms_obj()
-            shiny::req(obj)
+            shiny::validate(shiny::need(obj, .APP_NO_DATA_MSG))
+            shiny::validate(shiny::need(length(selected_samples()) > 0,
+                                        .APP_NO_SAMPLES_MSG))
             tryCatch({
                 layered <- obj +
                     lp_total_ion_current(
@@ -58,6 +54,6 @@
                 .toast_error(conditionMessage(e), title = "TIC error")
                 NULL
             })
-        })
+        }, res = 96)
     })
 }

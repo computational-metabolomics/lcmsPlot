@@ -17,15 +17,16 @@
 
 #' Internal UI builder for the Shiny app
 #'
-#' Lays out the dashboard: sticky topbar, left nav rail, main content with
-#' a hidden tabset. The Tailwind stylesheet is attached via
-#' [`.lcmsPlot_dep()`].
+#' Lays out the dashboard: a sticky sidebar (navigation, data, samples)
+#' next to the main column (sticky topbar, hidden tabset). The Tailwind
+#' stylesheet is attached separately by [lcmsPlotApp()]; Shiny's busy indicators
+#' add a spinner to recalculating outputs and a progress pulse at the top
+#' of the page whenever the server is busy.
 #'
 #' @return A `shiny::tagList` wrapping the dashboard.
 #' @keywords internal
 .build_ui <- function() {
     shiny::tagList(
-        .lcmsPlot_dep(),
         shiny::tags$head(
             shiny::tags$meta(charset = "utf-8"),
             shiny::tags$meta(
@@ -36,12 +37,20 @@
                 shinytoastr::useToastr()
             }
         ),
+        # Top-level so the spinner options scope to <body>.
+        shiny::useBusyIndicators(spinners = TRUE, pulse = TRUE),
+        shiny::busyIndicatorOptions(
+            spinner_type     = "ring",
+            spinner_color    = "#465fff",
+            spinner_size     = "36px",
+            pulse_background = "linear-gradient(90deg, #9cb9ff, #465fff)",
+            pulse_height     = "3px"),
         shiny::tags$div(
-            class = "min-h-screen bg-slate-50 text-slate-800",
-            .app_topbar(),
+            class = "lp-shell",
+            .app_sidebar(),
             shiny::tags$div(
-                class = "lp-grid-main",
-                .app_navrail(),
+                class = "lp-main",
+                .app_topbar(),
                 .app_content()
             )
         )
@@ -57,20 +66,35 @@
         # nocov start
         session_dir <- file.path(tempdir(), paste0("lcmsPlot-", session$token))
 
-        lcms_obj <- shiny::eventReactive(input$load, {
+        # A reactiveVal rather than an eventReactive so that, before the
+        # first load, readers get `NULL` (and can show an empty state)
+        # instead of a silent `req()` failure.
+        lcms_obj <- shiny::reactiveVal(NULL)
+        shiny::observeEvent(input$load, {
             paths <- .uploaded_files_to_paths(input$files, session_dir)
             if (length(paths) == 0) {
                 .toast_error("Upload at least one file before loading.",
                              title = "No files")
-                return(NULL)
+                lcms_obj(NULL)
+                return()
             }
-            tryCatch({
+            lcms_obj(tryCatch({
                 dataset <- .load_dataset(paths)
-                lcmsPlot(dataset)
+                obj <- lcmsPlot(dataset)
+                n <- length(sampleMetadata(obj)$sample_id)
+                .toast_success(
+                    sprintf("Loaded %d sample%s.", n, if (n == 1) "" else "s"),
+                    title = "Data loaded")
+                obj
             }, error = function(e) {
                 .toast_error(conditionMessage(e), title = "Load error")
                 NULL
-            })
+            }))
+        })
+
+        sample_ids <- shiny::reactive({
+            obj <- lcms_obj()
+            if (is.null(obj)) character(0) else sampleMetadata(obj)$sample_id
         })
 
         metadata_cols <- shiny::reactive({
@@ -80,13 +104,12 @@
         })
 
         output$sample_picker <- shiny::renderUI({
-            obj <- lcms_obj()
-            if (is.null(obj)) {
+            ids <- sample_ids()
+            if (length(ids) == 0) {
                 return(shiny::tags$p(
-                    class = "text-xs text-slate-400",
+                    class = "lp-help",
                     "Load files to see samples."))
             }
-            ids <- sampleMetadata(obj)$sample_id
             shiny::checkboxGroupInput(
                 inputId  = "samples",
                 label    = NULL,
@@ -95,21 +118,36 @@
         })
 
         output$samples_chip <- shiny::renderUI({
-            obj <- lcms_obj()
-            n <- if (is.null(obj)) 0L else length(sampleMetadata(obj)$sample_id)
+            n <- length(sample_ids())
+            if (n == 0) {
+                return(shiny::tags$span(class = "lp-chip-muted",
+                                        "No data loaded"))
+            }
             shiny::tags$span(
                 class = "lp-chip",
-                shiny::icon("vial"),
                 sprintf("%d sample%s loaded", n, if (n == 1) "" else "s"))
         })
 
-        selected_samples <- shiny::reactive({
-            sel <- input$samples
-            if (is.null(sel) || length(sel) == 0) NULL else sel
+        shiny::observeEvent(input$samples_all, {
+            shiny::updateCheckboxGroupInput(session, "samples",
+                                            selected = sample_ids())
+        })
+        shiny::observeEvent(input$samples_none, {
+            shiny::updateCheckboxGroupInput(session, "samples",
+                                            selected = character(0))
         })
 
-        # Nav-rail observers: switch the hidden tabset when a nav link is
-        # clicked, and toggle the `lp-nav-active` class on the link itself.
+        # `NULL` until data is loaded; afterwards the checked sample IDs,
+        # which may be empty (the modules then show an empty state). IDs
+        # left over from a previously loaded dataset are dropped.
+        selected_samples <- shiny::reactive({
+            ids <- sample_ids()
+            if (length(ids) == 0) return(NULL)
+            intersect(input$samples, ids)
+        })
+
+        # Sidebar nav observers: switch the hidden tabset when a nav link
+        # is clicked, and toggle the `lp-nav-active` class on the link.
         active_tab <- shiny::reactiveVal("chrom")
         lapply(.APP_TABS, function(t) {
             shiny::observeEvent(input[[paste0("nav_", t$value)]], {
@@ -118,10 +156,17 @@
                 active_tab(t$value)
             })
         })
+
+        output$page_header <- shiny::renderUI({
+            t <- .app_tab(active_tab())
+            shiny::tags$div(
+                shiny::tags$h1(class = "lp-page-title", t$title),
+                shiny::tags$p(class = "lp-page-subtitle", t$description))
+        })
+
         shiny::observe({
             current <- active_tab()
             for (t in .APP_TABS) {
-                shinyjs <- session$sendCustomMessage
                 # Manipulate the active class via a tiny inline JS message.
                 session$sendCustomMessage(
                     type = "lp_set_nav_active",
@@ -148,18 +193,43 @@
     }
 }
 
-#' Tiny JS handler that toggles the `lp-nav-active` class on a nav link
+#' Tiny JS handlers for nav state and button busy state
 #'
-#' Injected once into the page head so the R `.build_server()` can switch
-#' the highlighted nav button via `session$sendCustomMessage()`.
+#' Injected once into the page head. `lp_set_nav_active` lets the R
+#' `.build_server()` switch the highlighted nav link (class plus
+#' `aria-current`) via `session$sendCustomMessage()`. The click handler
+#' marks a primary action button as busy (spinner, disabled) until the
+#' server reports it is idle again.
 #'
 #' @keywords internal
 .nav_active_js <- "
 Shiny.addCustomMessageHandler('lp_set_nav_active', function(m) {
     var el = document.getElementById(m.id);
     if (!el) return;
-    if (m.active) { el.classList.add('lp-nav-active'); }
-    else          { el.classList.remove('lp-nav-active'); }
+    if (m.active) {
+        el.classList.add('lp-nav-active');
+        el.setAttribute('aria-current', 'page');
+    } else {
+        el.classList.remove('lp-nav-active');
+        el.removeAttribute('aria-current');
+    }
+});
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn.lp-btn-primary.action-button');
+    if (!btn) return;
+    // Defer so Shiny registers the click before the button is disabled.
+    setTimeout(function() {
+        btn.classList.add('is-busy');
+        btn.setAttribute('aria-busy', 'true');
+        btn.disabled = true;
+    }, 0);
+});
+$(document).on('shiny:idle', function() {
+    document.querySelectorAll('.btn.is-busy').forEach(function(btn) {
+        btn.classList.remove('is-busy');
+        btn.removeAttribute('aria-busy');
+        btn.disabled = false;
+    });
 });
 "
 
@@ -202,9 +272,13 @@ lcmsPlotApp <- function(max_upload_size = 2 * 1024^3) {
     }
     options(shiny.maxRequestSize = max_upload_size)
 
-    ui <- shiny::bootstrapPage(
-        shiny::tags$head(shiny::tags$script(shiny::HTML(.nav_active_js))),
-        .build_ui())
+    # The stylesheet is a sibling *after* the page so that it loads after
+    # Bootstrap and selectize and wins over their equal-specificity rules.
+    ui <- shiny::tagList(
+        shiny::bootstrapPage(
+            shiny::tags$head(shiny::tags$script(shiny::HTML(.nav_active_js))),
+            .build_ui()),
+        .lcmsPlot_dep())
 
     shiny::shinyApp(ui = ui, server = .build_server())
 }

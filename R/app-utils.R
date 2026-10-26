@@ -167,7 +167,25 @@
 #' @keywords internal
 .toast_error <- function(msg, title = "Error") {
     if (requireNamespace("shinytoastr", quietly = TRUE)) {
-        shinytoastr::toastr_error(message = msg, title = title)
+        shinytoastr::toastr_error(message = msg, title = title,
+                                  position = "bottom-right")
+    }
+    invisible(NULL)
+}
+
+#' Show a success toast and return invisibly
+#'
+#' Counterpart of [.toast_error()], used to confirm that a long-running
+#' action (such as loading data) has finished.
+#'
+#' @param msg A `character` message to display.
+#' @param title A `character` title for the toast.
+#' @return `NULL` invisibly.
+#' @keywords internal
+.toast_success <- function(msg, title = "Done") {
+    if (requireNamespace("shinytoastr", quietly = TRUE)) {
+        shinytoastr::toastr_success(message = msg, title = title,
+                                    position = "bottom-right")
     }
     invisible(NULL)
 }

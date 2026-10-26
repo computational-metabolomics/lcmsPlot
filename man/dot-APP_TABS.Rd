@@ -2,13 +2,13 @@
 % Please edit documentation in R/app-interface.R
 \name{.APP_TABS}
 \alias{.APP_TABS}
-\title{Tabs displayed in the dashboard's left nav rail}
+\title{Tabs displayed in the dashboard's sidebar navigation}
 \usage{
 .APP_TABS
 }
 \description{
-Each entry is the \code{value} used by the hidden tabsetPanel; the label and
-optional FontAwesome icon (via \code{\link[shiny:icon]{shiny::icon()}}) are rendered into the
-nav buttons by \code{\link[=.app_navrail]{.app_navrail()}}.
+Each entry is the \code{value} used by the hidden tabsetPanel, the short
+\code{label} rendered into the nav links by \code{\link[=.app_sidebar]{.app_sidebar()}}, and the
+\code{title} / \code{description} shown in the topbar while the tab is active.
 }
 \keyword{internal}
