@@ -13,7 +13,7 @@ lp_chromatogram(
   highlight_peaks = FALSE,
   highlight_peaks_color = NULL,
   highlight_peaks_mode = "polygon",
-  highlight_peaks_factor = "sample_id",
+  highlight_peaks_factor = NULL,
   aggregation_fun = "max",
   rt_type = "uncorrected",
   rt_unit = "second",
@@ -74,7 +74,9 @@ should be highlighted. One of \code{"polygon"} (fills the area under the curve),
 or \code{"point"} (marks the peak apex with a point). Defaults to \code{"polygon"}.}
 
 \item{highlight_peaks_factor}{A \code{character} value indicating the factor from
-the metadata that determines the color. By default it colors by \code{sample_id}.}
+the metadata that determines the color. By default (\code{NULL}) the peaks take
+the colour of their trace: the \code{group_by} column of \code{\link[=lp_arrange]{lp_arrange()}}, else
+\code{sample_id}.}
 
 \item{aggregation_fun}{A \code{character} value indicating which aggregation
 function to use for the spectra intensities; one of \code{max} (base peak

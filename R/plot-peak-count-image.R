@@ -66,7 +66,7 @@ plot_peak_count_image <- function(
             scale_fill_viridis_c()
         }) +
         labs(x = "RT (sec)", y = NULL, fill = fill_label) +
-        theme_minimal() +
+        .base_theme(options) +
         extra_layers
 
     return(p)

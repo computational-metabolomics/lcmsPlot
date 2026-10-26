@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.20
+Version: 1.1.21
 Authors@R: c(
     person(
         "Ossama",
@@ -97,6 +97,7 @@ Collate:
     'dataset-peak-count-image.R'
     'dataset-purity.R'
     'plot-units.R'
+    'plot-theme.R'
     'plot-chrom-peak-rects.R'
     'plot-chromatogram.R'
     'plot-mass-trace.R'

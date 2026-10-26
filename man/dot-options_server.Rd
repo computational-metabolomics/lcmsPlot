@@ -15,7 +15,7 @@ metadata column names to populate the facet/group dropdowns.}
 \value{
 A reactive returning a named \code{list} with members \code{facets},
 \code{facet_ncol}, \code{free_x}, \code{free_y}, \code{arrange_by}, \code{legend_position},
-\code{title}, \code{legend_title}.
+\code{title}, \code{legend_title}, \code{theme_preset}, \code{palette}, \code{base_size}.
 }
 \description{
 Collects the input values into a single reactive list with one entry per

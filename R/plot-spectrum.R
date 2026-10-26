@@ -49,11 +49,13 @@ plot_spectrum <- function(
             y = "intensity",
             options = options,
             color = "reference")
+        colour_scales <- .palette_scale(options, "colour")
     } else {
         p_aes <- build_aes(
             x = "mz",
             y = "intensity",
             options = options)
+        colour_scales <- .series_scales(options)
     }
 
     # Determine dynamic y-axis limits
@@ -64,7 +66,10 @@ plot_spectrum <- function(
         data = dataset_for_plot,
         mapping = p_aes
     ) +
-        geom_segment(aes(xend = .data$mz, yend = 0), show.legend = single) +
+        geom_segment(
+            aes(xend = .data$mz, yend = 0),
+            linewidth = .line_width(options),
+            show.legend = single) +
         geom_text(
             data = top_peaks,
             aes(label = round(.data$mz, 4)),
@@ -80,7 +85,8 @@ plot_spectrum <- function(
             breaks = seq(y_min, y_max, by = options$spectra$intensity_breaks_by),
             labels = function(x) abs(x)
         ) +
-        theme_minimal() +
+        colour_scales +
+        .base_theme(options) +
         extra_layers
 
     opt <- options$spectra

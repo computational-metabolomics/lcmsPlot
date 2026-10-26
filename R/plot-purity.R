@@ -116,7 +116,7 @@ plot_purity_timeline <- function(
         ) +
         labs(x = x_label, y = "Precursor ion purity") +
         scale_y_continuous(limits = c(0, 1)) +
-        theme_minimal() +
+        .base_theme(options) +
         extra_layers
 }
 
@@ -168,7 +168,8 @@ plot_purity_distribution <- function(
         geom_func() +
         labs(x = "Sample", y = "Precursor ion purity") +
         scale_y_continuous(limits = c(0, 1)) +
-        theme_minimal() +
+        .series_scales(options) +
+        .base_theme(options) +
         extra_layers
 }
 

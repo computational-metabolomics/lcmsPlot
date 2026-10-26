@@ -24,7 +24,7 @@ default_options <- function() {
             highlight_peaks = FALSE,
             highlight_peaks_color = NULL,
             highlight_peaks_mode = "polygon",
-            highlight_peaks_factor = "sample_id",
+            highlight_peaks_factor = NULL,
             aggregation_fun = "max",
             rt_type = "uncorrected",
             rt_unit = "second",
@@ -127,6 +127,12 @@ default_options <- function() {
         ),
         legend = list(
             position = "right"
+        ),
+        theme = list(
+            preset = "minimal",
+            palette = "okabe_ito",
+            base_size = NULL,
+            line_width = NULL
         ),
         rt_lines = list(),
         layout = list(

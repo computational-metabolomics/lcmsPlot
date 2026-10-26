@@ -125,13 +125,13 @@ plot_peak_density <- function(
     extra_layers <- remove_null_elements(extra_layers)
 
     p <- ggplot(density_data, aes(x = .data$rt_plot, y = .data$density)) +
-        geom_line(colour = "black") +
+        geom_line(colour = "black", linewidth = .line_width(options)) +
         scale_y_continuous(
             breaks = ypos,
             labels = seq_len(n_samples)
         ) +
         labs(x = x_label, y = "sample", colour = NULL) +
-        theme_minimal() +
+        .base_theme(options) +
         extra_layers
 
     if (nrow(peaks_by_feature) > 0) {
@@ -144,6 +144,11 @@ plot_peak_density <- function(
             ),
             inherit.aes = FALSE
         )
+        p <- p + if (identical(options$arrangement$group_by, "sample_id")) {
+            .series_scales(options)
+        } else {
+            .palette_scale(options, "colour")
+        }
     }
 
     if (nrow(rect_data) > 0) {
