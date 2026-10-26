@@ -36,9 +36,10 @@ plot_rt_diff <- function(
         data = dataset,
         mapping = mapping
     ) +
-        geom_line() +
+        geom_line(linewidth = .line_width(options)) +
         labs(x = "Adjusted RT (sec)", y = "Adjustment difference (sec)") +
-        theme_minimal() +
+        .series_scales(options) +
+        .base_theme(options) +
         extra_layers
 
     return(p)

@@ -236,6 +236,128 @@ lp_legend <- function(position = NULL)  {
     )
 }
 
+#' Define the theme and colour palette of the plot
+#'
+#' The `lp_theme` function styles every panel of the plot with a theme preset
+#' and colours the series (the `group_by` column of [lp_arrange()], and the
+#' highlighted peaks) with a discrete palette. Continuous colour scales, such
+#' as those of intensity maps or purity scores, are left unchanged.
+#'
+#' A theme added after [lp_get_plot()] (e.g. `lp_get_plot() + theme(...)`)
+#' still overrides the preset.
+#'
+#' @param preset The theme preset. One of `"minimal"` (default),
+#' `"classic"`, `"publication"` (white background, axis lines, no minor grid,
+#' and an 8 pt base size for print), or any `ggplot2` `theme` object.
+#' @param palette The discrete palette. One of `"okabe_ito"` (default;
+#' colourblind-safe, falling back to viridis beyond 8 groups), `"viridis"`,
+#' `"ggplot2"` (the default ggplot2 hues), or a `character` vector of colours.
+#' A named vector maps each group to its colour; an unnamed one is used in
+#' order.
+#' @param base_size A `numeric` value indicating the base font size in points.
+#' `NULL` uses the preset's default (11, or 8 for `"publication"`).
+#' @param line_width A `numeric` value indicating the width of the plotted
+#' lines (chromatogram traces, spectrum sticks) and of the theme's lines.
+#' `NULL` scales it with `base_size`. `base_size` and `line_width` only affect
+#' the theme when `preset` is one of the named presets.
+#' @return A function that takes an `lcmsPlot` object and returns a modified
+#' version with the specified theme options stored in `options$theme`.
+#' It is intended for use with the `+` operator, which incrementally layers
+#' new data or visual components onto the `lcmsPlot` object.
+#' @export
+#' @examples
+#' raw_files <- dir(
+#'    system.file("cdf", package = "faahKO"),
+#'    full.names = TRUE,
+#'    recursive = TRUE)[1:4]
+#'
+#' p <- lcmsPlot(raw_files) +
+#'   lp_chromatogram(features = rbind(c(
+#'     mzmin = 334.9,
+#'     mzmax = 335.1,
+#'     rtmin = 2700,
+#'     rtmax = 2900))) +
+#'   lp_arrange(group_by = "sample_id")
+#'
+#' ## Style the plot for print
+#' p + lp_theme(preset = "publication", palette = "okabe_ito", base_size = 8)
+#'
+#' ## Colour each sample explicitly
+#' p + lp_theme(palette = c(
+#'   ko15 = "#0072B2", ko16 = "#56B4E9",
+#'   ko18 = "#D55E00", ko19 = "#E69F00"))
+lp_theme <- function(
+    preset = "minimal",
+    palette = "okabe_ito",
+    base_size = NULL,
+    line_width = NULL
+) {
+    .check_theme_preset(preset)
+    .check_palette(palette)
+    .check_positive_number(base_size, "base_size")
+    .check_positive_number(line_width, "line_width")
+
+    args <- as.list(environment())
+
+    make_interface_function(
+        name = "lp_theme",
+        args_list = args,
+        fn = function(obj) {
+            obj@options$theme <- args
+            return(obj)
+        }
+    )
+}
+
+.check_theme_preset <- function(preset) {
+    if (inherits(preset, "theme")) {
+        return(invisible())
+    }
+    if (!is.character(preset) || length(preset) != 1 ||
+        !preset %in% .theme_presets) {
+        stop(
+            "lp_theme: 'preset' must be one of ",
+            paste0('"', .theme_presets, '"', collapse = ", "),
+            ", or a ggplot2 theme.", call. = FALSE)
+    }
+}
+
+.check_palette <- function(palette) {
+    if (!is.character(palette) || length(palette) == 0) {
+        stop("lp_theme: 'palette' must be a character vector.", call. = FALSE)
+    }
+    if (length(palette) == 1 && is.null(names(palette)) &&
+        palette %in% .palette_presets) {
+        return(invisible())
+    }
+
+    valid <- vapply(palette, function(colour) {
+        tryCatch({
+            grDevices::col2rgb(colour)
+            TRUE
+        }, error = function(e) FALSE)
+    }, logical(1))
+    if (!all(valid)) {
+        stop(
+            "lp_theme: 'palette' must be one of ",
+            paste0('"', .palette_presets, '"', collapse = ", "),
+            ", or a vector of colours. Not colours: ",
+            paste0('"', palette[!valid], '"', collapse = ", "),
+            call. = FALSE)
+    }
+}
+
+.check_positive_number <- function(x, name) {
+    if (is.null(x)) {
+        return(invisible())
+    }
+    if (!is.numeric(x) || length(x) != 1 || is.na(x) || x <= 0) {
+        stop(
+            "lp_theme: '", name, "' must be a single positive number.",
+            call. = FALSE)
+    }
+}
+
 #' Define a vertical line on a retention time value
 #'
 #' @param intercept A `numeric` value indicating the retention time

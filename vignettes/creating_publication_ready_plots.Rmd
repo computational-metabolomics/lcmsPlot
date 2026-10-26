@@ -139,9 +139,58 @@ lcmsPlot(ms2_raw_files, metadata = ms2_samples_metadata) +
     lp_facets(facets = "sample_name", free_x = TRUE, ncol = 2)
 ```
 
+# Theme and palette presets
+
+`lp_theme()` styles every panel of a plot as part of the pipeline. Its
+`preset` sets the overall look: `"minimal"` (the default), `"classic"`, or
+`"publication"`, which has a white background, axis lines, no minor grid
+lines, and an 8 pt base font sized for print. Its `palette` colours the
+series: the default `"okabe_ito"` palette stays distinguishable under the
+common forms of colour blindness and falls back to viridis when there are
+more than 8 groups; `"viridis"` and `"ggplot2"` are also available.
+`base_size` and `line_width` scale the text and the lines.
+
+```{r theme-publication}
+lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
+    lp_chromatogram(
+        features = data.frame(
+            sample_id = c("l-proline-MS1", "l-kynurenine-MS1"),
+            mz = c(116.0703793, 209.091824),
+            rt = c(425.74, 365.72)
+        ),
+        ppm = 5,
+        rt_tol = 5
+    ) +
+    lp_arrange(group_by = "sample_name") +
+    lp_facets(facets = "sample_name", free_x = TRUE, ncol = 2) +
+    lp_theme(preset = "publication", base_size = 12, line_width = 0.6)
+```
+
+A named vector of colours maps each group to the colour of your choice, for
+example to match the rest of a manuscript. Highlighted peaks take the colour
+of their trace.
+
+```{r theme-named-palette}
+lcmsPlot(ms1_raw_files, metadata = ms1_samples_metadata) +
+    lp_chromatogram(
+        features = data.frame(
+            sample_id = c("l-proline-MS1", "l-kynurenine-MS1"),
+            mz = c(116.0703793, 209.091824),
+            rt = c(425.74, 365.72)
+        ),
+        ppm = 5,
+        rt_tol = 5
+    ) +
+    lp_arrange(group_by = "sample_name") +
+    lp_facets(facets = "sample_name", free_x = TRUE, ncol = 2) +
+    lp_theme(
+        preset = "classic",
+        palette = c("L-Proline" = "#0072B2", "L-Kynurenine" = "#D55E00"))
+```
+
 # Custom themes
 
-You can fully customise the appearance of your plots by modifying the
+For full control, you can customise the appearance of your plots by modifying the
 underlying `ggplot2` object. To do this, simply extract the plot using the
 `lp_get_plot()` function, which returns the raw `ggplot2` object, and then apply
 any desired theme settings. This gives you complete flexibility to tailor the

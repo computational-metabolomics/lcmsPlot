@@ -19,7 +19,7 @@ Tailwind \code{lp-card}.
 }
 \description{
 Renders a card with form controls for \code{lp_facets}, \code{lp_arrange},
-\code{lp_legend}, and \code{lp_labels}. Inputs are placed inside the module
+\code{lp_legend}, \code{lp_labels}, and \code{lp_theme}. Inputs are placed inside the module
 namespace given by \code{id}.
 }
 \keyword{internal}

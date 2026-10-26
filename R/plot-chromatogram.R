@@ -128,11 +128,14 @@ plot_chromatogram <- function(
             options = options,
             group = "series_id")
     ) +
-        geom_line(linetype = options$chromatograms$line_type) +
+        geom_line(
+            linetype = options$chromatograms$line_type,
+            linewidth = .line_width(options)) +
         labs(x = x_label, y = y_label) +
-        scale_fill_discrete(guide = "none") + # Removes peak highlight legend
+        # The highlighted peaks share the trace colours, without a legend.
+        .series_scales(options, c("colour", "fill")) +
         scale_x_continuous(breaks = scales::pretty_breaks()) +
-        theme_minimal() +
+        .base_theme(options) +
         extra_layers
 
     if (isTRUE(options$purity_overlay$show)) {

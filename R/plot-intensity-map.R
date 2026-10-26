@@ -47,7 +47,7 @@ plot_intensity_map <- function(
             geom_density_2d_filled(contour_var = "ndensity") +
             (if (!is.null(fill_scale)) fill_scale else scale_fill_viridis_d()) +
             labs(x = dim_label(x_dim), y = dim_label(y_dim), fill = "Density") +
-            theme_minimal() +
+            .base_theme(options) +
             extra_layers,
         point = ggplot(
             dataset,
@@ -65,7 +65,7 @@ plot_intensity_map <- function(
                 x = dim_label(x_dim),
                 y = dim_label(y_dim),
                 colour = "log(Intensity)") +
-            theme_minimal() +
+            .base_theme(options) +
             extra_layers,
         tile = ggplot(
             dataset,
@@ -76,7 +76,7 @@ plot_intensity_map <- function(
             geom_tile() +
             (if (!is.null(fill_scale)) fill_scale else scale_fill_viridis_c()) +
             labs(x = dim_label(x_dim), y = dim_label(y_dim), fill = "log(Intensity)") +
-            theme_minimal() +
+            .base_theme(options) +
             extra_layers,
         stop("Unknown intensity map geom: '", geom_type, "'. ",
              "Expected 'tile', 'point', or 'density'.")

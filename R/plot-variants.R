@@ -134,7 +134,7 @@ plot_multiple_faceted_datasets <- function(datasets, obj, plot_config) {
 
             datasets_plots[[1]] <- datasets_plots[[1]] +
                 ggtitle(plot_title) +
-                theme(plot.title = element_text(size = 9, hjust = 0.5))
+                theme(plot.title = element_text(size = rel(0.8), hjust = 0.5))
 
             combined_plot <- patchwork::wrap_plots(
                 datasets_plots,

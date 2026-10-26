@@ -90,6 +90,11 @@ run_matching_plot_variant <- function(datasets, obj) {
 #' @return A `patchwork` plot object representing the final plot.
 #' @keywords internal
 plot_data <- function(datasets, obj) {
+    # Resolved once over every dataset, so that a series keeps its colour in
+    # every panel.
+    obj@options$theme$series_values <- .series_values(
+        datasets, .supporting_datasets(obj)$detected_peaks, obj@options)
+
     result_plot <- run_matching_plot_variant(datasets, obj)
 
     result_plot <- result_plot +

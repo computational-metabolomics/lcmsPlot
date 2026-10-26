@@ -56,7 +56,9 @@
 #' `"rectangle"` (draws a bounding box from rtmin to rtmax up to the peak apex),
 #' or `"point"` (marks the peak apex with a point). Defaults to `"polygon"`.
 #' @param highlight_peaks_factor A `character` value indicating the factor from
-#' the metadata that determines the color. By default it colors by `sample_id`.
+#' the metadata that determines the color. By default (`NULL`) the peaks take
+#' the colour of their trace: the `group_by` column of [lp_arrange()], else
+#' `sample_id`.
 #' @param aggregation_fun A `character` value indicating which aggregation
 #' function to use for the spectra intensities; one of `max` (base peak
 #' chromatogram), `sum` (total ion current), or `mean` (averaged ion
@@ -114,7 +116,7 @@ lp_chromatogram <- function(
     highlight_peaks = FALSE,
     highlight_peaks_color = NULL,
     highlight_peaks_mode = "polygon",
-    highlight_peaks_factor = "sample_id",
+    highlight_peaks_factor = NULL,
     aggregation_fun = "max",
     rt_type = "uncorrected",
     rt_unit = "second",

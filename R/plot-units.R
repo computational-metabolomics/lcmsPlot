@@ -103,7 +103,7 @@ highlight_peaks <- function(
 
     mode <- options$chromatograms$highlight_peaks_mode
     highlight_peaks_color <- options$chromatograms$highlight_peaks_color
-    highlight_peaks_factor <- options$chromatograms$highlight_peaks_factor
+    highlight_peaks_factor <- .highlight_factor(options)
 
     if (mode == "polygon") {
         # Rows are sliced out of `dataset`, whose intensity_plot already carries
@@ -123,6 +123,12 @@ highlight_peaks <- function(
         # from the traces.
         plot_data$y_base <- series_offset(plot_data, offsets, stack_col)
         plot_data$maxo_plot <- y_transform(plot_data$maxo) + plot_data$y_base
+    }
+
+    # Peaks that do not carry the colouring column (e.g. a group_by on a
+    # chromatogram-only column) fall back to one colour per sample.
+    if (!highlight_peaks_factor %in% colnames(plot_data)) {
+        highlight_peaks_factor <- "sample_id"
     }
 
     build_geom(mode, plot_data, highlight_peaks_color, highlight_peaks_factor)

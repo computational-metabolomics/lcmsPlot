@@ -31,7 +31,10 @@ test_that(".apply_options is a no-op when every field is NULL/empty", {
         arrange_by      = NULL,
         legend_position = NULL,
         title           = NULL,
-        legend_title    = NULL)
+        legend_title    = NULL,
+        theme_preset    = NULL,
+        palette         = NULL,
+        base_size       = NULL)
     out <- .apply_options(obj, opts)
     expect_identical(out, obj)
 })
@@ -68,6 +71,20 @@ test_that(".apply_options(title/legend_title=...) calls lp_labels", {
     out  <- .apply_options(obj, list(title = "Foo", legend_title = "Bar"))
     expect_equal(out@options$labels$title,  "Foo")
     expect_equal(out@options$labels$legend, "Bar")
+})
+
+test_that(".apply_options(theme_preset/palette/base_size=...) calls lp_theme", {
+    skip_if_no_data()
+    obj  <- lcmsPlot(raw_files)
+    out  <- .apply_options(obj, list(theme_preset = "publication", base_size = 9))
+    expect_equal(out@history[[length(out@history)]]$name, "lp_theme")
+    expect_equal(out@options$theme$preset,    "publication")
+    expect_equal(out@options$theme$palette,   "okabe_ito")
+    expect_equal(out@options$theme$base_size, 9)
+
+    out  <- .apply_options(obj, list(palette = "viridis"))
+    expect_equal(out@options$theme$preset,  "minimal")
+    expect_equal(out@options$theme$palette, "viridis")
 })
 
 test_that(".empty_to_null returns NULL for '' and the value otherwise", {

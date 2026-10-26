@@ -17,7 +17,7 @@ The (possibly layered) \code{lcmsPlotClass}.
 \description{
 Pure function (no Shiny). Given an \code{lcmsPlotClass} and a list as produced
 by \code{\link[=.options_server]{.options_server()}}, appends the corresponding \code{lp_facets},
-\code{lp_arrange}, \code{lp_legend}, and \code{lp_labels} layers when their inputs are
-non-\code{NULL}. Used by every plot module immediately before \code{lp_get_plot()}.
+\code{lp_arrange}, \code{lp_legend}, \code{lp_labels}, and \code{lp_theme} layers when their
+inputs are non-\code{NULL}. Used by every plot module immediately before \code{lp_get_plot()}.
 }
 \keyword{internal}

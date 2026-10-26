@@ -1,7 +1,7 @@
 #' Build the per-tab Options panel UI
 #'
 #' Renders a card with form controls for `lp_facets`, `lp_arrange`,
-#' `lp_legend`, and `lp_labels`. Inputs are placed inside the module
+#' `lp_legend`, `lp_labels`, and `lp_theme`. Inputs are placed inside the module
 #' namespace given by `id`.
 #'
 #' @param id The module namespace id.
@@ -44,7 +44,24 @@
                              "top", "right", "bottom", "left", "none"),
                 selected = ""),
             shiny::textInput(ns("title"),        "Plot title",  value = ""),
-            shiny::textInput(ns("legend_title"), "Legend title", value = "")
+            shiny::textInput(ns("legend_title"), "Legend title", value = ""),
+            shiny::selectInput(
+                ns("theme_preset"),
+                "Theme",
+                choices  = c("default" = "", .theme_presets),
+                selected = ""),
+            shiny::selectInput(
+                ns("palette"),
+                "Palette",
+                choices  = c("default" = "",
+                             "Okabe-Ito" = "okabe_ito",
+                             "viridis" = "viridis",
+                             "ggplot2" = "ggplot2"),
+                selected = ""),
+            shiny::numericInput(
+                ns("base_size"),
+                "Base font size",
+                value = NA, min = 4, step = 1)
         )
     )
 }
@@ -64,7 +81,7 @@
 #'   metadata column names to populate the facet/group dropdowns.
 #' @return A reactive returning a named `list` with members `facets`,
 #'   `facet_ncol`, `free_x`, `free_y`, `arrange_by`, `legend_position`,
-#'   `title`, `legend_title`.
+#'   `title`, `legend_title`, `theme_preset`, `palette`, `base_size`.
 #' @keywords internal
 .options_server <- function(id, metadata_cols = NULL) {
     shiny::moduleServer(id, function(input, output, session) {
@@ -92,7 +109,10 @@
                 arrange_by      = .empty_to_null(input$arrange_by),
                 legend_position = .empty_to_null(input$legend_position),
                 title           = .empty_to_null(input$title),
-                legend_title    = .empty_to_null(input$legend_title)
+                legend_title    = .empty_to_null(input$legend_title),
+                theme_preset    = .empty_to_null(input$theme_preset),
+                palette         = .empty_to_null(input$palette),
+                base_size       = .na_to_null(input$base_size)
             )
         })
     })
@@ -102,8 +122,8 @@
 #'
 #' Pure function (no Shiny). Given an `lcmsPlotClass` and a list as produced
 #' by [`.options_server()`], appends the corresponding `lp_facets`,
-#' `lp_arrange`, `lp_legend`, and `lp_labels` layers when their inputs are
-#' non-`NULL`. Used by every plot module immediately before `lp_get_plot()`.
+#' `lp_arrange`, `lp_legend`, `lp_labels`, and `lp_theme` layers when their
+#' inputs are non-`NULL`. Used by every plot module immediately before `lp_get_plot()`.
 #'
 #' @param obj An `lcmsPlotClass`.
 #' @param opts A named `list` of options (see [`.options_server()`]).
@@ -129,6 +149,13 @@
         obj <- obj + lp_labels(
             title  = opts$title,
             legend = opts$legend_title)
+    }
+    if (!is.null(opts$theme_preset) || !is.null(opts$palette) ||
+        !is.null(opts$base_size)) {
+        obj <- obj + lp_theme(
+            preset    = opts$theme_preset %||% "minimal",
+            palette   = opts$palette %||% "okabe_ito",
+            base_size = opts$base_size)
     }
     obj
 }

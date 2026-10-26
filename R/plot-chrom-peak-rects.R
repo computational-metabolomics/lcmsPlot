@@ -149,7 +149,7 @@ plot_chrom_peak_rects <- function(
 
     p <- ggplot(dataset, aes(x = .data$rt, y = .data$mz)) +
         labs(x = "RT (sec)", y = "m/z") +
-        theme_minimal() +
+        .base_theme(options) +
         extra_layers
 
     if (is.null(options$facets$facets) &&

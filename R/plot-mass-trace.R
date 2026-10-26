@@ -33,7 +33,8 @@ plot_mass_trace <- function(
     ) +
         geom_point(show.legend = single) +
         labs(x = "RT (sec)", y = "m/z") +
-        theme_minimal() +
+        .series_scales(options) +
+        .base_theme(options) +
         extra_layers
 
     if (isTRUE(options$chrom_peak_rects$show)) {

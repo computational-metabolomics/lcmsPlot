@@ -1,3 +1,29 @@
+# lcmsPlot 1.1.21
+
+- New `lp_theme()` layer styles every plot type, and every panel of a
+  patchwork layout, from the pipeline (#60):
+  `lp_theme(preset = "publication", palette = "okabe_ito", base_size = 8)`.
+  `preset` is `"minimal"` (the previous look, still the default),
+  `"classic"`, `"publication"` (white background, axis lines, no minor grid,
+  8 pt base size), or any ggplot2 `theme`. `palette` is `"okabe_ito"`,
+  `"viridis"`, `"ggplot2"` (the previous hues), or a named or unnamed vector
+  of colours. `line_width` sets the width of the plotted lines and of the
+  theme's lines. `lp_get_plot() + theme(...)` still overrides the preset.
+- **The default discrete colours are now the colourblind-safe Okabe-Ito
+  palette**, falling back to viridis beyond 8 groups. Use
+  `lp_theme(palette = "ggplot2")` for the previous hues. A series keeps its
+  colour across all the panels of a layout. Continuous scales (intensity
+  maps, peak count images, purity scores) are unchanged.
+- Highlighted peaks take the colour of their trace: `highlight_peaks_factor`
+  of `lp_chromatogram()` now defaults to `NULL`, meaning the `group_by`
+  column of `lp_arrange()`, else `sample_id`. Set it explicitly for the
+  previous behaviour.
+- The Shiny app's Options panel exposes the theme preset, palette, and base
+  font size.
+- The plot-data baselines in `tests/testthat/fixtures/baseline` are
+  unaffected: they record the values handed to the plotting functions, not
+  their colours.
+
 # lcmsPlot 1.1.20
 
 - `lp_spectra(mode = "precursor")` plots the MS2 spectra of each feature from
