@@ -10,8 +10,10 @@
 A \code{shiny::tagList} wrapping the dashboard.
 }
 \description{
-Lays out the dashboard: sticky topbar, left nav rail, main content with
-a hidden tabset. The Tailwind stylesheet is attached via
-\code{\link[=.lcmsPlot_dep]{.lcmsPlot_dep()}}.
+Lays out the dashboard: a sticky sidebar (navigation, data, samples)
+next to the main column (sticky topbar, hidden tabset). The Tailwind
+stylesheet is attached separately by \code{\link[=lcmsPlotApp]{lcmsPlotApp()}}; Shiny's busy indicators
+add a spinner to recalculating outputs and a progress pulse at the top
+of the page whenever the server is busy.
 }
 \keyword{internal}

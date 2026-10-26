@@ -10,24 +10,15 @@
         shiny::tags$section(
             class = "lp-plot-card",
             shiny::tags$div(
-                class = "mb-4",
-                shiny::tags$h2(
-                    class = "text-2xl mt-0 mb-2 font-semibold text-slate-800",
-                    "Spectra"),
-                shiny::tags$p(
-                    class = "text-lg text-slate-500",
-                    "Plot a mass spectrum at a given scan index.")),
-            shiny::tags$div(
-                class = "grid grid-cols-3 gap-3 mb-4",
+                class = "lp-toolbar",
                 shiny::uiOutput(ns("sample")),
                 shiny::numericInput(ns("scan_index"), "Scan index",
                                     value = 1, min = 1, step = 1),
                 shiny::numericInput(ns("ms_level"),  "MS level",
-                                    value = 1, min = 1, step = 1)),
-            shiny::actionButton(ns("go"), "Plot",
-                                icon = shiny::icon("chart-column"),
-                                class = "lp-btn-primary mb-4"),
-            shiny::plotOutput(ns("plot"), height = "480px")),
+                                    value = 1, min = 1, step = 1),
+                shiny::actionButton(ns("go"), "Plot",
+                                    class = "lp-btn-primary")),
+            shiny::plotOutput(ns("plot"), height = "520px")),
         .options_ui(ns("opts"))
     )
 }
@@ -43,10 +34,12 @@
     shiny::moduleServer(id, function(input, output, session) {
         opts <- .options_server("opts", metadata_cols)
 
+        # Rendered before data is loaded too (with no choices) so the
+        # toolbar layout stays stable.
         output$sample <- shiny::renderUI({
             obj <- lcms_obj()
-            shiny::req(obj)
-            ids <- sampleMetadata(obj)$sample_id
+            ids <- if (is.null(obj)) character(0)
+                   else sampleMetadata(obj)$sample_id
             shiny::selectInput(
                 inputId  = session$ns("sample_id"),
                 label    = "Sample",
@@ -72,9 +65,12 @@
         })
 
         output$plot <- shiny::renderPlot({
+            shiny::validate(shiny::need(lcms_obj(), .APP_NO_DATA_MSG))
+            shiny::validate(shiny::need(
+                input$go > 0, "Pick a sample and scan, then click Plot."))
             p <- plot_data()
             shiny::req(p)
             print(p)
-        })
+        }, res = 96)
     })
 }

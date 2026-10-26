@@ -2,7 +2,7 @@
 % Please edit documentation in R/app-interface.R
 \name{.app_content}
 \alias{.app_content}
-\title{Build the content area: hidden tabset + per-tab options panel}
+\title{Build the content area: hidden tabset of plot views}
 \usage{
 .app_content()
 }
@@ -11,8 +11,8 @@ A \code{shiny::tags$main}.
 }
 \description{
 Each \code{\link[shiny:tabPanel]{shiny::tabPanel()}} hosts a plot card on the left and the Options
-card on the right. Tab switching is driven from the left nav rail via
-\code{\link[shiny:updateTabsetPanel]{shiny::updateTabsetPanel()}} — the tabsetPanel itself is \code{type = "hidden"}
-so no Bootstrap tab strip is shown.
+card on the right. Tab switching is driven from the sidebar navigation
+via \code{\link[shiny:updateTabsetPanel]{shiny::updateTabsetPanel()}} — the tabsetPanel itself is
+\code{type = "hidden"} so no Bootstrap tab strip is shown.
 }
 \keyword{internal}

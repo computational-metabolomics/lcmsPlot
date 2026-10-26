@@ -2,12 +2,15 @@
 % Please edit documentation in R/app-launcher.R
 \name{.nav_active_js}
 \alias{.nav_active_js}
-\title{Tiny JS handler that toggles the \code{lp-nav-active} class on a nav link}
+\title{Tiny JS handlers for nav state and button busy state}
 \usage{
 .nav_active_js
 }
 \description{
-Injected once into the page head so the R \code{.build_server()} can switch
-the highlighted nav button via \code{session$sendCustomMessage()}.
+Injected once into the page head. \code{lp_set_nav_active} lets the R
+\code{.build_server()} switch the highlighted nav link (class plus
+\code{aria-current}) via \code{session$sendCustomMessage()}. The click handler
+marks a primary action button as busy (spinner, disabled) until the
+server reports it is idle again.
 }
 \keyword{internal}

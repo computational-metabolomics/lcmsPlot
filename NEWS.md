@@ -1,3 +1,14 @@
+# lcmsPlot 1.1.22
+
+- Refreshed Shiny app interface: a consistent type scale (Bootstrap's 10px
+  root font no longer shrinks the text), the bundled Outfit font, a sidebar
+  with views, data and samples (with All / None selection), the active
+  view's title in the topbar, and no icons. Busy outputs show a spinner,
+  the page shows a progress bar while the server works, action buttons show
+  a busy state, and empty plot areas explain what to do next. Deselecting
+  every sample now shows a message instead of plotting all samples.
+  Requires `shiny (>= 1.8.1)`.
+
 # lcmsPlot 1.1.21
 
 - New `lp_theme()` layer styles every plot type, and every panel of a

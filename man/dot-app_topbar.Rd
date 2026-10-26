@@ -10,6 +10,7 @@
 A \code{shiny::tags$header}.
 }
 \description{
-Build the sticky topbar of the dashboard
+Shows the active view's title and description (rendered server-side
+into \code{page_header}) and a chip with the number of loaded samples.
 }
 \keyword{internal}

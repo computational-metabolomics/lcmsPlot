@@ -14,12 +14,12 @@ offer as choices for the facet and grouping pickers. Pass \code{character(0)}
 before any data is loaded — the dropdowns will simply be empty.}
 }
 \value{
-A \code{shiny::tagList} containing the option controls wrapped in a
-Tailwind \code{lp-card}.
+A \code{shiny::tags$aside} containing the option controls wrapped in
+a Tailwind \code{lp-options} card.
 }
 \description{
 Renders a card with form controls for \code{lp_facets}, \code{lp_arrange},
-\code{lp_legend}, \code{lp_labels}, and \code{lp_theme}. Inputs are placed inside the module
-namespace given by \code{id}.
+\code{lp_legend}, \code{lp_labels}, and \code{lp_theme}, grouped under small
+sub-headings. Inputs are placed inside the module namespace given by \code{id}.
 }
 \keyword{internal}

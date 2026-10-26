@@ -2,128 +2,473 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    html {
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-            Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-        color: theme('colors.slate.800');
-        background: theme('colors.slate.50');
-    }
-    body {
-        margin: 0;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        margin: 0;
-    }
+/*
+ * Outfit variable font (SIL OFL 1.1, see fonts/OFL.txt), bundled so the
+ * app renders the same offline. The URL is relative to this stylesheet,
+ * which `.lcmsPlot_dep()` serves together with the rest of `inst/www/`.
+ */
+@font-face {
+    font-family: "Outfit";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("fonts/outfit-latin-wght-normal.woff2") format("woff2-variations"),
+         url("fonts/outfit-latin-wght-normal.woff2") format("woff2");
+}
+
+/*
+ * Bootstrap 3 (shipped by `shiny::bootstrapPage()`) sets
+ * `html { font-size: 10px }`, which shrinks every Tailwind rem size.
+ * `:root` outranks Bootstrap's `html` selector regardless of load order;
+ * `html body` likewise outranks its `body` rule.
+ */
+:root {
+    font-size: 16px;
+}
+html body {
+    margin: 0;
+    font-family: theme('fontFamily.sans');
+    font-size: theme('fontSize.sm');
+    line-height: 1.5;
+    color: theme('colors.gray.700');
+    background: theme('colors.gray.50');
+    -webkit-font-smoothing: antialiased;
 }
 
 @layer components {
-    .lp-card {
-        @apply bg-white rounded-md border border-slate-200
-               shadow-sm p-5;
+    /* ---- Shell ------------------------------------------------------- */
+    .lp-shell {
+        display: grid;
+        grid-template-columns: 18rem minmax(0, 1fr);
+        min-height: 100vh;
     }
-    .lp-card-tight {
-        @apply bg-white rounded-md border border-slate-200
-               shadow-sm p-3;
+    .lp-sidebar {
+        @apply bg-white border-r border-gray-200 flex flex-col gap-8
+               px-5 py-8;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
     }
-    .lp-section-title {
-        @apply text-lg font-semibold tracking-wide uppercase
-               text-slate-500 mb-2 mt-0;
+    .lp-wordmark {
+        @apply px-3 text-xl font-semibold text-gray-800 m-0;
+        letter-spacing: -0.01em;
     }
-    .lp-btn {
-        @apply inline-flex items-center justify-center gap-2
-               rounded-lg px-3 py-2 text-sm font-medium
-               border border-slate-200 bg-white text-slate-700
-               hover:bg-slate-100 transition-colors;
+    .lp-main {
+        @apply flex flex-col;
+        min-width: 0;
     }
-    .lp-btn-primary {
-        @apply inline-flex items-center justify-center gap-2
-               rounded-lg px-3 py-2 text-sm font-medium
-               bg-indigo-600 text-white border border-indigo-600
-               hover:bg-indigo-700 transition-colors shadow-sm;
+    .lp-topbar {
+        @apply sticky top-0 z-10 bg-white border-b border-gray-200
+               flex items-center justify-between gap-4 px-6;
+        min-height: 4.5rem;
+    }
+    .lp-page-title {
+        @apply text-xl font-semibold text-gray-800 m-0;
+    }
+    .lp-page-subtitle {
+        @apply text-sm text-gray-500 m-0;
+    }
+    .lp-content {
+        @apply p-6;
+    }
+
+    /* ---- Sidebar groups and navigation -------------------------------- */
+    .lp-sidebar-group {
+        @apply flex flex-col gap-3;
+    }
+    .lp-group-label {
+        @apply text-xs font-medium uppercase text-gray-500 m-0;
+        letter-spacing: 0.06em;
+    }
+    .lp-sidebar-group > .lp-group-label,
+    .lp-sidebar-group > .lp-group-header {
+        @apply px-3;
+    }
+    .lp-sidebar-body {
+        @apply flex flex-col gap-3 px-3;
+    }
+    .lp-group-header {
+        @apply flex items-center justify-between gap-2;
     }
     .lp-nav-item {
-        @apply flex items-center gap-3 w-full rounded-lg
-               px-3 py-2 text-lg text-slate-600 cursor-pointer
-               hover:bg-slate-100 transition-colors;
+        @apply flex items-center w-full rounded-lg px-3 text-sm
+               font-medium text-gray-700 transition-colors;
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+        text-decoration: none;
     }
-    .lp-nav-item.lp-nav-active {
-        @apply bg-indigo-50 text-indigo-700 font-semibold;
+    .lp-nav-item:hover,
+    .lp-nav-item:focus {
+        @apply bg-gray-100 text-gray-800;
+        text-decoration: none;
     }
-    .lp-chip {
-        @apply inline-flex items-center gap-1.5 rounded-full
-               bg-indigo-50 text-indigo-700 px-3 py-1
-               text-xs font-medium;
+    .lp-nav-item.lp-nav-active,
+    .lp-nav-item.lp-nav-active:hover,
+    .lp-nav-item.lp-nav-active:focus {
+        @apply bg-brand-50 text-brand-500;
     }
-    .lp-divider {
-        @apply h-px w-full bg-slate-200 my-4;
+    .lp-sample-list {
+        max-height: 16rem;
+        overflow-y: auto;
     }
-    .lp-grid-main {
-        display: grid;
-        grid-template-columns: 19rem minmax(0, 1fr);
-        gap: 1.25rem;
-        padding: 1.25rem;
+
+    /* ---- Cards -------------------------------------------------------- */
+    .lp-card {
+        @apply bg-white rounded-2xl border border-gray-200 p-6;
+    }
+    .lp-card-title {
+        @apply text-lg font-semibold text-gray-800 m-0;
     }
     .lp-grid-content {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 18rem;
-        gap: 1.25rem;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    .lp-plot-card {
+        @apply lp-card flex flex-col gap-6;
+    }
+    .lp-toolbar {
+        @apply flex flex-wrap items-end gap-4;
+    }
+    .lp-toolbar > * {
+        flex: 1 1 9rem;
+        min-width: 8rem;
+    }
+    .lp-toolbar > .btn,
+    .lp-toolbar > .lp-segmented {
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+    .lp-options {
+        @apply lp-card p-5 flex flex-col gap-4;
+    }
+    .lp-options-section {
+        @apply flex flex-col gap-3 border-t border-gray-200 pt-4;
+    }
+    .lp-subheading {
+        @apply text-xs font-medium uppercase text-gray-500 m-0;
+        letter-spacing: 0.06em;
+    }
+
+    /* ---- Text, chips, buttons ----------------------------------------- */
+    .lp-help {
+        @apply text-sm text-gray-500 m-0;
+    }
+    .lp-chip {
+        @apply inline-flex items-center rounded-full bg-brand-50
+               text-brand-600 px-3 py-1 text-xs font-medium;
+    }
+    .lp-chip-muted {
+        @apply lp-chip bg-gray-100 text-gray-600;
+    }
+    .lp-divider {
+        @apply h-px w-full bg-gray-200 my-4;
+    }
+    .lp-link-btn {
+        @apply text-xs font-medium text-brand-500 rounded;
+        text-decoration: none;
+    }
+    .lp-link-btn:hover,
+    .lp-link-btn:focus {
+        @apply text-brand-700;
+        text-decoration: none;
     }
 }
 
-/*
- * Soften Shiny / Bootstrap defaults so form widgets pick up the
- * Tailwind look without re-implementing each one.
- */
-.form-group { margin-bottom: 0.75rem; }
-.form-group > label,
-.control-label,
-.shiny-input-container > label:not(.radio-inline):not(.checkbox-inline) {
-    @apply text-lg font-medium text-slate-600 mb-1;
-    display: block;
-}
-.form-control,
-input[type="text"],
-input[type="number"],
-select.form-control {
-    @apply w-full rounded-lg border border-slate-200 bg-white
-           px-3 py-2 text-base text-slate-800
-           focus:outline-none focus:ring-2 focus:ring-indigo-500
-           focus:border-indigo-500;
-}
-.selectize-input {
-    @apply w-full rounded-lg border border-slate-200 bg-white
-           px-3 py-2 text-base text-slate-800 shadow-none;
-}
-.shiny-input-container .checkbox label,
-.shiny-input-container .radio label,
-.shiny-input-container .checkbox-inline,
-.shiny-input-container .radio-inline {
-    @apply text-base text-slate-700 font-normal;
-}
-/* Keep inline radio / checkbox groups horizontal — Bootstrap's
-   .radio-inline / .checkbox-inline are overridden by the
-   .shiny-input-container > label rule above without this. */
-.radio-inline,
-.checkbox-inline {
-    display: inline-block !important;
-    margin-right: 1rem;
-    margin-bottom: 0;
-    font-weight: 400;
-    vertical-align: middle;
-}
-.action-button.btn-primary,
-.btn.btn-primary {
-    @apply bg-indigo-600 border-indigo-600 text-white
-           hover:bg-indigo-700 hover:border-indigo-700 shadow-sm;
-}
-.shiny-file-input-progress {
-    margin-top: 0.5rem;
+/* ---- Focus ring (shared) ---------------------------------------------- */
+.lp-nav-item:focus-visible,
+.lp-link-btn:focus-visible,
+.btn:focus-visible,
+.btn:focus,
+.btn:active:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.2);
 }
 
-/* Sticky header offset for plot area */
-.lp-plot-card {
-    @apply bg-white rounded-md border border-slate-200
-           shadow-sm p-5 min-h-[560px];
+/* ---- Buttons (override Bootstrap 3 `.btn`) ---------------------------- */
+.btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           text-sm font-medium px-4 transition-colors;
+    height: 2.75rem;
+    line-height: 1.25rem;
+}
+.btn.btn-default {
+    @apply bg-white border border-gray-300 text-gray-700;
+}
+.btn.btn-default:hover {
+    @apply bg-gray-50 text-gray-800 border-gray-300;
+}
+.btn.lp-btn-primary,
+.btn.lp-btn-primary:focus {
+    @apply bg-brand-500 border border-brand-500 text-white;
+}
+.btn.lp-btn-primary:hover,
+.btn.lp-btn-primary:active {
+    @apply bg-brand-600 border-brand-600 text-white;
+}
+.btn[disabled] {
+    opacity: 1;
+}
+.btn.lp-btn-primary.is-busy {
+    @apply bg-brand-400 border-brand-400;
+    cursor: progress;
+}
+.btn.is-busy::before {
+    content: "";
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: lp-spin 0.7s linear infinite;
+}
+@keyframes lp-spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn.is-busy::before { animation-duration: 2s; }
+}
+
+/* ---- Form widgets (override Bootstrap 3 / Shiny defaults) ------------- */
+.shiny-input-container:not(.shiny-input-container-inline) {
+    width: 100%;
+}
+.form-group {
+    margin-bottom: 0;
+}
+.form-group > label.control-label,
+.shiny-input-container > label:not(.radio-inline):not(.checkbox-inline) {
+    @apply block text-sm font-medium text-gray-700;
+    margin: 0 0 0.375rem;
+}
+.control-label.shiny-label-null {
+    display: none !important;
+}
+.form-control,
+input[type="text"].form-control,
+input[type="number"].form-control {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3.5
+           text-sm text-gray-800;
+    height: 2.75rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+.form-control::placeholder {
+    @apply text-gray-400;
+}
+.form-control:focus {
+    @apply border-brand-300;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.12);
+}
+
+/* File picker: Bootstrap's table-based `.input-group` → flex. */
+.shiny-input-container .input-group {
+    display: flex;
+    width: 100%;
+}
+.shiny-input-container .input-group-btn {
+    display: flex;
+    width: auto;
+    margin: 0;
+    font-weight: 500;
+}
+.shiny-input-container .input-group .btn-file {
+    @apply rounded-l-lg rounded-r-none bg-gray-50 border-gray-300;
+    border-right: 0;
+}
+.shiny-input-container .input-group .form-control {
+    @apply rounded-l-none rounded-r-lg;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-overflow: ellipsis;
+}
+/* Shiny keeps the hidden bar in the layout; drop it until an upload
+   starts (Shiny then sets an inline `visibility: visible`). */
+.shiny-file-input-progress:not([style*="visible"]) {
+    display: none;
+}
+.shiny-file-input-progress.progress {
+    @apply rounded-full bg-gray-100;
+    height: 1.25rem;
+    margin: 0.5rem 0 0;
+    box-shadow: none;
+}
+.shiny-file-input-progress .progress-bar {
+    @apply bg-brand-500 text-xs font-medium;
+    line-height: 1.25rem;
+    box-shadow: none;
+}
+
+/* Selectize (every `selectInput()` in the app) */
+.selectize-control {
+    margin: 0;
+}
+.selectize-input,
+.selectize-control.single .selectize-input,
+.selectize-control.single .selectize-input.input-active {
+    @apply rounded-lg border border-gray-300 bg-white text-sm text-gray-800;
+    min-height: 2.75rem;
+    padding: 0.6875rem 2.25rem 0.6875rem 0.875rem;
+    line-height: 1.25rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+.selectize-control.multi .selectize-input.has-items {
+    padding: 0.4375rem 0.875rem 0.1875rem;
+}
+.selectize-control.multi .selectize-input > div {
+    @apply rounded-md bg-brand-50 text-brand-600 text-xs font-medium;
+    padding: 0.125rem 0.5rem;
+    margin: 0 0.25rem 0.25rem 0;
+}
+.selectize-input input {
+    @apply text-sm;
+}
+.selectize-input.focus {
+    @apply border-brand-300;
+    box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.12);
+}
+.selectize-control.single .selectize-input::after {
+    right: 0.875rem;
+}
+.selectize-dropdown {
+    @apply rounded-lg border border-gray-200 bg-white text-sm text-gray-700;
+    margin-top: 0.25rem;
+    box-shadow: 0 12px 16px -4px rgba(16, 24, 40, 0.08),
+                0 4px 6px -2px rgba(16, 24, 40, 0.03);
+}
+.selectize-dropdown .option,
+.selectize-dropdown .optgroup-header {
+    padding: 0.5rem 0.875rem;
+}
+.selectize-dropdown .active {
+    @apply bg-brand-50 text-brand-600;
+}
+
+/* Checkboxes */
+.shiny-input-container .checkbox {
+    margin: 0;
+}
+.shiny-options-group .checkbox + .checkbox {
+    margin-top: 0;
+}
+.shiny-input-container .checkbox label {
+    @apply flex items-center gap-2 text-sm font-normal text-gray-700;
+    padding: 0.375rem 0;
+    min-height: 0;
+    cursor: pointer;
+}
+.shiny-input-container .checkbox input[type="checkbox"] {
+    position: static;
+    margin: 0;
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    accent-color: theme('colors.brand.500');
+}
+.lp-sample-list .checkbox label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Segmented control: wraps an inline `radioButtons()` group. The native
+   radios stay in the DOM (visually hidden) for keyboard and screen-reader
+   access; the label carries the visual state. */
+.lp-segmented .shiny-options-group {
+    @apply inline-flex items-center gap-1 rounded-lg bg-gray-100 p-1;
+}
+.lp-segmented .radio-inline,
+.lp-segmented .radio-inline + .radio-inline {
+    @apply rounded-md text-sm font-medium text-gray-500 transition-colors;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.5rem 0.875rem;
+    line-height: 1.25rem;
+    cursor: pointer;
+}
+.lp-segmented .radio-inline:hover {
+    @apply text-gray-800;
+}
+.lp-segmented .radio-inline input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+}
+.lp-segmented .radio-inline:has(input:checked) {
+    @apply bg-white text-gray-800;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1),
+                0 1px 2px rgba(16, 24, 40, 0.06);
+}
+.lp-segmented .radio-inline:has(input:focus-visible) {
+    box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.2);
+}
+
+/* ---- Plot outputs: empty state ---------------------------------------- */
+.shiny-plot-output.shiny-output-error-validation {
+    @apply flex items-center justify-center rounded-xl border
+           border-dashed border-gray-300 bg-gray-25 text-sm text-gray-500
+           p-6;
+    text-align: center;
+}
+
+/* ---- Toasts (shinytoastr) --------------------------------------------- */
+/* toastr's stylesheet loads after ours, hence the `div` in the selectors
+   for extra specificity, and `!important` to drop its icon images. */
+#toast-container > div.toast {
+    @apply rounded-xl border border-gray-200 bg-white text-sm text-gray-600;
+    width: 22rem;
+    max-width: calc(100vw - 2rem);
+    padding: 1rem 1.25rem 1rem 1.125rem;
+    border-left-width: 4px;
+    font-family: inherit;
+    opacity: 1;
+    background-image: none !important;
+    box-shadow: 0 12px 16px -4px rgba(16, 24, 40, 0.08),
+                0 4px 6px -2px rgba(16, 24, 40, 0.03);
+}
+#toast-container > div.toast:hover {
+    box-shadow: 0 12px 16px -4px rgba(16, 24, 40, 0.12),
+                0 4px 6px -2px rgba(16, 24, 40, 0.05);
+}
+#toast-container > div.toast-success {
+    border-left-color: #12b76a;
+}
+#toast-container > div.toast-error {
+    border-left-color: #f04438;
+}
+#toast-container > div.toast .toast-title {
+    @apply text-sm font-semibold text-gray-800;
+    margin-bottom: 0.125rem;
+}
+#toast-container > div.toast .toast-close-button {
+    @apply text-gray-400;
+    text-shadow: none;
+}
+
+/* ---- Responsive ------------------------------------------------------- */
+@media (max-width: 1279px) {
+    .lp-grid-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 1023px) {
+    .lp-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .lp-sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid theme('colors.gray.200');
+    }
+    .lp-topbar {
+        @apply py-3;
+    }
 }

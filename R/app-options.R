@@ -1,23 +1,29 @@
 #' Build the per-tab Options panel UI
 #'
 #' Renders a card with form controls for `lp_facets`, `lp_arrange`,
-#' `lp_legend`, `lp_labels`, and `lp_theme`. Inputs are placed inside the module
-#' namespace given by `id`.
+#' `lp_legend`, `lp_labels`, and `lp_theme`, grouped under small
+#' sub-headings. Inputs are placed inside the module namespace given by `id`.
 #'
 #' @param id The module namespace id.
 #' @param metadata_cols A `character` vector of metadata column names to
 #'   offer as choices for the facet and grouping pickers. Pass `character(0)`
 #'   before any data is loaded — the dropdowns will simply be empty.
-#' @return A `shiny::tagList` containing the option controls wrapped in a
-#'   Tailwind `lp-card`.
+#' @return A `shiny::tags$aside` containing the option controls wrapped in
+#'   a Tailwind `lp-options` card.
 #' @keywords internal
 .options_ui <- function(id, metadata_cols = character(0)) {
     ns <- shiny::NS(id)
+    section <- function(label, ...) {
+        shiny::tags$section(
+            class = "lp-options-section",
+            shiny::tags$h3(class = "lp-subheading", label),
+            ...)
+    }
     shiny::tags$aside(
-        class = "lp-card-tight",
-        shiny::tags$h3(class = "lp-section-title", "Options"),
-        shiny::tags$div(
-            class = "space-y-3",
+        class = "lp-options",
+        shiny::tags$h2(class = "lp-card-title", "Plot options"),
+        section(
+            "Layout",
             shiny::selectInput(
                 ns("facets"),
                 "Facet by",
@@ -31,7 +37,9 @@
             shiny::tags$div(
                 class = "flex items-center gap-4",
                 shiny::checkboxInput(ns("free_x"), "Free x", FALSE),
-                shiny::checkboxInput(ns("free_y"), "Free y", FALSE)),
+                shiny::checkboxInput(ns("free_y"), "Free y", FALSE))),
+        section(
+            "Legend",
             shiny::selectInput(
                 ns("arrange_by"),
                 "Group / colour by",
@@ -39,12 +47,16 @@
                 selected = ""),
             shiny::selectInput(
                 ns("legend_position"),
-                "Legend position",
+                "Position",
                 choices  = c("default" = "",
                              "top", "right", "bottom", "left", "none"),
                 selected = ""),
-            shiny::textInput(ns("title"),        "Plot title",  value = ""),
-            shiny::textInput(ns("legend_title"), "Legend title", value = ""),
+            shiny::textInput(ns("legend_title"), "Legend title", value = "")),
+        section(
+            "Labels",
+            shiny::textInput(ns("title"), "Plot title", value = "")),
+        section(
+            "Appearance",
             shiny::selectInput(
                 ns("theme_preset"),
                 "Theme",
@@ -61,8 +73,7 @@
             shiny::numericInput(
                 ns("base_size"),
                 "Base font size",
-                value = NA, min = 4, step = 1)
-        )
+                value = NA, min = 4, step = 1))
     )
 }
 

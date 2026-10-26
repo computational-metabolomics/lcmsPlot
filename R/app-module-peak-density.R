@@ -10,26 +10,16 @@
         shiny::tags$section(
             class = "lp-plot-card",
             shiny::tags$div(
-                class = "mb-4",
-                shiny::tags$h2(
-                    class = "text-2xl mt-0 mb-2 font-semibold text-slate-800",
-                    "Peak density"),
-                shiny::tags$p(
-                    class = "text-lg text-slate-500",
-                    paste("Requires data with detected peaks",
-                          "(XCMSnExp / MsExperiment)."))),
-            shiny::tags$div(
-                class = "grid grid-cols-3 gap-3 mb-4",
+                class = "lp-toolbar",
                 shiny::numericInput(ns("mz"),  "m/z (optional)",
                                     value = NA,  min = 0, step = 0.001),
                 shiny::numericInput(ns("ppm"), "ppm",
                                     value = 20,  min = 0, step = 1),
                 shiny::numericInput(ns("bw"),  "Bandwidth (sec)",
-                                    value = 30,  min = 1, step = 1)),
-            shiny::actionButton(ns("go"), "Plot",
-                                icon = shiny::icon("chart-area"),
-                                class = "lp-btn-primary mb-4"),
-            shiny::plotOutput(ns("plot"), height = "480px")),
+                                    value = 30,  min = 1, step = 1),
+                shiny::actionButton(ns("go"), "Plot",
+                                    class = "lp-btn-primary")),
+            shiny::plotOutput(ns("plot"), height = "520px")),
         .options_ui(ns("opts"))
     )
 }
@@ -70,9 +60,12 @@
         })
 
         output$plot <- shiny::renderPlot({
+            shiny::validate(shiny::need(lcms_obj(), .APP_NO_DATA_MSG))
+            shiny::validate(shiny::need(
+                input$go > 0, "Set the parameters and click Plot."))
             p <- plot_data()
             shiny::req(p)
             print(p)
-        })
+        }, res = 96)
     })
 }

@@ -10,22 +10,16 @@
         shiny::tags$section(
             class = "lp-plot-card",
             shiny::tags$div(
-                class = "flex items-center justify-between mb-4",
+                class = "lp-toolbar",
                 shiny::tags$div(
-                    shiny::tags$h2(
-                        class = "text-2xl mt-0 mb-2 font-semibold text-slate-800",
-                        "Base-peak / total-ion chromatogram"),
-                    shiny::tags$p(
-                        class = "text-lg text-slate-500",
-                        paste("Aggregate each scan and trace the result",
-                              "across retention time."))),
-                shiny::radioButtons(
-                    inputId  = ns("agg"),
-                    label    = NULL,
-                    choices  = c("BPC (max)" = "max", "TIC (sum)" = "sum",
-                                 "AIC (mean)" = "mean"),
-                    selected = "max",
-                    inline   = TRUE)),
+                    class = "lp-segmented",
+                    shiny::radioButtons(
+                        inputId  = ns("agg"),
+                        label    = "Aggregation",
+                        choices  = c("BPC (max)" = "max", "TIC (sum)" = "sum",
+                                     "AIC (mean)" = "mean"),
+                        selected = "max",
+                        inline   = TRUE))),
             shiny::plotOutput(ns("plot"), height = "520px")),
         .options_ui(ns("opts"))
     )
@@ -49,7 +43,9 @@
 
         output$plot <- shiny::renderPlot({
             obj <- lcms_obj()
-            shiny::req(obj)
+            shiny::validate(shiny::need(obj, .APP_NO_DATA_MSG))
+            shiny::validate(shiny::need(length(selected_samples()) > 0,
+                                        .APP_NO_SAMPLES_MSG))
             tryCatch({
                 layered <- obj +
                     lp_chromatogram(
@@ -62,7 +58,7 @@
                              title = "Chromatogram error")
                 NULL
             })
-        })
+        }, res = 96)
     })
 }
 
@@ -78,15 +74,7 @@
         shiny::tags$section(
             class = "lp-plot-card",
             shiny::tags$div(
-                class = "mb-4",
-                shiny::tags$h2(
-                    class = "text-2xl mt-0 mb-2 font-semibold text-slate-800",
-                    "Extracted ion chromatogram"),
-                shiny::tags$p(
-                    class = "text-lg text-slate-500",
-                    "Trace intensity for a target m/z window.")),
-            shiny::tags$div(
-                class = "grid grid-cols-4 gap-3 mb-4",
+                class = "lp-toolbar",
                 shiny::numericInput(ns("mz"),  "m/z",  value = 335,
                                     min = 0, step = 0.001),
                 shiny::numericInput(ns("ppm"), "ppm",  value = 20,
@@ -94,11 +82,10 @@
                 shiny::numericInput(ns("rt"),  "RT (sec, optional)",
                                     value = NA, min = 0, step = 1),
                 shiny::numericInput(ns("rt_tol"), "RT tolerance (sec)",
-                                    value = 30, min = 0, step = 1)),
-            shiny::actionButton(ns("go"), "Extract",
-                                icon = shiny::icon("crosshairs"),
-                                class = "lp-btn-primary mb-4"),
-            shiny::plotOutput(ns("plot"), height = "480px")),
+                                    value = 30, min = 0, step = 1),
+                shiny::actionButton(ns("go"), "Extract",
+                                    class = "lp-btn-primary")),
+            shiny::plotOutput(ns("plot"), height = "520px")),
         .options_ui(ns("opts"))
     )
 }
@@ -140,9 +127,14 @@
         })
 
         output$plot <- shiny::renderPlot({
+            shiny::validate(shiny::need(lcms_obj(), .APP_NO_DATA_MSG))
+            shiny::validate(shiny::need(length(selected_samples()) > 0,
+                                        .APP_NO_SAMPLES_MSG))
+            shiny::validate(shiny::need(
+                input$go > 0, "Set the m/z window and click Extract."))
             p <- plot_data()
             shiny::req(p)
             print(p)
-        })
+        }, res = 96)
     })
 }
