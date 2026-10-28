@@ -1,5 +1,9 @@
 # lcmsPlot
 
+[![R-CMD-check](https://github.com/computational-metabolomics/lcmsPlot/actions/workflows/R-CMD-check.yaml/badge.svg?branch=devel)](https://github.com/computational-metabolomics/lcmsPlot/actions/workflows/R-CMD-check.yaml)
+[![Bioconductor devel build](https://bioconductor.org/shields/build/devel/bioc/lcmsPlot.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/lcmsPlot/)
+[![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](LICENSE)
+
 [lcmsPlot](https://bioconductor.org/packages/release/bioc/html/lcmsPlot.html) is an R/Bioconductor package designed to generate composable, reproducible, interoperable, and high-quality publication-ready visualisations of Liquid Chromatography-Mass Spectrometry (LC-MS) data and processing results. The package enables users to generate and
 customise chromatograms, mass traces, spectra, and more with fine-tuned
 aesthetics and annotation options.
