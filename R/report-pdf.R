@@ -166,7 +166,63 @@
             style$heading_face, style$heading_colour))
 }
 
-.write_report_pdf <- function(rendered, file, title, layout, size) {
+# The provenance page of a PDF report: tables of the software, the pipeline
+# and the inputs, the inputs cut to the rows that fit.
+.pdf_provenance_grob <- function(prov, font_size, style, size) {
+    tables <- .provenance_tables(prov, max_chars = 80)
+    # Each row of the page is a grob at the top left of its space, except a
+    # heading, which sits at the bottom of its space, just above its table.
+    heading <- function(label) {
+        grob <- .pdf_text(
+            label, font_size * 1.2, style, style$heading_face,
+            style$heading_colour)
+        grob$y <- grid::unit(0.4, "lines")
+        grob$vjust <- 0
+        list(grob = grob, height = grid::unit(2.5, "lines"))
+    }
+    block <- function(grob) {
+        list(grob = .top_left(grob), height = .grob_height(grob))
+    }
+    note <- function(label) {
+        block(.pdf_text(label, font_size, style, "italic"))
+    }
+
+    rows <- list(
+        heading("Software"),
+        block(.table_grob(tables$software, font_size, style)),
+        heading("Pipeline"),
+        block(.table_grob(tables$pipeline, font_size, style)))
+    if (length(tables$files) > 0) {
+        used <- nrow(tables$software) + nrow(tables$pipeline) + 8
+        budget <- floor((size[2] - 1.6) / .pdf_row_height(font_size)) - used
+        files <- tables$files
+        shown <- utils::head(files, max(1L, budget))
+        rows <- c(rows, list(
+            heading("Inputs"),
+            block(.table_grob(shown, font_size, style))))
+        if (nrow(shown) < nrow(files)) {
+            rows <- c(rows, list(note(paste0(
+                "... and ", nrow(files) - nrow(shown), " more file(s); see ",
+                prov$output$file, ".provenance.json."))))
+        }
+    }
+    rows <- c(rows, list(note(paste0(
+        "The full record, with the version of every loaded package, is in ",
+        prov$output$file, ".provenance.json."))))
+
+    # The empty last row keeps the content at the top of the page.
+    gridExtra::arrangeGrob(
+        grobs = c(lapply(rows, `[[`, "grob"), list(grid::nullGrob())),
+        ncol = 1,
+        heights = do.call(grid::unit.c, c(
+            lapply(rows, `[[`, "height"), list(grid::unit(1, "null")))),
+        top = .pdf_text(
+            "Provenance", font_size * 1.8, style, style$title_face,
+            style$heading_colour))
+}
+
+.write_report_pdf <- function(rendered, file, title, layout, size,
+                              prov = NULL) {
     index <- rendered$index
     style <- layout$style
     font_size <- layout$font_size * 0.8
@@ -184,7 +240,12 @@
     shown$page <- ifelse(
         is.na(index$page), "", as.character(length(chunks) + index$page))
 
-    grDevices::pdf(file, width = size[1], height = size[2])
+    # Laid out before the device opens, so that an error leaves no file.
+    provenance_page <- if (!is.null(prov)) {
+        .pdf_provenance_grob(prov, font_size, style, size)
+    }
+
+    grDevices::pdf(file, width = size[1], height = size[2], title = title)
     on.exit(grDevices::dev.off())
 
     for (k in seq_along(chunks)) {
@@ -203,5 +264,8 @@
 
     for (page in rendered$pages) {
         .draw_pdf_page(page$figure)
+    }
+    if (!is.null(provenance_page)) {
+        .draw_pdf_page(provenance_page)
     }
 }

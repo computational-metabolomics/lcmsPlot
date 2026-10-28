@@ -15,6 +15,13 @@
   per dataset in the tidy form the plot is drawn from, plus the detected
   peaks, the samples, and a `columns` data dictionary with the type, unit
   and description of every column.
+- **Reports with provenance** (#68): `lp_report()` closes with a provenance
+  section (the last page of a PDF report) listing the versions of lcmsPlot,
+  R and Bioconductor, the pipeline layers, and the input files, and writes
+  the full record next to the report (`features.html.provenance.json`). The
+  HTML report also embeds it as JSON and names lcmsPlot as its generator;
+  the PDF report carries its title in its metadata. `provenance = FALSE`
+  leaves it out, and `checksums = TRUE` adds the MD5 of the input files.
 
 # lcmsPlot 1.1.23
 

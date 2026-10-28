@@ -94,7 +94,36 @@
             class = "lp-back", tags$a(href = "#lp-index", "Back to the index")))
 }
 
-.write_report_html <- function(rendered, file, title, layout) {
+# The provenance of an HTML report: tables of the software, the pipeline and
+# the inputs, and the full record as JSON for tools to read.
+.html_provenance <- function(prov) {
+    tags <- htmltools::tags
+    tables <- .provenance_tables(prov)
+    # "</" would close the script element early.
+    json <- gsub("</", "<\\/", .provenance_json(prov), fixed = TRUE)
+
+    tags$section(
+        id = "lp-provenance",
+        tags$h2("Provenance"),
+        tags$p(paste0(
+            "The full record, with the version of every loaded package, is ",
+            "embedded in this file and written next to it as ",
+            prov$output$file, ".provenance.json.")),
+        tags$h3("Software"),
+        .html_table(tables$software, "lp-fields"),
+        tags$h3("Pipeline"),
+        .html_table(tables$pipeline),
+        if (length(tables$files) > 0) {
+            htmltools::tagList(tags$h3("Inputs"), .html_table(tables$files))
+        },
+        tags$script(
+            type = "application/json", id = "lp-provenance-data",
+            htmltools::HTML(json)),
+        tags$p(
+            class = "lp-back", tags$a(href = "#lp-index", "Back to the index")))
+}
+
+.write_report_html <- function(rendered, file, title, layout, prov = NULL) {
     tags <- htmltools::tags
     index <- rendered$index
     links <- ifelse(
@@ -105,6 +134,9 @@
             tags$meta(
                 name = "viewport",
                 content = "width=device-width, initial-scale=1"),
+            if (!is.null(prov)) {
+                tags$meta(name = "generator", content = prov$generator)
+            },
             tags$title(title),
             tags$style(htmltools::HTML(paste0(
                 .report_base_css(layout$font_size), layout$style$css)))),
@@ -123,7 +155,8 @@
                 .html_table(
                     .report_index_table(index, layout$by, layout$rt_unit),
                     "lp-index-table", links)),
-            lapply(rendered$pages, .html_page)),
+            lapply(rendered$pages, .html_page),
+            if (!is.null(prov)) .html_provenance(prov)),
         tags$script(htmltools::HTML(.report_js)))
 
     htmltools::save_html(html, file)

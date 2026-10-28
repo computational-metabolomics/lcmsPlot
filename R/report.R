@@ -20,6 +20,14 @@
 #' `"no data"`, and the features of a page that fails to render as `"error"`,
 #' rather than stopping the report.
 #'
+#' By default the report records how it was made: a closing provenance
+#' section (the last page of a PDF report) lists the versions of lcmsPlot, R
+#' and Bioconductor, the layers of the pipeline with their arguments, and the
+#' input files. The full record, with the version of every loaded package, is
+#' written next to the report as JSON (`features.html` gives
+#' `features.html.provenance.json`), and embedded in the HTML report. See
+#' [lp_save()].
+#'
 #' @param object An instance of class `lcmsPlotClass`, with the chromatograms
 #' of its features (see `lp_chromatogram(features = )` or the layers of the
 #' compound sources, such as [lp_compound_discoverer()]).
@@ -58,6 +66,11 @@
 #' or `"portrait"`. Ignored when `page_size` is `numeric`.
 #' @param progress A `logical` value indicating whether to show a progress bar
 #' while the pages are rendered.
+#' @param provenance A `logical` value indicating whether to record the
+#' provenance of the report.
+#' @param checksums A `logical` value indicating whether to record the MD5
+#' checksum of every input file in the provenance. Reading large raw files can
+#' take a while, so it is off by default.
 #' @return The index of the report (invisibly): a `tibble` with one row per
 #' value of `by`, its annotations, the `feature_ids` it covers, the number of
 #' samples with a detected peak (`n_samples`), its `status` (`"ok"`,
@@ -107,7 +120,9 @@ lp_report <- function(
     dpi = 150,
     page_size = "a4",
     orientation = "landscape",
-    progress = interactive()
+    progress = interactive(),
+    provenance = TRUE,
+    checksums = FALSE
 ) {
     if (!is(object, "lcmsPlotClass") || !.has_data(object)) {
         stop(
@@ -159,10 +174,19 @@ lp_report <- function(
     }
     rendered <- .report_pages(object, index, layout, ms2, render, progress)
 
+    prov <- if (isTRUE(provenance)) {
+        .provenance(object, checksums, output = list(
+            file = basename(file), format = format, by = by,
+            features = nrow(rendered$index),
+            pages = length(rendered$pages)))
+    }
     if (format == "html") {
-        .write_report_html(rendered, file, title, layout)
+        .write_report_html(rendered, file, title, layout, prov)
     } else {
-        .write_report_pdf(rendered, file, title, layout, size)
+        .write_report_pdf(rendered, file, title, layout, size, prov)
+    }
+    if (!is.null(prov)) {
+        .write_provenance(prov, file)
     }
 
     invisible(rendered$index)

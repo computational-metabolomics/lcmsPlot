@@ -20,7 +20,9 @@ lp_report(
   dpi = 150,
   page_size = "a4",
   orientation = "landscape",
-  progress = interactive()
+  progress = interactive(),
+  provenance = TRUE,
+  checksums = FALSE
 )
 }
 \arguments{
@@ -77,6 +79,13 @@ or \code{"portrait"}. Ignored when \code{page_size} is \code{numeric}.}
 
 \item{progress}{A \code{logical} value indicating whether to show a progress bar
 while the pages are rendered.}
+
+\item{provenance}{A \code{logical} value indicating whether to record the
+provenance of the report.}
+
+\item{checksums}{A \code{logical} value indicating whether to record the MD5
+checksum of every input file in the provenance. Reading large raw files can
+take a while, so it is off by default.}
 }
 \value{
 The index of the report (invisibly): a \code{tibble} with one row per
@@ -106,6 +115,14 @@ with the index on the first pages and the feature pages after it.
 Values of \code{features} that match no data are listed in the index as
 \code{"no data"}, and the features of a page that fails to render as \code{"error"},
 rather than stopping the report.
+
+By default the report records how it was made: a closing provenance
+section (the last page of a PDF report) lists the versions of lcmsPlot, R
+and Bioconductor, the layers of the pipeline with their arguments, and the
+input files. The full record, with the version of every loaded package, is
+written next to the report as JSON (\code{features.html} gives
+\code{features.html.provenance.json}), and embedded in the HTML report. See
+\code{\link[=lp_save]{lp_save()}}.
 }
 \examples{
 raw_files <- dir(
