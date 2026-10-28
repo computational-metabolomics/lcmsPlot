@@ -18,7 +18,8 @@ lcmsPlot(
 \code{XcmsRawList}, \code{purityA}, a data source (see \code{MZmineFeatureListsSource()},
 \code{MsDialPeaksSource()}, \code{CompoundDiscovererNodeSource()},
 \code{LipidSearchSource()}), a Compound Discoverer \code{.cdResult} path, or a
-\code{character} vector of raw file paths (\code{.mzML}, \code{.mzXML}, \code{.CDF}, \code{.raw}).}
+\code{character} vector of raw file paths (\code{.mzML}, \code{.mzXML}, \code{.CDF}, \code{.raw}).
+See \link{lcmsPlot-formats} for the supported formats and versions.}
 
 \item{sample_id_column}{A \code{character} value indicating which column
 should be used as the sample ID. By default it is \code{"sample_id"}.}

@@ -70,6 +70,7 @@ Suggests:
     testthat (>= 3.0.0)
 Collate:
     'lcmsPlot-package.R'
+    'lcmsPlot-formats.R'
     'zzz.R'
     'helpers-data.R'
     'helpers-s4.R'

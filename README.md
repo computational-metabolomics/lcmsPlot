@@ -19,7 +19,10 @@ The lcmsPlot package addresses this gap by providing:
 - Streamlined generation of high-quality, customisable plots: chromatograms
   (BPC, TIC, XIC), mass traces, spectra and mirror plots, intensity maps, peak
   density, retention-time alignment, and precursor purity.
-- Improved reproducibility and reduced need for bespoke scripts.
+- Improved reproducibility and reduced need for bespoke scripts: `lp_save()`
+  records the provenance of a figure (software versions, pipeline, input
+  files) next to it, and `lp_export_data()` writes the plotted data as
+  CSV with a data dictionary.
 - Interoperability with raw files, Bioconductor objects, and third-party LC-MS
   software (see [Interoperability](#interoperability)).
 - Better performance at scale, with parallel extraction (`BPPARAM`) and
@@ -112,21 +115,24 @@ whichever tool produced the data.
 
 ### Supported inputs
 
-| Source | Input | How to plot it |
-|---|---|---|
-| **Raw files** | mzML, mzXML, netCDF (via `mzR`) | `lcmsPlot(c("a.mzML", "b.mzML"), metadata = ...)` |
-| | ThermoFisher `.raw` (via `rawrr`) | `lcmsPlot(c("a.raw", "b.raw"))` |
-| **Bioconductor** | `MsExperiment` / `XcmsExperiment`, `XCMSnExp` (*xcms*) | `lcmsPlot(xdata)` |
-| | `xcmsRaw` (legacy *xcms*) | `lcmsPlot(create_xcms_raw_list(files))` |
-| | `XChromatograms`, `XChromatogram`, `MChromatograms` | `lcmsPlot(chrs)` |
-| | `purityA` (*msPurity*) | `lcmsPlot(pa)` + `lp_purity_*()` / `lp_isolation_window()` |
-| **Compound Discoverer** | `.cdResult` files | `lcmsPlot("study.cdResult") + lp_compound_discoverer()` |
-| | Scripting-node exports | `CompoundDiscovererNodeSource()` |
-| **MZmine** (2+) | Feature lists | `MZmineFeatureListsSource()` |
-| **MS-DIAL** | Peak tables | `MsDialPeaksSource()` |
-| **LipidSearch** (4.2, 5.2) | Lipid result files | `LipidSearchSource()` + `lp_lipid_search()` |
-| **mzTab-M** (2.0) | Exports from MS-DIAL, MZmine, OpenMS, ... | `MzTabMSource()` + `lp_mztab()` |
-| **Spectral libraries** | MSP (via `MsBackendMsp`) or mzML reference spectra | `lp_spectra(spectral_match_db = "library.msp")` for mirror plots |
+| Source | Input | Versions | How to plot it |
+|---|---|---|---|
+| **Raw files** | mzML, mzXML, netCDF (via `mzR`) | Those read by mzR | `lcmsPlot(c("a.mzML", "b.mzML"), metadata = ...)` |
+| | ThermoFisher `.raw` (via `rawrr`) | Those read by the Thermo RawFileReader | `lcmsPlot(c("a.raw", "b.raw"))` |
+| **Bioconductor** | `MsExperiment` / `XcmsExperiment`, `XCMSnExp` (*xcms*) | xcms 4 and later | `lcmsPlot(xdata)` |
+| | `xcmsRaw` (legacy *xcms*) | Any | `lcmsPlot(create_xcms_raw_list(files))` |
+| | `XChromatograms`, `XChromatogram`, `MChromatograms` | xcms 4 and later | `lcmsPlot(chrs)` |
+| | `purityA` (*msPurity*) | Any | `lcmsPlot(pa)` + `lp_purity_*()` / `lp_isolation_window()` |
+| **Compound Discoverer** | `.cdResult` files | 3.x | `lcmsPlot("study.cdResult") + lp_compound_discoverer()` |
+| | Scripting-node exports | 3.3, 3.4, 3.5 | `CompoundDiscovererNodeSource()` |
+| **MZmine** | Feature lists | 2 and 3 or later | `MZmineFeatureListsSource()` |
+| **MS-DIAL** | Peak tables | Any with the standard peak list columns | `MsDialPeaksSource()` |
+| **LipidSearch** | Lipid result files | 4.2 and 5.2 | `LipidSearchSource()` + `lp_lipid_search()` |
+| **mzTab-M** | Exports from MS-DIAL, MZmine, OpenMS, ... | 2.0.0-M | `MzTabMSource()` + `lp_mztab()` |
+| **Spectral libraries** | MSP (via `MsBackendMsp`) or mzML reference spectra | Any | `lp_spectra(spectral_match_db = "library.msp")` for mirror plots |
+
+See `?lcmsPlot-formats` for the columns each reader expects and the packages
+each input needs.
 
 Results from external software are paired with the raw files they were
 computed from (`sample_paths`), so chromatograms are extracted from the

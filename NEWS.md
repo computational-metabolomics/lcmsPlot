@@ -22,6 +22,11 @@
   HTML report also embeds it as JSON and names lcmsPlot as its generator;
   the PDF report carries its title in its metadata. `provenance = FALSE`
   leaves it out, and `checksums = TRUE` adds the MD5 of the input files.
+- **Supported formats** (#68): a new help page, `?lcmsPlot-formats`, lists
+  every supported input with its versions, the way to read it, and the
+  packages it needs. The README and the Interoperability section of the
+  vignette show the same table, and the vignette has a new section on
+  saving figures with provenance.
 
 # lcmsPlot 1.1.23
 
