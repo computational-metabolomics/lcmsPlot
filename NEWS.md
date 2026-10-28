@@ -1,3 +1,26 @@
+# lcmsPlot 1.1.23
+
+- **Per-feature reports** (#61): `lp_report(p, file, by = "feature_id")`
+  writes one page per feature (or per `name`, or per any annotation column)
+  out of a plot pipeline built once. Each page draws the pipeline restricted
+  to the feature with `subset_features()`, with tables of the feature's
+  annotations and of its detected peak in every sample (`rt`, `into`,
+  `maxo`); the raw data is not read again. The format follows the file
+  extension:
+  - `.html`: one self-contained file with the plots embedded as PNG images
+    and an index of the features that can be searched and sorted and links
+    to each page;
+  - `.pdf`: one multi-page file with the index first, sized by `page_size`
+    and `orientation`.
+
+  `features` limits the report to some values, listed in the index as
+  `"no data"` when they match no data. `sections` picks the tables drawn
+  under the plots (`"annotations"`, `"peaks"`) and can add `"ms2"`, the MS2
+  spectra of each feature by precursor, extracted once for the whole report.
+  `features_per_page` and `ncol` tile several features on a page, and
+  `theme` styles the report: `"plain"` (the default), `"clean"`, or
+  `"journal"`. PDF reports need `gridExtra` and `gtable`, now in Suggests.
+
 # lcmsPlot 1.1.22
 
 - Refreshed Shiny app interface: a consistent type scale (Bootstrap's 10px
