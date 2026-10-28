@@ -59,7 +59,73 @@ test_that("lp_report writes a multi-page PDF of the index and the features", {
   lp_report(p, file, page_size = "letter", orientation = "portrait")
 
   # assert
-  expect_equal(pdf_page_count(file), 1 + 3)
+  # The index, a page per feature, and the provenance.
+  expect_equal(pdf_page_count(file), 1 + 3 + 1)
+})
+
+test_that("lp_report records its provenance in the HTML and next to it", {
+  skip_if_not_installed("htmltools")
+  # arrange
+  p <- report_pipeline()
+  file <- tempfile(fileext = ".html")
+
+  # act
+  lp_report(p, file, checksums = TRUE)
+
+  # assert
+  html <- paste(readLines(file, warn = FALSE), collapse = "\n")
+  generator <- paste("lcmsPlot", packageVersion("lcmsPlot"))
+  expect_match(
+    html, paste0("<meta name=\"generator\" content=\"", generator, "\""),
+    fixed = TRUE)
+  expect_equal(count_matches(html, "<section id=\"lp-provenance\">"), 1)
+  expect_match(html, ">lp_chromatogram</td>", fixed = TRUE)
+  embedded <- regmatches(html, regexpr(
+    "(?s)id=\"lp-provenance-data\">.*?</script>", html, perl = TRUE))
+  embedded <- sub("^id=\"lp-provenance-data\">", "", sub("</script>$", "", embedded))
+  prov <- jsonlite::read_json(paste0(file, ".provenance.json"))
+  expect_equal(jsonlite::fromJSON(embedded)$generated_at, prov$generated_at)
+  expect_equal(prov$output$format, "html")
+  expect_equal(prov$output$features, 3)
+  expect_equal(prov$output$pages, 3)
+  expect_length(prov$input$files, 2)
+  expect_false(is.null(prov$input$files[[1]]$md5))
+})
+
+test_that("lp_report leaves out the provenance with provenance = FALSE", {
+  skip_if_not_installed("htmltools")
+  # arrange
+  p <- report_pipeline()
+  file <- tempfile(fileext = ".html")
+
+  # act
+  lp_report(p, file, provenance = FALSE)
+
+  # assert
+  html <- paste(readLines(file, warn = FALSE), collapse = "\n")
+  expect_no_match(html, "lp-provenance", fixed = TRUE)
+  expect_no_match(html, "name=\"generator\"", fixed = TRUE)
+  expect_false(file.exists(paste0(file, ".provenance.json")))
+})
+
+test_that("lp_report writes the provenance of a PDF report next to it", {
+  skip_if_not_installed("gridExtra")
+  # arrange
+  p <- report_pipeline()
+  file <- tempfile(fileext = ".pdf")
+
+  # act
+  lp_report(p, file, provenance = FALSE)
+  pages_without <- pdf_page_count(file)
+  lp_report(p, file, title = "My report")
+
+  # assert
+  expect_equal(pdf_page_count(file), pages_without + 1)
+  expect_true(file.exists(paste0(file, ".provenance.json")))
+  bytes <- readBin(file, "raw", file.size(file))
+  expect_true(grepl(
+    "/Title (My report)", rawToChar(bytes[bytes != as.raw(0)]),
+    fixed = TRUE, useBytes = TRUE))
 })
 
 test_that("lp_report draws several features per page", {
@@ -91,7 +157,7 @@ test_that("lp_report fits several features per page in the PDF", {
   lp_report(p, file, features_per_page = 2, ncol = 1, theme = "journal")
 
   # assert
-  expect_equal(pdf_page_count(file), 1 + 2)
+  expect_equal(pdf_page_count(file), 1 + 2 + 1)
 })
 
 test_that("lp_report leaves out the tables whose section is off", {
@@ -103,7 +169,7 @@ test_that("lp_report leaves out the tables whose section is off", {
 
   # act
   lp_report(p, annotations_only, sections = "annotations")
-  lp_report(p, plots_only, sections = character())
+  lp_report(p, plots_only, sections = character(), provenance = FALSE)
 
   # assert
   html <- paste(readLines(annotations_only, warn = FALSE), collapse = "\n")
