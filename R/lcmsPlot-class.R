@@ -12,6 +12,7 @@
 #' `MsDialPeaksSource()`, `CompoundDiscovererNodeSource()`,
 #' `LipidSearchSource()`), a Compound Discoverer `.cdResult` path, or a
 #' `character` vector of raw file paths (`.mzML`, `.mzXML`, `.CDF`, `.raw`).
+#' See [lcmsPlot-formats] for the supported formats and versions.
 #' @param sample_id_column A `character` value indicating which column
 #' should be used as the sample ID. By default it is `"sample_id"`.
 #' @param metadata A `data.frame` containing the samples metadata
