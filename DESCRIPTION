@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.22
+Version: 1.1.23
 Authors@R: c(
     person(
         "Ossama",
@@ -61,6 +61,8 @@ Suggests:
     MsBackendRawFileReader,
     msPurity,
     ggnewscale,
+    gridExtra,
+    gtable,
     htmltools,
     shiny (>= 1.8.1),
     shinytoastr,
@@ -117,6 +119,12 @@ Collate:
     'layers-purity.R'
     'layers-layout.R'
     'subset-features.R'
+    'report-index.R'
+    'report-page.R'
+    'report-styles.R'
+    'report-html.R'
+    'report-pdf.R'
+    'report.R'
     'app-utils.R'
     'app-options.R'
     'app-module-chromatogram.R'
