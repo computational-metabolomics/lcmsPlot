@@ -1,7 +1,7 @@
 Package: lcmsPlot
 Type: Package
 Title: Comprehensive Liquid Chromatography-Mass Spectrometry (LC-MS) data visualisation package
-Version: 1.1.23
+Version: 1.1.24
 Authors@R: c(
     person(
         "Ossama",
@@ -136,7 +136,8 @@ Collate:
 VignetteBuilder: knitr
 URL: https://github.com/computational-metabolomics/lcmsPlot
 Roxygen: list(markdown = TRUE)
-biocViews: Metabolomics, MassSpectrometry
+biocViews: Software, Metabolomics, MassSpectrometry, Lipidomics, Visualization,
+    ShinyApps
 BugReports: https://github.com/computational-metabolomics/lcmsPlot/issues
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1

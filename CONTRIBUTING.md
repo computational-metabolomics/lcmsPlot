@@ -211,6 +211,9 @@ must:
    describes the change **for users**: what changed, how to use it, and a
    reference to the issue, e.g. `(#45)`. Put breaking changes under a
    `## Breaking changes` subheading with migration instructions.
+3. Regenerate `codemeta.json` with `codemetar::write_codemeta()`, so the
+   machine-readable metadata matches `DESCRIPTION` (version, authors,
+   dependencies).
 
 If several pull requests are open at once, rebase onto `devel` and take the
 next free version number before merging.
@@ -226,7 +229,8 @@ Before requesting a review, make sure that:
 - [ ] `rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "warning")` passes
       with no new NOTEs.
 - [ ] `BiocCheck::BiocCheck(".")` reports no new ERRORs or WARNINGs.
-- [ ] `DESCRIPTION` version is bumped and `NEWS.md` has an entry.
+- [ ] `DESCRIPTION` version is bumped, `NEWS.md` has an entry, and
+      `codemeta.json` is regenerated.
 - [ ] New exported functions have runnable examples and tests.
 
 Continuous integration (`.github/workflows/R-CMD-check.yaml`) runs the tests

@@ -16,3 +16,4 @@ README.rst
 ^\.claude$
 ^tools$
 ^CONTRIBUTING\.md$
+^codemeta\.json$

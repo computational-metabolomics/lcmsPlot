@@ -1,3 +1,9 @@
+# lcmsPlot 1.1.24
+
+- **FAIR metadata** (#68): the package ships a `codemeta.json`, the
+  machine-readable software metadata harvested by registries, and its
+  biocViews add `Software`, `Lipidomics`, `Visualization` and `ShinyApps`.
+
 # lcmsPlot 1.1.23
 
 - **Per-feature reports** (#61): `lp_report(p, file, by = "feature_id")`
