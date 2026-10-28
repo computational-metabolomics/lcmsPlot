@@ -121,6 +121,15 @@ setMethod("as_plot_df", "data.frame", function(x, ...) {
 }
 
 .render_plot <- function(object, additional_datasets) {
+    object@plot <- plot_data(
+        .plot_datasets(object, additional_datasets), object)
+
+    return(object)
+}
+
+# The datasets drawn as panels, in panel order, with the sample metadata
+# joined in. These are what the plot shows and what lp_export_data() writes.
+.plot_datasets <- function(object, additional_datasets) {
     dataset_types <- c(DATASET_TYPES, names(additional_datasets))
     sample_table <- .sample_table(object@data)
 
@@ -143,11 +152,7 @@ setMethod("as_plot_df", "data.frame", function(x, ...) {
         .join_sample_data(data_df, sample_table)
     })
     names(datasets) <- dataset_types
-    datasets <- remove_null_elements(datasets)
-
-    object@plot <- plot_data(datasets, object)
-
-    return(object)
+    remove_null_elements(datasets)
 }
 
 .has_data <- function(object) {

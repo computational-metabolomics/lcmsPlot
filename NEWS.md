@@ -3,6 +3,18 @@
 - **FAIR metadata** (#68): the package ships a `codemeta.json`, the
   machine-readable software metadata harvested by registries, and its
   biocViews add `Software`, `Lipidomics`, `Visualization` and `ShinyApps`.
+- **Figures with provenance** (#68): `lp_save(p, "figure.pdf")` saves the
+  plot with `ggsave()` and writes `figure.pdf.provenance.json` next to it:
+  the versions of lcmsPlot, R, Bioconductor and every loaded package, the
+  layers of the pipeline with their arguments, and the input files with
+  their size and modification time (and MD5 checksum with
+  `checksums = TRUE`). `data = TRUE` also writes the plotted data to
+  `figure_data/`.
+- **Plotted data in an open format** (#68): `lp_export_data(p, dir)` writes
+  the data a pipeline draws as CSV (or TSV with `format = "tsv"`) files, one
+  per dataset in the tidy form the plot is drawn from, plus the detected
+  peaks, the samples, and a `columns` data dictionary with the type, unit
+  and description of every column.
 
 # lcmsPlot 1.1.23
 

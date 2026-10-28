@@ -119,6 +119,8 @@ Collate:
     'layers-purity.R'
     'layers-layout.R'
     'subset-features.R'
+    'provenance.R'
+    'export.R'
     'report-index.R'
     'report-page.R'
     'report-styles.R'
