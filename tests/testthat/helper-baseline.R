@@ -161,12 +161,20 @@ normalise_baseline_dataset <- function(df) {
 }
 
 # Deliberate differences from the recorded baseline, by scenario and dataset.
-# `ignore` lists columns whose recorded values were wrong; `distinct` compares
-# the distinct rows only, for datasets that used to repeat rows.
+# `ignore` lists columns left out of the comparison; `distinct` compares the
+# distinct rows only, for datasets that used to repeat rows.
 #
 # xcms_spectra_closest_apex was re-recorded when apex spectra moved to the
 # adjusted retention times of their (adjusted) peaks.
-baseline_changes <- list()
+#
+# rt_diff$diff is rt_adj - rt_raw, and both are compared. Obiwarp's adjusted
+# times differ by up to ~5e-4 s between platforms (aarch64 against x86_64):
+# well within the relative tolerance for rt_adj (~3000 s), but not for their
+# difference, which is often below a second. test-dataset-rt-diff.R checks the
+# difference against the two columns instead.
+baseline_changes <- list(
+    rt_diff = list(rt_diff = list(ignore = "diff"))
+)
 
 baseline_path <- function(name) {
     testthat::test_path("fixtures", "baseline", paste0(name, ".rds"))
