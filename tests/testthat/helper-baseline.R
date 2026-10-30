@@ -116,10 +116,6 @@ baseline_scenarios <- list(
         lcmsPlot(get_test_sample_paths()) +
             lp_intensity_map(mz_range = c(330, 350), rt_range = c(2600, 3600))
     },
-    rt_diff = function() {
-        lcmsPlot(cached_xcms_object(), sample_id_column = "sample_name") +
-            lp_rt_diff_plot()
-    },
     peak_density = function() {
         lcmsPlot(cached_xcms_object(), sample_id_column = "sample_name") +
             lp_peak_density(features = baseline_feature_windows())
@@ -167,14 +163,10 @@ normalise_baseline_dataset <- function(df) {
 # xcms_spectra_closest_apex was re-recorded when apex spectra moved to the
 # adjusted retention times of their (adjusted) peaks.
 #
-# rt_diff$diff is rt_adj - rt_raw, and both are compared. Obiwarp's adjusted
-# times differ by up to ~5e-4 s between platforms (aarch64 against x86_64):
-# well within the relative tolerance for rt_adj (~3000 s), but not for their
-# difference, which is often below a second. test-dataset-rt-diff.R checks the
-# difference against the two columns instead.
-baseline_changes <- list(
-    rt_diff = list(rt_diff = list(ignore = "diff"))
-)
+# There is no rt_diff scenario: Obiwarp's adjusted retention times differ
+# between platforms (aarch64 against x86_64), so no recorded reference holds
+# on every Bioconductor builder. test-dataset-rt-diff.R covers that dataset.
+baseline_changes <- list()
 
 baseline_path <- function(name) {
     testthat::test_path("fixtures", "baseline", paste0(name, ".rds"))
