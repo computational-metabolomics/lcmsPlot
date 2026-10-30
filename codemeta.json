@@ -7,7 +7,7 @@
   "codeRepository": "https://github.com/computational-metabolomics/lcmsPlot",
   "issueTracker": "https://github.com/computational-metabolomics/lcmsPlot/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.1.24",
+  "version": "1.1.25",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -526,7 +526,9 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "2723.912KB",
+  "fileSize": "2769.594KB",
   "releaseNotes": "https://github.com/computational-metabolomics/lcmsPlot/blob/main/NEWS.md",
-  "readme": "https://github.com/computational-metabolomics/lcmsPlot/blob/devel/README.md"
+  "readme": "https://github.com/computational-metabolomics/lcmsPlot/blob/devel/README.md",
+  "contIntegration": "https://github.com/computational-metabolomics/lcmsPlot/actions/workflows/R-CMD-check.yaml",
+  "relatedLink": "https://bioconductor.org/packages/release/bioc/html/lcmsPlot.html"
 }

@@ -196,6 +196,12 @@
         }))
 }
 
+# The y scale of an absolute intensity axis, labelled in scientific notation
+# so that intensities read the same in every panel and plot.
+.intensity_scale <- function() {
+    scale_y_continuous(labels = scales::label_scientific())
+}
+
 # A discrete scale drawn from the palette, for colourings other than the
 # series (e.g. reference against query spectra).
 .palette_scale <- function(options, aesthetic = "colour") {

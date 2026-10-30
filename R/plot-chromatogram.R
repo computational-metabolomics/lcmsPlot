@@ -118,6 +118,9 @@ plot_chromatogram <- function(
     if (!is.null(offsets)) {
         y_label <- NULL
         extra_layers <- c(extra_layers, list(scale_y_continuous(breaks = NULL)))
+    } else if (options$chromatograms$intensity_unit != "relative" &&
+               identical(transform_fun, identity)) {
+        extra_layers <- c(extra_layers, list(.intensity_scale()))
     }
 
     p <- ggplot(

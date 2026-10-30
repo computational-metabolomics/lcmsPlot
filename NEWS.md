@@ -1,3 +1,15 @@
+# lcmsPlot 1.1.25
+
+- **Intensity axes in scientific notation**: the intensity axis of
+  chromatograms (TIC, BPC, EICs) and of the total ion current is labelled in
+  scientific notation (`0.0e+00`, `5.0e+05`, `1.0e+06`, ...), so intensities
+  read the same in every panel of a figure. Previously ggplot2 picked plain
+  or scientific labels for each panel depending on its range. Relative
+  intensities (`intensity_unit = "relative"`), transformed intensities
+  (`transform`) and stacked chromatograms keep their axes. To use other
+  labels, replace the scale of every panel, e.g.
+  `lp_get_plot() & ggplot2::scale_y_continuous(labels = scales::label_comma())`.
+
 # lcmsPlot 1.1.24
 
 - **FAIR metadata** (#68): the package ships a `codemeta.json`, the

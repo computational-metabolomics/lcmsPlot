@@ -33,6 +33,7 @@ plot_total_ion_current <- function(
         mapping = build_aes(x = "sample_id", y = "intensity", options = options)
     ) +
         geom_func() +
+        .intensity_scale() +
         .series_scales(options) +
         .base_theme(options) +
         extra_layers

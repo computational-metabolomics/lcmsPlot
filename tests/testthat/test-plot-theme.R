@@ -225,3 +225,39 @@ test_that("a theme added after lp_get_plot() overrides the preset", {
   expect_equal(p[[1]]$theme$panel.background$fill, "red")
   expect_s3_class(p[[1]]$theme$panel.grid.minor, "element_blank")
 })
+
+y_axis_labels <- function(p) {
+  labels <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]$y$get_labels()
+  labels[!is.na(labels)]
+}
+
+test_that("absolute intensities are labelled in scientific notation", {
+  chromatograms <- two_group_chromatograms()
+  chromatograms$intensity <- chromatograms$intensity * 1e5
+  datasets <- list(chromatograms = chromatograms)
+  peaks <- list(detected_peaks = tibble::tibble())
+
+  absolute <- plot_chromatogram(datasets, peaks, theme_opts())
+  expect_true(all(grepl("^[0-9.]+e[+-][0-9]+$", y_axis_labels(absolute))))
+
+  relative_opts <- theme_opts()
+  relative_opts$chromatograms$intensity_unit <- "relative"
+  relative <- plot_chromatogram(datasets, peaks, relative_opts)
+  expect_false(any(grepl("e[+-]", y_axis_labels(relative))))
+
+  log_opts <- theme_opts()
+  log_opts$chromatograms$transform <- log10
+  logged <- plot_chromatogram(datasets, peaks, log_opts)
+  expect_false(any(grepl("e[+-]", y_axis_labels(logged))))
+})
+
+test_that("the total ion current is labelled in scientific notation", {
+  tic <- tibble::tibble(
+    sample_id = rep(c("s1", "s2"), each = 5),
+    intensity = c(1:5, 3:7) * 1e6)
+
+  p <- plot_total_ion_current(
+    list(total_ion_current = tic), list(), theme_opts(NULL))
+
+  expect_true(all(grepl("^[0-9.]+e[+-][0-9]+$", y_axis_labels(p))))
+})
