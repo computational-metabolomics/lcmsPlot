@@ -1,3 +1,12 @@
+# lcmsPlot 1.1.26
+
+- **Compound Discoverer 3.5 result files**: `lp_compound_discoverer()` reads
+  `.cdResult` files written by Compound Discoverer 3.5, which name the table
+  linking compounds to their per-file instances
+  `UnknownCompoundInstanceItemsConsolidatedUnknownCompoundItems` instead of
+  `ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems`. Previously
+  such files failed with "no such table".
+
 # lcmsPlot 1.1.25
 
 - **Intensity axes in scientific notation**: the intensity axis of

@@ -7,7 +7,7 @@
   "codeRepository": "https://github.com/computational-metabolomics/lcmsPlot",
   "issueTracker": "https://github.com/computational-metabolomics/lcmsPlot/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.1.25",
+  "version": "1.1.26",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",

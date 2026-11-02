@@ -5,8 +5,13 @@
 # Two compounds, each detected in two study files. `checked` controls whether
 # the Compounds table carries the `Checked` column at all: Compound Discoverer
 # only materialises it once compounds have been checked and the result saved in
-# the application, so both variants occur in the wild.
-.write_cd_result_db <- function(checked = c(1L, 0L)) {
+# the application, so both variants occur in the wild. `link_table` names the
+# compound-to-instance connection table, which Compound Discoverer 3.5 names the
+# other way round from earlier versions.
+.write_cd_result_db <- function(
+    checked = c(1L, 0L),
+    link_table = "ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems"
+) {
     path <- tempfile(fileext = ".cdResult")
     conn <- DBI::dbConnect(RSQLite::SQLite(), path)
 
@@ -71,7 +76,7 @@
         ))
 
     DBI::dbWriteTable(
-        conn, "ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems",
+        conn, link_table,
         data.frame(
             ConsolidatedUnknownCompoundItemsID = c(1L, 2L),
             UnknownCompoundInstanceItemsID = c(1L, 2L)
@@ -90,6 +95,26 @@ test_that("has_compound_checked_column() detects the Checked column", {
     on.exit(DBI::dbDisconnect(conn_none), add = TRUE)
 
     expect_false(has_compound_checked_column(conn_none))
+})
+
+test_that("Compound Discoverer 3.5's compound-to-instance link table is read", {
+    conn <- .write_cd_result_db(
+        link_table = "UnknownCompoundInstanceItemsConsolidatedUnknownCompoundItems")
+    on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+    res <- get_xic_traces_from_compounds(conn, NULL)
+
+    expect_equal(nrow(res), 4)
+    expect_setequal(unique(res$name), c("Betaine", "Creatine"))
+})
+
+test_that("a .cdResult without a compound-to-instance link raises a clear error", {
+    conn <- .write_cd_result_db(link_table = "SomeOtherTable")
+    on.exit(DBI::dbDisconnect(conn), add = TRUE)
+
+    expect_error(
+        get_xic_traces_from_compounds(conn, NULL),
+        "no table linking compounds to their per-file instances")
 })
 
 test_that("compounds_query can filter on the checked column", {
