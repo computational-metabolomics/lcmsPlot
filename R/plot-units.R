@@ -142,14 +142,38 @@ build_ribbon_data <- function(dataset, detected_peaks) {
         peak_id = seq_len(nrow(detected_peaks))
     )
 
-    peaks |>
+    # A peak of a feature belongs to that feature's chromatograms only: other
+    # features' traces of the same sample may share its retention times.
+    # Peaks without a feature are drawn on every trace of their sample.
+    by_feature <- rep(FALSE, nrow(peaks))
+    if ("feature_id" %in% names(detected_peaks) &&
+        "feature_id" %in% names(dataset)) {
+        by_feature <- !is.na(detected_peaks$feature_id)
+    }
+
+    of_feature <- if (any(by_feature)) {
+        peaks[by_feature, , drop = FALSE] |>
+            mutate(feature_id = detected_peaks$feature_id[by_feature]) |>
+            inner_join(
+                dataset,
+                by = join_by(
+                    "sample_id", "feature_id",
+                    ".peak_rtmin" <= "rt",
+                    ".peak_rtmax" >= "rt"),
+                relationship = "many-to-many")
+    }
+
+    of_sample <- peaks[!by_feature, , drop = FALSE] |>
         inner_join(
             dataset,
             by = join_by(
                 "sample_id",
                 ".peak_rtmin" <= "rt",
                 ".peak_rtmax" >= "rt"),
-            relationship = "many-to-many") |>
+            relationship = "many-to-many")
+
+    bind_rows(of_feature, of_sample) |>
+        arrange(.data$peak_id) |>
         select(all_of(c(names(dataset), "peak_id")))
 }
 
