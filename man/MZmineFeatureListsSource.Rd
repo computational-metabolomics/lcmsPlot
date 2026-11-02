@@ -29,6 +29,13 @@ This function reads MZmine feature list files (supports version 2 and above)
 and sample metadata and converts them into a format compatible
 with xcms-style peak tables.
 }
+\details{
+A feature list may hold one data file (a list exported per sample) or
+several (a list aligned across samples, e.g. after the join aligner). In an
+aligned list, each data file contributes the peaks it has: rows whose state
+in that file is \code{UNKNOWN}, or which have no retention time there, are
+skipped, while gap-filled (\code{ESTIMATED}) peaks are kept.
+}
 \examples{
 ## Create temporary example files
 tmp_dir <- tempdir()

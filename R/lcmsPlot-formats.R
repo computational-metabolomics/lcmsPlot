@@ -15,7 +15,7 @@
 #' | msPurity | `purityA` | Any | `lcmsPlot(object)` | msPurity |
 #' | Compound Discoverer | `.cdResult` files (SQLite) | 3.x | `lcmsPlot(path)` + [lp_compound_discoverer()] | |
 #' | | Scripting node exports | 3.3, 3.4, 3.5 | [CompoundDiscovererNodeSource()] | |
-#' | MZmine | Feature list CSV exports | 2 (`row m/z` columns) and 3 or later (`datafile:` columns) | [MZmineFeatureListsSource()] | |
+#' | MZmine | Feature list CSV exports, per sample or aligned | 2 (`row m/z` columns) and 3 or later (`datafile:` columns) | [MZmineFeatureListsSource()] | |
 #' | MS-DIAL | Peak list CSV or TSV exports | Any with the `Precursor m/z`, `RT (min)`, `RT left(min)`, `RT right (min)`, `Area`, and `Height` columns | [MsDialPeaksSource()] | |
 #' | LipidSearch | Result files | 4.2 and 5.2 | [LipidSearchSource()] + [lp_lipid_search()] | |
 #' | mzTab-M | Small molecule features (SMF) | 2.0.0-M | [MzTabMSource()] + [lp_mztab()] | |
