@@ -47,3 +47,26 @@ test_that("build_ribbon_data returns no rows when nothing falls under a peak", {
   expect_equal(nrow(actual), 0)
   expect_named(actual, c(names(dataset), "peak_id"))
 })
+
+test_that("build_ribbon_data keeps a feature's peaks on that feature's traces", {
+  # arrange: two features of one sample whose retention times overlap; the
+  # peak of F1 must not shade the trace of F2.
+  dataset <- tibble::tibble(
+    sample_id = "a",
+    feature_id = rep(c("F1", "F2"), each = 11),
+    rt = rep(0:10, 2),
+    intensity_plot = seq_len(22))
+  detected_peaks <- tibble::tibble(
+    sample_id = c("a", "a"), feature_id = c("F1", NA),
+    rtmin = c(2, 8), rtmax = c(4, 9))
+
+  # act
+  actual <- build_ribbon_data(dataset, detected_peaks)
+
+  # assert: F1's peak on F1 only; the peak without a feature on both traces
+  expect_equal(actual$feature_id[actual$peak_id == 1], rep("F1", 3))
+  expect_equal(actual$rt[actual$peak_id == 1], 2:4)
+  expect_setequal(actual$feature_id[actual$peak_id == 2], c("F1", "F2"))
+  expect_equal(nrow(actual), 3 + 4)
+  expect_named(actual, c(names(dataset), "peak_id"))
+})

@@ -13,6 +13,12 @@
   rows a file has no peak for are skipped. Previously only lists exported
   per sample could be read; aligned lists failed with "Expected exactly one
   feature state/status column".
+- **Highlighted peaks stay on their own feature**: with several features in
+  one plot (e.g. faceted by feature), `lp_chromatogram(highlight_peaks =
+  TRUE)` shaded a feature's detected peaks on the traces of every feature of
+  the same sample whose retention times overlapped them. A peak is now
+  shaded only on its own feature's traces; peaks without a feature are still
+  shaded on every trace of their sample.
 
 # lcmsPlot 1.1.25
 
