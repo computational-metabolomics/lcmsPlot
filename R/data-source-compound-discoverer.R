@@ -29,6 +29,32 @@ has_compound_checked_column <- function(conn) {
     "Checked" %in% DBI::dbListFields(conn, "ConsolidatedUnknownCompoundItems")
 }
 
+#' Link table between compounds and their per-file instances
+#'
+#' Compound Discoverer links the Compounds table
+#' (`ConsolidatedUnknownCompoundItems`) to the Compounds per File table
+#' (`UnknownCompoundInstanceItems`) through a connection table whose name
+#' depends on the version: `ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems`
+#' up to 3.3, and `UnknownCompoundInstanceItemsConsolidatedUnknownCompoundItems`
+#' in 3.5. Both hold the same ID columns.
+#'
+#' @param conn A `DBIConnection` to a Compound Discoverer results database.
+#' @return A lazy `tbl` of the link table.
+#' @keywords internal
+cd_compound_instance_link <- function(conn) {
+    candidates <- c(
+        "ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems",
+        "UnknownCompoundInstanceItemsConsolidatedUnknownCompoundItems"
+    )
+    found <- candidates[candidates %in% DBI::dbListTables(conn)]
+    if (length(found) == 0) {
+        stop("cd_compound_instance_link: the .cdResult file has no table ",
+             "linking compounds to their per-file instances (",
+             paste(candidates, collapse = " or "), ").")
+    }
+    tbl(conn, found[1])
+}
+
 #' Open a connection to a Compound Discoverer results database
 #'
 #' Establishes a read-only SQLite database connection to a Compound Discoverer
@@ -129,8 +155,7 @@ get_xic_traces_from_compounds <- function(conn, compounds_query_str) {
         conn, "UnknownCompoundIonInstanceItemsXicTraceItems")
     inst_ion_link <- tbl(
         conn, "UnknownCompoundInstanceItemsUnknownCompoundIonInstanceItems")
-    cons_inst_link <- tbl(
-        conn, "ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems")
+    cons_inst_link <- cd_compound_instance_link(conn)
     ion_peak_link <- tbl(
         conn, "UnknownCompoundIonInstanceItemsChromatogramPeakItems")
 
