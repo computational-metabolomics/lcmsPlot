@@ -1127,7 +1127,7 @@ The supported inputs and their versions are:
 | msPurity | `purityA` | Any | `lcmsPlot(object)` |
 | Compound Discoverer | `.cdResult` files | 3.x | `lp_compound_discoverer()` |
 | | Scripting node exports | 3.3, 3.4, 3.5 | `CompoundDiscovererNodeSource()` |
-| MZmine | Feature list CSV exports | 2 and 3 or later | `MZmineFeatureListsSource()` |
+| MZmine | Feature list CSV exports, per sample or aligned | 2 and 3 or later | `MZmineFeatureListsSource()` |
 | MS-DIAL | Peak list CSV or TSV exports | Any with the standard peak list columns | `MsDialPeaksSource()` |
 | LipidSearch | Result files | 4.2 and 5.2 | `LipidSearchSource()` |
 | mzTab-M | Small molecule features | 2.0.0-M | `MzTabMSource()` |

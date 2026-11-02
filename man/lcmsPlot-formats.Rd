@@ -23,7 +23,7 @@ imports of lcmsPlot.
    msPurity \tab \code{purityA} \tab Any \tab \code{lcmsPlot(object)} \tab msPurity \cr
    Compound Discoverer \tab \code{.cdResult} files (SQLite) \tab 3.x \tab \code{lcmsPlot(path)} + \code{\link[=lp_compound_discoverer]{lp_compound_discoverer()}} \tab  \cr
     \tab Scripting node exports \tab 3.3, 3.4, 3.5 \tab \code{\link[=CompoundDiscovererNodeSource]{CompoundDiscovererNodeSource()}} \tab  \cr
-   MZmine \tab Feature list CSV exports \tab 2 (\verb{row m/z} columns) and 3 or later (\verb{datafile:} columns) \tab \code{\link[=MZmineFeatureListsSource]{MZmineFeatureListsSource()}} \tab  \cr
+   MZmine \tab Feature list CSV exports, per sample or aligned \tab 2 (\verb{row m/z} columns) and 3 or later (\verb{datafile:} columns) \tab \code{\link[=MZmineFeatureListsSource]{MZmineFeatureListsSource()}} \tab  \cr
    MS-DIAL \tab Peak list CSV or TSV exports \tab Any with the \verb{Precursor m/z}, \code{RT (min)}, \verb{RT left(min)}, \verb{RT right (min)}, \code{Area}, and \code{Height} columns \tab \code{\link[=MsDialPeaksSource]{MsDialPeaksSource()}} \tab  \cr
    LipidSearch \tab Result files \tab 4.2 and 5.2 \tab \code{\link[=LipidSearchSource]{LipidSearchSource()}} + \code{\link[=lp_lipid_search]{lp_lipid_search()}} \tab  \cr
    mzTab-M \tab Small molecule features (SMF) \tab 2.0.0-M \tab \code{\link[=MzTabMSource]{MzTabMSource()}} + \code{\link[=lp_mztab]{lp_mztab()}} \tab  \cr

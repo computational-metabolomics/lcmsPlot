@@ -6,6 +6,13 @@
   `UnknownCompoundInstanceItemsConsolidatedUnknownCompoundItems` instead of
   `ConsolidatedUnknownCompoundItemsUnknownCompoundInstanceItems`. Previously
   such files failed with "no such table".
+- **Aligned MZmine feature lists**: `MZmineFeatureListsSource()` reads
+  feature lists that hold several data files, such as those exported after
+  MZmine's join aligner, in both the MZmine 2 and the MZmine 3+ formats.
+  Each data file contributes its own peaks (gap-filled ones included), and
+  rows a file has no peak for are skipped. Previously only lists exported
+  per sample could be read; aligned lists failed with "Expected exactly one
+  feature state/status column".
 
 # lcmsPlot 1.1.25
 

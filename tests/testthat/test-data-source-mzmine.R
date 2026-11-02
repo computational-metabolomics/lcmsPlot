@@ -145,3 +145,74 @@ test_that("MZmineFeatureListsSource fails when required columns are missing", {
         "Missing required columns"
     )
 })
+
+test_that("MZmineFeatureListsSource reads an aligned MZmine >=3 feature list", {
+    # arrange: two features aligned across two files; the second feature has
+    # no peak in sampleB (UNKNOWN) and a gap-filled one in sampleA.
+    tmp <- tempfile("mzmine")
+    dir.create(tmp)
+    sample_paths <- file.path(tmp, c("sampleA.mzML", "sampleB.mzML"))
+    file.create(sample_paths)
+    feature_path <- file.path(tmp, "aligned.csv")
+
+    per_file <- function(file, mz, rt, state) {
+        df <- data.frame(mz, rt, area = 1000, height = 100, mz - 0.01,
+                         mz + 0.01, rt - 0.1, rt + 0.1, state)
+        names(df) <- paste0("datafile:", file, ":", c(
+            "mz", "rt", "area", "height", "mz_range:min", "mz_range:max",
+            "rt_range:min", "rt_range:max", "feature_state"))
+        df
+    }
+    write.csv(
+        cbind(
+            data.frame(id = 1:2, mz = c(150, 200), rt = c(10, 12),
+                       check.names = FALSE),
+            per_file("sampleA.mzML", c(150.001, 200.001), c(10.1, 12.1),
+                     c("DETECTED", "ESTIMATED")),
+            per_file("sampleB.mzML", c(149.999, NA), c(9.9, NA),
+                     c("DETECTED", "UNKNOWN"))),
+        feature_path, row.names = FALSE)
+
+    # act
+    res <- MZmineFeatureListsSource(feature_path, sample_paths)
+
+    # assert: each file's own values, without the missing peak
+    expect_equal(nrow(res@peaks), 3)
+    expect_equal(sort(res@peaks$sample_index), c(1, 1, 2))
+    a <- res@peaks[res@peaks$sample_index == 1, ]
+    expect_equal(sort(a$mz), c(150.001, 200.001))
+    expect_equal(sort(a$rt), c(10.1, 12.1) * 60)
+    b <- res@peaks[res@peaks$sample_index == 2, ]
+    expect_equal(b$mz, 149.999)
+})
+
+test_that("MZmineFeatureListsSource reads an aligned MZmine 2 feature list", {
+    # arrange
+    tmp <- tempfile("mzmine")
+    dir.create(tmp)
+    sample_paths <- file.path(tmp, c("s1.mzML", "s2.mzML"))
+    file.create(sample_paths)
+    feature_path <- file.path(tmp, "aligned.csv")
+
+    per_file <- function(file, rt, state) {
+        df <- data.frame(state, 100, rt, 1000, 500, 99.9, 100.1, rt - 0.2,
+                         rt + 0.2)
+        names(df) <- paste0(file, c(
+            " Feature status", " Feature m/z", " Feature RT", " Peak area",
+            " Peak height", " Feature m/z min", " Feature m/z max",
+            " Feature RT start", " Feature RT end"))
+        df
+    }
+    write.csv(
+        cbind(data.frame("row m/z" = 100, check.names = FALSE),
+              per_file("s1.mzML", 5, "DETECTED"),
+              per_file("s2.mzML", 5.1, "DETECTED")),
+        feature_path, row.names = FALSE)
+
+    # act
+    res <- MZmineFeatureListsSource(feature_path, sample_paths)
+
+    # assert
+    expect_equal(nrow(res@peaks), 2)
+    expect_equal(res@peaks$rt[order(res@peaks$sample_index)], c(5, 5.1) * 60)
+})
