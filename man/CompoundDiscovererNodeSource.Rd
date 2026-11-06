@@ -33,6 +33,14 @@ The Scripting Node must be configured to request the Compounds, Compounds per
 File, and Features tables (with their link tables). For each compound and
 study file a representative ion is selected, preferring a molecular ion
 and otherwise the most abundant feature.
+
+The peak window of each compound in each file is Compound Discoverer's
+integration window when the export also holds the Features per File and
+Chromatogram Peaks tables: the left and right retention times of the
+reference chromatogram peak of the compound's reference ion, as the
+\code{.cdResult} reader uses. Without them, the window is taken from the
+exported Left/Right RT, else the apex \eqn{\pm} half the FWHM, else the
+apex alone.
 }
 \examples{
 ## Inside a real Compound Discoverer Scripting Node the JSON path arrives as

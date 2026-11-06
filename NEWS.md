@@ -1,3 +1,21 @@
+# lcmsPlot 1.1.27
+
+- **Peak integration windows in the Compound Discoverer node** (#41): the
+  Compounds Chromatograms scripting node now requests the Features per File
+  and Chromatogram Peaks tables, and `CompoundDiscovererNodeSource()` takes
+  each compound's peak window in each file from them: the left and right
+  retention times of the reference chromatogram peak of the compound's
+  reference ion, the window Compound Discoverer integrated the area over, as
+  the `.cdResult` reader does. Previously the node exported no peak bounds,
+  so the window was the apex ± half the FWHM (about a third of the
+  integrated window) or the apex alone. The reference peak is the one
+  flagged `Is Ref Peak`, else isotope 0, else the one whose apex is closest
+  to the ion's retention time. Exports without these tables keep the
+  previous behaviour, and per-file feature exports without Left/Right RT now
+  also fall back to the FWHM. Workflows built with the previous `node.json`
+  need the node re-registered (or its Requested Tables and Columns updated)
+  to benefit.
+
 # lcmsPlot 1.1.26
 
 - **Compound Discoverer 3.5 result files**: `lp_compound_discoverer()` reads

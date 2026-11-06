@@ -83,11 +83,17 @@ that `node.json`'s `ExecutablePath` points to).
 Post-Processing Node area (it is not connected to other nodes). Its **Requested Tables and Columns** are already set in `node.json`:
 
 ```
-Compounds; Compounds per File; Input Files
+Compounds; Compounds per File; Features per File; Chromatogram Peaks; Input Files
 ```
 
 The script derives the raw file paths from the exported Input Files **File Name**
 column, so the `.raw` files must be readable at their original locations.
+
+Features per File and Chromatogram Peaks give each compound's peak integration
+window in each file: the left and right retention times of the reference
+chromatogram peak of its reference ion, the window Compound Discoverer integrated
+the area over. Plots shade that window. If a workflow's node does not request
+these two tables, the window falls back to the peak apex ± half its FWHM.
 
 Click the node to set its parameters (below).
 

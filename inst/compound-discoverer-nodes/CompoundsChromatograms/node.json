@@ -19,7 +19,7 @@
     "ExecutablePath": "C:\\Program Files\\R\\R-4.3.0\\bin\\Rscript.exe",
     "ExpectResponse": true,
     "UseRFriendlyNames": true,
-    "RequestedTablesAndColumns": "Compounds; Compounds per File; Input Files"
+    "RequestedTablesAndColumns": "Compounds; Compounds per File; Features per File; Chromatogram Peaks; Input Files"
   },
 
   "Parameters": [
