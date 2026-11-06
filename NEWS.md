@@ -1,3 +1,20 @@
+# lcmsPlot 1.1.28
+
+- **Compound Discoverer node released with an installer**: each version of
+  the Compounds Chromatograms node (its own version, starting at 1.0.0 in
+  `VERSION`) is published as a GitHub release,
+  `CompoundsChromatograms.zip`, with a Windows installer (`install.bat`).
+  The installer finds R 4.4.0 or later, installs lcmsPlot at the version the
+  node was released with (from its GitHub tag, as Bioconductor's release may
+  be older) and rawrr, copies the node into each Compound Discoverer version
+  found and writes the R and script paths into `node.json`. Package versions
+  are tagged `vX.Y.Z`, and node releases `cd-node-vX.Y.Z`, by the release
+  workflow.
+- The node checks, when run from a release, that the installed lcmsPlot is at
+  least the version it was released with, and stops with a clear message if
+  not. It now ships the icons its `node.json` refers to, and its default
+  `ExecutablePath` points to an R that lcmsPlot supports (4.4).
+
 # lcmsPlot 1.1.27
 
 - **Peak integration windows in the Compound Discoverer node** (#41): the

@@ -1,0 +1,4 @@
+# The Compound Discoverer node installer runs on Windows.
+tools/cd-node/*.bat text eol=crlf
+tools/cd-node/*.ps1 text eol=crlf
+tools/cd-node/*.txt text eol=crlf

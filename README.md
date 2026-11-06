@@ -169,8 +169,14 @@ lcmsPlot("study.cdResult") +
 lcmsPlot ships a ready-made Compound Discoverer post-processing node,
 **Compounds Chromatograms**. It renders one chromatogram per compound from the
 original `.raw` files and adds a clickable plot column to the Compounds table,
-so each compound links to its chromatogram inside Compound Discoverer. The
-node is installed with the package:
+so each compound links to its chromatogram inside Compound Discoverer.
+
+The easiest way to install it is the Windows installer published with each
+release of the node: download
+[CompoundsChromatograms.zip](https://github.com/computational-metabolomics/lcmsPlot/releases/latest/download/CompoundsChromatograms.zip), unzip it and double-click `install.bat`.
+It installs the R packages the node needs and registers the node in each
+Compound Discoverer version found; `INSTALL.txt` in the download gives the
+details. The node also ships with the package:
 
 ```r
 system.file("compound-discoverer-nodes/CompoundsChromatograms",
@@ -178,7 +184,7 @@ system.file("compound-discoverer-nodes/CompoundsChromatograms",
 ```
 
 See its [README](inst/compound-discoverer-nodes/CompoundsChromatograms/README.md)
-for installation and parameters.
+for manual installation and parameters.
 
 ## Interactive exploration
 

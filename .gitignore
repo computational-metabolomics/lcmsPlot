@@ -76,3 +76,6 @@ data.zip
 
 *.playground.*
 .positai
+
+# Compound Discoverer node release builds (tools/cd-node/build-zip.sh)
+dist/

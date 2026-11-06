@@ -17,3 +17,5 @@ README.rst
 ^tools$
 ^CONTRIBUTING\.md$
 ^codemeta\.json$
+^\.gitattributes$
+^dist$
