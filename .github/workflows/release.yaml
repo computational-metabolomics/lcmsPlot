@@ -1,0 +1,106 @@
+name: Release
+
+# On every push to devel:
+#   - tags the package version (v<Version> from DESCRIPTION) when it is new;
+#   - when the Compounds Chromatograms node version (its VERSION file) is new,
+#     builds the node's zip, tests its installer on Windows, and publishes it
+#     as the GitHub release cd-node-v<version>.
+# Tags pushed by a workflow do not trigger other workflows, so both happen
+# here.
+
+on:
+  push:
+    branches: [devel]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.v.outputs.package }}
+      node: ${{ steps.v.outputs.node }}
+      package-is-new: ${{ steps.v.outputs.package_is_new }}
+      node-is-new: ${{ steps.v.outputs.node_is_new }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the versions
+        id: v
+        run: |
+          package=$(sed -n 's/^Version: *//p' DESCRIPTION | tr -d '[:space:]')
+          node=$(tr -d '[:space:]' < inst/compound-discoverer-nodes/CompoundsChromatograms/VERSION)
+          is_new() { [ -z "$(git ls-remote --tags origin "refs/tags/$1")" ] && echo true || echo false; }
+          {
+            echo "package=$package"
+            echo "node=$node"
+            echo "package_is_new=$(is_new "v$package")"
+            echo "node_is_new=$(is_new "cd-node-v$node")"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  package-tag:
+    needs: versions
+    if: needs.versions.outputs.package-is-new == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag v${{ needs.versions.outputs.package }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ needs.versions.outputs.package }}" \
+            -m "lcmsPlot ${{ needs.versions.outputs.package }}" "$GITHUB_SHA"
+          git push origin "v${{ needs.versions.outputs.package }}"
+
+  # The installer installs lcmsPlot from the package tag, so it runs once that
+  # tag exists (or already existed).
+  node-test:
+    needs: [versions, package-tag]
+    if: >-
+      always() && needs.versions.outputs.node-is-new == 'true' &&
+      needs.package-tag.result != 'failure'
+    uses: ./.github/workflows/cd-node.yaml
+    with:
+      install-packages: true
+
+  node-release:
+    needs: [versions, node-test]
+    if: always() && needs.versions.outputs.node-is-new == 'true' && needs.node-test.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the zip
+        run: |
+          tools/cd-node/build-zip.sh dist
+          # A copy under a fixed name, for the stable "latest" download link.
+          cp "dist/CompoundsChromatograms-${{ needs.versions.outputs.node }}.zip" dist/CompoundsChromatograms.zip
+          (cd dist && shasum -a 256 *.zip > SHA256SUMS.txt)
+
+      - name: Publish cd-node-v${{ needs.versions.outputs.node }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node="${{ needs.versions.outputs.node }}"
+          package="${{ needs.versions.outputs.package }}"
+          cat > notes.md <<EOF
+          The Compounds Chromatograms node for Compound Discoverer (3.3 to 3.5), version ${node}.
+
+          **Install:** download \`CompoundsChromatograms.zip\`, unzip it, double-click \`install.bat\` and follow \`INSTALL.txt\`.
+          The installer sets up the R packages the node needs, including lcmsPlot ${package}, and needs R 4.4.0 or later.
+
+          See NEWS.md for the changes in lcmsPlot ${package}.
+          EOF
+          gh release create "cd-node-v${node}" \
+            --target "$GITHUB_SHA" \
+            --title "Compounds Chromatograms (Compound Discoverer node) ${node}" \
+            --notes-file notes.md \
+            --latest \
+            dist/CompoundsChromatograms-${node}.zip dist/CompoundsChromatograms.zip dist/SHA256SUMS.txt

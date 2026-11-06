@@ -16,7 +16,7 @@
   "ScriptProcessorArguments": {
 
     "ExecutableCommandLineArguments": "\"C:\\Program Files\\Thermo\\Compound Discoverer 3.5\\Tools\\Scripts\\CompoundsChromatograms\\CompoundsChromatograms.R\" %NODEARGS%",
-    "ExecutablePath": "C:\\Program Files\\R\\R-4.3.0\\bin\\Rscript.exe",
+    "ExecutablePath": "C:\\Program Files\\R\\R-4.4.1\\bin\\Rscript.exe",
     "ExpectResponse": true,
     "UseRFriendlyNames": true,
     "RequestedTablesAndColumns": "Compounds; Compounds per File; Features per File; Chromatogram Peaks; Input Files"

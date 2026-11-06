@@ -1,0 +1,67 @@
+COMPOUNDS CHROMATOGRAMS - a Compound Discoverer node powered by lcmsPlot
+==========================================================================
+
+The node draws the chromatograms of each compound of a Compound Discoverer
+result, from your raw files, and adds a column to the Compounds table that
+opens each compound's plot.
+
+Requirements: Windows, Compound Discoverer 3.3, 3.4 or 3.5, an internet
+connection, and administrator rights on the computer.
+
+
+INSTALL
+-------
+
+1. Install R 4.4.0 or later, if you do not have it:
+   https://cloud.r-project.org/bin/windows/base/
+   Keep the default options.
+
+2. Unzip this download into a folder of its own (right-click the zip file,
+   "Extract All...").
+
+3. Double-click install.bat and allow it to make changes (it needs
+   administrator rights to write into the Compound Discoverer folder).
+   - If Windows shows "Windows protected your PC", click "More info", then
+     "Run anyway". The installer is not signed, which Windows reports for
+     any script downloaded from the internet.
+   - The first installation downloads and installs the R packages the node
+     needs, which can take 10-20 minutes.
+   - If several Compound Discoverer versions are installed, it asks which
+     ones to install the node into.
+
+4. In Compound Discoverer: Help > License Manager > Scan for Missing
+   Features, and confirm.
+
+5. Restart Compound Discoverer. The node is in the Workflow Nodes panel,
+   under Scripting nodes, as "Compounds Chromatograms". Drag it into the
+   post-processing area of a workflow.
+
+The installer writes install.log in this folder. If something fails, that
+file says what and where.
+
+
+UPDATE
+------
+
+Download the new release and run its install.bat. It replaces the node and
+updates the R packages if needed.
+
+
+UNINSTALL
+---------
+
+Delete the CompoundsChromatograms folder from
+  C:\Program Files\Thermo\Compound Discoverer <version>\Tools\Scripts\
+and restart Compound Discoverer.
+
+
+NOTES
+-----
+
+- The node reads the original .raw files, so they must be readable at the
+  locations recorded in the Compound Discoverer result.
+- Reading .raw files uses rawrr, which includes the Thermo Fisher Scientific
+  RawFileReader library; its licence terms apply.
+- The node's settings (which compounds to plot, plot size, ...) are described
+  in CompoundsChromatograms\README.md.
+- Help and bug reports: https://github.com/computational-metabolomics/lcmsPlot/issues

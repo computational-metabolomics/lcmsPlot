@@ -9,7 +9,28 @@ Files in this folder (locatable via
 
 - `CompoundsChromatograms.R` - the node script.
 - `node.json` - the CD node definition.
+- `IMG_16x16.png`, `IMG_32x32.png` - the node's icons.
+- `VERSION` - the node's version, which is separate from lcmsPlot's.
 - `README.md` - this file.
+
+## Install with the installer (recommended)
+
+Each release of the node is published on GitHub with a Windows installer that
+sets everything up: the R packages (including the lcmsPlot version the node
+was released with), the node in each Compound Discoverer version found, and
+the paths in `node.json`.
+
+1. Install **R ≥ 4.4.0** from <https://cloud.r-project.org/bin/windows/base/>.
+2. Download
+   [CompoundsChromatograms.zip](https://github.com/computational-metabolomics/lcmsPlot/releases/latest/download/CompoundsChromatograms.zip)
+   (all releases: <https://github.com/computational-metabolomics/lcmsPlot/releases>)
+   and unzip it.
+3. Double-click `install.bat` and allow it to make changes.
+4. In Compound Discoverer: **Help -> License Manager -> Scan for Missing
+   Features**, then restart Compound Discoverer.
+
+`INSTALL.txt` in the download gives the details. Running a newer release's
+`install.bat` updates the node. The steps below do the same by hand.
 
 ## 1. Install R and the required packages
 
@@ -30,8 +51,7 @@ that `node.json`'s `ExecutablePath` points to).
 
    ```r
    BiocManager::install("rawrr")
-   rawrr::installRawFileReaderDLLs()   # downloads Thermo RawFileReader (accept the licence)
-   rawrr::installRawrrExe()
+   rawrr::installRawrrExe()   # downloads rawrr.exe, which includes the Thermo RawFileReader
    ```
 
 4. *(Development only - skip for normal use.)* To load an `lcmsPlot` **source tree**

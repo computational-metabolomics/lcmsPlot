@@ -121,6 +121,37 @@ options(warn = 1)
     }
 }
 
+# The node released as a zip (see the GitHub releases of lcmsPlot) carries a
+# node-info.json next to this script, with the lcmsPlot version its installer
+# sets up. An older installed lcmsPlot lacks what the node relies on, so stop
+# with a clear message rather than fail later. Without the file (the node run
+# from the installed package or a source tree), there is nothing to check.
+.check_lcmsplot_version <- function(info_path = file.path(.script_dir,
+                                                          "node-info.json")) {
+    if (!file.exists(info_path)) {
+        return(invisible(NULL))
+    }
+    info <- jsonlite::fromJSON(info_path)
+    required <- info$lcmsplot_version
+    if (is.null(required) || !nzchar(required)) {
+        return(invisible(NULL))
+    }
+
+    installed <- as.character(utils::packageVersion("lcmsPlot"))
+    log_msg("  node ", info$node_version, " needs lcmsPlot >= ", required,
+            "; installed: ", installed)
+    if (utils::compareVersion(installed, required) < 0) {
+        stop(
+            "This Compounds Chromatograms node (", info$node_version, ") needs ",
+            "lcmsPlot ", required, " or later, but lcmsPlot ", installed,
+            " is installed in this R. Run install.bat from the node's release ",
+            "again: it installs the matching lcmsPlot.",
+            call. = FALSE
+        )
+    }
+    invisible(NULL)
+}
+
 # Load lcmsPlot: from the installed package when `dir` is empty (deployment), or
 # from a source tree via pkgload when `dir` is set (development). Load-time
 # messages/warnings go to the log file only.
@@ -290,6 +321,7 @@ main <- function() {
             plot_path_mode, "'")
 
     load_lcmsplot(lcmsplot_dir)
+    if (!nzchar(lcmsplot_dir)) .check_lcmsplot_version()
 
     log_msg("STEP: registering BiocParallel::SerialParam()")
     BiocParallel::register(BiocParallel::SerialParam())

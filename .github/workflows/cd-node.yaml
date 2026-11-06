@@ -1,0 +1,122 @@
+name: CD node installer
+
+# Builds the release zip of the Compounds Chromatograms Compound Discoverer
+# node and runs its installer on Windows, against a stand-in Compound
+# Discoverer Scripts folder, including the R packages: lcmsPlot at the commit
+# being tested, and rawrr. Manual runs can skip the packages.
+
+on:
+  pull_request:
+    branches: [devel]
+    paths:
+      - "inst/compound-discoverer-nodes/**"
+      - "tools/cd-node/**"
+      - ".github/workflows/cd-node.yaml"
+  workflow_dispatch:
+    inputs:
+      install-packages:
+        description: "Also install the R packages (lcmsPlot at this commit, rawrr)"
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      install-packages:
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.zip.outputs.node_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the zip
+        id: zip
+        run: tools/cd-node/build-zip.sh dist | tee -a "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cd-node-zip
+          path: dist/
+
+  install-windows:
+    needs: build
+    runs-on: windows-latest
+    env:
+      INSTALL_PACKAGES: ${{ github.event_name == 'pull_request' || inputs.install-packages }}
+      # A pull request's own commit; its test merge commit cannot be installed.
+      LCMSPLOT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cd-node-zip
+          path: dist
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Unzip
+        shell: pwsh
+        run: |
+          Expand-Archive "dist/CompoundsChromatograms-${{ needs.build.outputs.node-version }}.zip" -DestinationPath node-release
+
+      - name: Lint install.ps1
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $issues = Invoke-ScriptAnalyzer -Path node-release/install.ps1 -Severity Error
+          $issues | Format-Table -AutoSize
+          if ($issues) { exit 1 }
+
+      # Windows PowerShell 5.1, which install.bat uses on users' machines.
+      - name: Run the installer
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          $rscript = (Get-Command Rscript.exe).Source
+          $scripts = Join-Path $env:RUNNER_TEMP 'CD\Tools\Scripts'
+          $installerArgs = @{
+            RscriptPath = $rscript
+            CDScriptsDir = $scripts
+            NonInteractive = $true
+          }
+          if ($env:INSTALL_PACKAGES -eq 'true') {
+            $installerArgs.LcmsPlotRef = $env:LCMSPLOT_REF
+          } else {
+            $installerArgs.SkipRPackages = $true
+          }
+          & .\node-release\install.ps1 @installerArgs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check the installed node
+        shell: pwsh
+        run: |
+          $dest = Join-Path $env:RUNNER_TEMP 'CD\Tools\Scripts\CompoundsChromatograms'
+          foreach ($f in 'CompoundsChromatograms.R', 'node.json', 'node-info.json',
+                         'IMG_16x16.png', 'IMG_32x32.png') {
+            if (-not (Test-Path (Join-Path $dest $f))) { throw "Missing $f" }
+          }
+          $node = Get-Content (Join-Path $dest 'node.json') -Raw | ConvertFrom-Json
+          $spa = $node.ScriptProcessorArguments
+          $rscript = (Get-Command Rscript.exe).Source
+          if ($spa.ExecutablePath -ne $rscript) { throw "ExecutablePath is $($spa.ExecutablePath)" }
+          $expected = "`"$(Join-Path $dest 'CompoundsChromatograms.R')`" %NODEARGS%"
+          if ($spa.ExecutableCommandLineArguments -ne $expected) {
+            throw "ExecutableCommandLineArguments is $($spa.ExecutableCommandLineArguments)"
+          }
+          if ($spa.RequestedTablesAndColumns -notmatch 'Chromatogram Peaks') { throw 'Requested tables lost' }
+          if ($node.Parameters.Count -lt 10) { throw "Only $($node.Parameters.Count) parameters" }
+          Write-Host "node.json is set up for $rscript"
+
+      - name: Check the installed R packages
+        if: env.INSTALL_PACKAGES == 'true'
+        shell: pwsh
+        run: |
+          Rscript -e "cat('lcmsPlot', as.character(packageVersion('lcmsPlot')), '\n'); stopifnot(file.exists(rawrr:::.rawrrAssembly()))"
