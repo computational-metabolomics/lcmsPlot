@@ -79,3 +79,5 @@ data.zip
 
 # Compound Discoverer node release builds (tools/cd-node/build-zip.sh)
 dist/
+# ...except the Compound Discoverer node icons, which node.json refers to.
+!inst/compound-discoverer-nodes/*/IMG_*.png
