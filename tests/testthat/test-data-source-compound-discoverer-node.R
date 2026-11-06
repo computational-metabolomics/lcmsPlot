@@ -1,13 +1,18 @@
 # Build a minimal Compound Discoverer scripting-node export (node_args.json plus
 # the referenced tab-delimited tables) in a temporary directory and return the
 # JSON path.
+#
+# `feature_window = "fwhm"` exports a FWHM instead of Left/Right RT on the
+# features.
 .write_cd_node_export <- function(
     dir = tempfile("cd_node"),
     study_file_ids = c(1, 2),
     file_names = c("ko15.mzML", "wt15.mzML"),
     include_study_files = TRUE,
-    checked = NULL
+    checked = NULL,
+    feature_window = c("bounds", "fwhm")
 ) {
+    feature_window <- match.arg(feature_window)
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
 
     write_tab <- function(df, name) {
@@ -53,6 +58,11 @@
         "Right RT [min]" = c(0.92, 0.92, 0.92, 0.92, 0.96, 0.96, 0.96, 0.96),
         check.names = FALSE
     )
+    if (feature_window == "fwhm") {
+        features$`Left RT [min]` <- NULL
+        features$`Right RT [min]` <- NULL
+        features$`FWHM in min` <- 0.04
+    }
 
     link_cmp_cpf <- data.frame(
         "Compounds ID" = c(1, 1, 2, 2),
@@ -140,6 +150,18 @@ test_that("CompoundDiscovererNodeSource converts RT minutes to seconds", {
     expect_equal(betaine$rt, 0.86 * 60, tolerance = 1e-6)
     expect_equal(betaine$rtmin, 0.80 * 60, tolerance = 1e-6)
     expect_equal(betaine$rtmax, 0.92 * 60, tolerance = 1e-6)
+})
+
+test_that("per-file features without Left/Right RT fall back to FWHM", {
+    json_path <- .write_cd_node_export(feature_window = "fwhm")
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    betaine <- res@peaks[res@peaks$name == "Betaine", ][1, ]
+    expect_equal(betaine$rt, 0.86 * 60, tolerance = 1e-6)
+    expect_equal(betaine$rtmin, (0.86 - 0.02) * 60, tolerance = 1e-6)
+    expect_equal(betaine$rtmax, (0.86 + 0.02) * 60, tolerance = 1e-6)
 })
 
 test_that("CompoundDiscovererNodeSource errors on unmatched sample basename", {
@@ -328,10 +350,21 @@ test_that("Compound-centric export works without a Features table (adduct NA)", 
 # "RT in min", "FWHM in min", "Area Ref Ion", "Intensity Max", "Reference Ion".
 # The RT window is derived from FWHM (no Left/Right RT columns are exported).
 # -----------------------------------------------------------------------------
+#
+# With `peaks = TRUE` the export also holds the Features per File and
+# Chromatogram Peaks tables and their connection tables, named as the node
+# exports them (R-friendly names). Each Compounds per File row has a reference
+# ion ([M+H]+1) whose isotope-0 peak is the reference peak, spanning
+# rt - 0.06 to rt + 0.08 min; its isotope-1 peak spans a much wider window, so
+# that picking the wrong peak shows. Compounds per File 1 also has an [M+Na]+1
+# ion, and Compounds per File 2 a second, smaller [M+H]+1 instance, both with
+# other windows. `peak_columns` drops the peak-selection columns.
 .write_cd_node_cd35_export <- function(
     dir = tempfile("cd_node_cd35"),
     study_file_ids = c("F4", "F5"),
-    file_names = c("ko15.mzML", "wt15.mzML")
+    file_names = c("ko15.mzML", "wt15.mzML"),
+    peaks = FALSE,
+    peak_columns = c("Is Ref Peak", "Isotope Number", "Apex RT in min")
 ) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
     write_tab <- function(df, name) {
@@ -380,11 +413,153 @@ test_that("Compound-centric export works without a Features table (adduct NA)", 
         list(DataFile = write_tab(study_files, "study_files.txt"))
     )
 
+    if (peaks) {
+        cpf$`Reference Ion` <- "[M+H]+1"
+        tables[[2]] <- list(DataFile = write_tab(cpf, "cpf.txt"))
+
+        fpf <- data.frame(
+            "Features per File ID" = c(11, 12, 21, 22, 31, 41),
+            "Ion" = c("[M+H]+1", "[M+Na]+1", "[M+H]+1", "[M+H]+1", "[M+H]+1",
+                      "[M+H]+1"),
+            "mz" = c(70.06509, 92.04703, 70.06509, 70.06509, 72.04437,
+                     72.04437),
+            "RT in min" = c(7.052, 7.050, 7.051, 7.060, 4.498, 4.500),
+            "Area" = c(8000, 900, 6000, 100, 5000, 3000),
+            "Study File ID" = study_file_ids[c(1, 1, 2, 2, 1, 2)],
+            check.names = FALSE
+        )
+        link_cpf_fpf <- data.frame(
+            "Compounds per File WorkflowID" = 1,
+            "Compounds per File ID" = c(1, 1, 2, 2, 3, 4),
+            "Features per File WorkflowID" = 1,
+            "Features per File ID" = fpf$`Features per File ID`,
+            check.names = FALSE
+        )
+
+        # Two isotope peaks per ion: the reference (isotope 0) and isotope 1.
+        # The other ions' peaks get windows of their own (+/- 0.5 min).
+        ion_rt <- rep(fpf$`RT in min`, each = 2)
+        is_ref_ion <- rep(fpf$`Features per File ID` %in% c(11, 21, 31, 41),
+                          each = 2)
+        isotope <- rep(c(0, 1), times = nrow(fpf))
+        peak_tab <- data.frame(
+            "Chromatogram Peaks ID" = seq_len(2 * nrow(fpf)),
+            "Apex RT in min" = ion_rt + ifelse(isotope == 0, 0, 0.02),
+            "Left RT in min" = ifelse(
+                !is_ref_ion, ion_rt - 0.5,
+                ifelse(isotope == 0, ion_rt - 0.06, ion_rt - 0.2)),
+            "Right RT in min" = ifelse(
+                !is_ref_ion, ion_rt + 0.5,
+                ifelse(isotope == 0, ion_rt + 0.08, ion_rt + 0.3)),
+            "Isotope Number" = isotope,
+            "Is Ref Peak" = ifelse(isotope == 0, "True", "False"),
+            check.names = FALSE
+        )
+        drop <- setdiff(c("Is Ref Peak", "Isotope Number", "Apex RT in min"),
+                        peak_columns)
+        peak_tab <- peak_tab[, setdiff(names(peak_tab), drop), drop = FALSE]
+        link_fpf_peak <- data.frame(
+            "Features per File WorkflowID" = 1,
+            "Features per File ID" = rep(fpf$`Features per File ID`, each = 2),
+            "Chromatogram Peaks WorkflowID" = 1,
+            "Chromatogram Peaks ID" = peak_tab$`Chromatogram Peaks ID`,
+            check.names = FALSE
+        )
+
+        tables <- c(tables, list(
+            list(DataFile = write_tab(fpf, "fpf.txt")),
+            list(DataFile = write_tab(peak_tab, "peaks.txt")),
+            list(DataFile = write_tab(link_cpf_fpf, "link_cpf_fpf.txt")),
+            list(DataFile = write_tab(link_fpf_peak, "link_fpf_peak.txt"))
+        ))
+    }
+
     json_path <- file.path(dir, "node_args.json")
     writeLines(
         jsonlite::toJSON(list(Tables = tables), auto_unbox = TRUE), json_path)
     json_path
 }
+
+# The windows the fixture's reference peaks give, in seconds, by Compounds per
+# File ID: the reference ion's RT, -0.06 and +0.08 min.
+.cd35_reference_windows <- function() {
+    ion_rt <- c(7.052, 7.051, 4.498, 4.500)
+    data.frame(cpf = 1:4, rt = ion_rt * 60, rtmin = (ion_rt - 0.06) * 60,
+               rtmax = (ion_rt + 0.08) * 60)
+}
+
+## The node source's rows, ordered as .cd35_reference_windows().
+.cd35_rows <- function(res) {
+    rows <- res@compounds
+    rows[order(rows$formula != "C4 H7 N", rows$study_file_id), ]
+}
+
+test_that("peak bounds come from the reference ion's reference peak", {
+    json_path <- .write_cd_node_cd35_export(peaks = TRUE)
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    rows <- .cd35_rows(res)
+    expected <- .cd35_reference_windows()
+    expect_equal(nrow(rows), 4)
+    expect_equal(rows$rt, expected$rt, tolerance = 1e-6)
+    expect_equal(rows$rtmin, expected$rtmin, tolerance = 1e-6)
+    expect_equal(rows$rtmax, expected$rtmax, tolerance = 1e-6)
+})
+
+test_that("without Is Ref Peak, the isotope-0 peak is the reference", {
+    json_path <- .write_cd_node_cd35_export(
+        peaks = TRUE, peak_columns = c("Isotope Number", "Apex RT in min"))
+    res <- CompoundDiscovererNodeSource(
+        json_path, file.path(tempdir(), c("ko15.mzML", "wt15.mzML")))
+
+    rows <- .cd35_rows(res)
+    expect_equal(rows$rtmin, .cd35_reference_windows()$rtmin, tolerance = 1e-6)
+    expect_equal(rows$rtmax, .cd35_reference_windows()$rtmax, tolerance = 1e-6)
+})
+
+test_that("without Is Ref Peak or Isotope Number, the closest apex is used", {
+    json_path <- .write_cd_node_cd35_export(
+        peaks = TRUE, peak_columns = "Apex RT in min")
+    res <- CompoundDiscovererNodeSource(
+        json_path, file.path(tempdir(), c("ko15.mzML", "wt15.mzML")))
+
+    rows <- .cd35_rows(res)
+    expect_equal(rows$rtmin, .cd35_reference_windows()$rtmin, tolerance = 1e-6)
+    expect_equal(rows$rtmax, .cd35_reference_windows()$rtmax, tolerance = 1e-6)
+})
+
+test_that("an ion's peaks without any selection column fall back to FWHM", {
+    json_path <- .write_cd_node_cd35_export(
+        peaks = TRUE, peak_columns = character(0))
+    res <- CompoundDiscovererNodeSource(
+        json_path, file.path(tempdir(), c("ko15.mzML", "wt15.mzML")))
+
+    # Each ion has two peaks and nothing to choose between them by: the
+    # window is the apex +/- FWHM/2 of Compounds per File, as without peaks.
+    c4 <- .cd35_rows(res)[1, ]
+    expect_equal(c4$rtmin, (7.052 - 0.072 / 2) * 60, tolerance = 1e-6)
+    expect_equal(c4$rtmax, (7.052 + 0.072 / 2) * 60, tolerance = 1e-6)
+})
+
+test_that("the new tables are classified without displacing the others", {
+    json_path <- .write_cd_node_cd35_export(peaks = TRUE)
+    tabs <- .cd_node_classify_tables(.cd_node_read_tables(json_path))
+
+    expect_true("Features per File ID" %in% colnames(tabs$fpf))
+    expect_true("Left RT in min" %in% colnames(tabs$peaks))
+    expect_setequal(
+        colnames(tabs$link_cpf_fpf)[grepl(" ID$", colnames(tabs$link_cpf_fpf))],
+        c("Compounds per File ID", "Features per File ID"))
+    expect_setequal(
+        colnames(tabs$link_fpf_peak)[grepl(" ID$", colnames(tabs$link_fpf_peak))],
+        c("Features per File ID", "Chromatogram Peaks ID"))
+    expect_true("RT in min" %in% colnames(tabs$cpf))
+    expect_true("mz" %in% colnames(tabs$compounds))
+    expect_null(tabs$features)
+    expect_null(tabs$link_cpf_feat)
+})
 
 test_that("CD 3.5 names resolve: mz/rt/into/maxo populated, window from FWHM", {
     json_path <- .write_cd_node_cd35_export()

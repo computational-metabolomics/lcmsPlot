@@ -11,8 +11,8 @@
 }
 \value{
 A named \code{list} with elements \code{compounds}, \code{cpf}, \code{features},
-\code{link_cmp_cpf}, \code{link_cpf_feat}, \code{link_cmp_feat}, and \code{study_files} (any of
-which may be \code{NULL}).
+\code{link_cmp_cpf}, \code{link_cpf_feat}, \code{link_cmp_feat}, \code{study_files}, \code{fpf},
+\code{peaks}, \code{link_cpf_fpf} and \code{link_fpf_peak} (any of which may be \code{NULL}).
 }
 \description{
 Identifies the Compounds, Compounds per File, Features, the two link tables,
@@ -20,6 +20,10 @@ and (optionally) a study-file table from a list of exported tables, based on
 their columns rather than their position.
 }
 \details{
+The optional Features per File (\code{fpf}) and Chromatogram Peaks
+(\code{peaks}) tables, with their links to Compounds per File and to each other,
+carry the peak integration bounds (see \code{.cd_node_reference_peaks()}).
+
 Two export topologies are supported:
 \itemize{
 \item \strong{Per-file feature} (targeted-style): each \code{features} row carries \code{m/z},

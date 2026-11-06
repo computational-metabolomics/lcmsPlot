@@ -25,8 +25,12 @@
     compound_adduct = c("Reference Ion"),
     rt = c("RT [min]", "Apex RT [min]", "RT in min", "RT", "Retention Time",
            "Ion_RT"),
-    rt_left = c("Left RT [min]", "LeftRT", "RT left [min]", "Left RT"),
-    rt_right = c("Right RT [min]", "RightRT", "RT right [min]", "Right RT"),
+    # Peak integration bounds. The scripting node exports R-friendly column
+    # names ("Left RT [min]" becomes "Left RT in min"), so both forms are listed.
+    rt_left = c("Left RT [min]", "Left RT in min", "LeftRT", "RT left [min]",
+                "Left RT"),
+    rt_right = c("Right RT [min]", "Right RT in min", "RightRT",
+                 "RT right [min]", "Right RT"),
     # Peak full-width-at-half-maximum, used to derive the RT window when explicit
     # Left/Right RT bounds are not exported (CD 3.5 "Unknown Compounds").
     fwhm = c("FWHM in min", "FWHM [min]", "FWHM"),
@@ -34,7 +38,16 @@
                   "Spectrum File Name", "Study File"),
     # Per-compound check state, as set by hand in the Compound Discoverer
     # Compounds table. Present only when the export carries the column.
-    checked = c("Checked")
+    checked = c("Checked"),
+    # The "Features per File" table (the per-file ions,
+    # UnknownCompoundIonInstanceItems) and its "Chromatogram Peaks", which
+    # carry the peak integration bounds. Compounds per File link to their
+    # ions, and ions to their peaks (one per isotope).
+    fpf_id = c("Features per File ID"),
+    peak_id = c("Chromatogram Peaks ID"),
+    peak_apex_rt = c("Apex RT in min", "Apex RT [min]", "ApexRT"),
+    is_ref_peak = c("Is Ref Peak", "Is Ref. Peak", "IsRefPeak"),
+    isotope_number = c("Isotope Number", "IsotopeNumber")
 )
 
 # Coerce an exported "Checked" column to logical. Compound Discoverer writes it
@@ -120,10 +133,14 @@
 #'
 #' @param tables A `list` of `tibble`s as returned by `.cd_node_read_tables()`.
 #' @return A named `list` with elements `compounds`, `cpf`, `features`,
-#' `link_cmp_cpf`, `link_cpf_feat`, `link_cmp_feat`, and `study_files` (any of
-#' which may be `NULL`).
+#' `link_cmp_cpf`, `link_cpf_feat`, `link_cmp_feat`, `study_files`, `fpf`,
+#' `peaks`, `link_cpf_fpf` and `link_fpf_peak` (any of which may be `NULL`).
 #'
-#' @details Two export topologies are supported:
+#' @details The optional Features per File (`fpf`) and Chromatogram Peaks
+#' (`peaks`) tables, with their links to Compounds per File and to each other,
+#' carry the peak integration bounds (see `.cd_node_reference_peaks()`).
+#'
+#' Two export topologies are supported:
 #' * **Per-file feature** (targeted-style): each `features` row carries `m/z`,
 #'   `Ion` and RT, joined to `cpf` via a Compounds-per-File \eqn{\leftrightarrow}
 #'   Features link (`link_cpf_feat`).
@@ -140,13 +157,34 @@
     classified <- list(
         compounds = NULL, cpf = NULL, features = NULL,
         link_cmp_cpf = NULL, link_cpf_feat = NULL, link_cmp_feat = NULL,
-        study_files = NULL
+        study_files = NULL, fpf = NULL, peaks = NULL,
+        link_cpf_fpf = NULL, link_fpf_peak = NULL
     )
 
     for (df in tables) {
         is_cmp_id <- has_id(df, "compound_id")
         is_cpf_id <- has_id(df, "cpf_id")
         is_feat_id <- has_id(df, "feature_id")
+        is_fpf_id <- has_id(df, "fpf_id")
+        is_peak_id <- has_id(df, "peak_id")
+
+        # Features per File, Chromatogram Peaks and their links, recognised by
+        # their own IDs before any other table.
+        if (is_fpf_id || is_peak_id) {
+            if (is.null(classified$link_fpf_peak) && is_fpf_id && is_peak_id) {
+                classified$link_fpf_peak <- df
+            } else if (is.null(classified$link_cpf_fpf) && is_fpf_id &&
+                       is_cpf_id) {
+                classified$link_cpf_fpf <- df
+            } else if (is.null(classified$fpf) && is_fpf_id &&
+                       has_id(df, "feature_ion")) {
+                classified$fpf <- df
+            } else if (is.null(classified$peaks) && is_peak_id &&
+                       has_id(df, "rt_left") && has_id(df, "rt_right")) {
+                classified$peaks <- df
+            }
+            next
+        }
 
         if (is.null(classified$link_cmp_cpf) && is_cmp_id && is_cpf_id &&
             !is_feat_id) {
@@ -249,6 +287,132 @@
     ifelse(dup, paste0(base, " [#", ids, "]"), base)
 }
 
+#' Peak integration bounds of each compound in each file
+#'
+#' Follows each Compounds per File row to its reference ion in the Features per
+#' File table (the ion whose `Ion` is the row's `Reference Ion`; the one with
+#' the larger area if several are) and from there to the ion's reference
+#' chromatogram peak, as the `.cdResult` reader does. An ion has one
+#' chromatogram peak per isotope; the reference peak is the one flagged
+#' `Is Ref Peak`, else isotope 0, else the one whose apex is closest to the ion
+#' retention time.
+#'
+#' @param tabs A `list` of classified tables from `.cd_node_classify_tables()`.
+#' @return A `tibble` with columns `cpf_id` (as `character`), `rt` (the
+#' reference ion's retention time), `rtmin` and `rtmax`, in minutes; or `NULL`
+#' when the export lacks the Features per File and Chromatogram Peaks tables,
+#' their links, or the columns needed.
+#' @keywords internal
+.cd_node_reference_peaks <- function(tabs) {
+    needed <- c("cpf", "fpf", "peaks", "link_cpf_fpf", "link_fpf_peak")
+    if (any(vapply(tabs[needed], is.null, logical(1)))) {
+        return(NULL)
+    }
+    col <- function(df, field) first_matching_column(df, .cd_node_cols[[field]])
+
+    cols <- list(
+        cpf_id = col(tabs$cpf, "cpf_id"),
+        ref_ion = col(tabs$cpf, "compound_adduct"),
+        fpf_id = col(tabs$fpf, "fpf_id"),
+        ion = col(tabs$fpf, "feature_ion"),
+        peak_id = col(tabs$peaks, "peak_id"),
+        rt_left = col(tabs$peaks, "rt_left"),
+        rt_right = col(tabs$peaks, "rt_right"),
+        l_cf_cpf = col(tabs$link_cpf_fpf, "cpf_id"),
+        l_cf_fpf = col(tabs$link_cpf_fpf, "fpf_id"),
+        l_fp_fpf = col(tabs$link_fpf_peak, "fpf_id"),
+        l_fp_peak = col(tabs$link_fpf_peak, "peak_id")
+    )
+    if (anyNA(unlist(cols))) {
+        return(NULL)
+    }
+    optional <- function(df, field) {
+        column <- col(df, field)
+        if (is.na(column)) rep(NA, nrow(df)) else df[[column]]
+    }
+
+    # The reference ion of each compound in each file.
+    ions <- tibble(
+        cpf_id = as.character(tabs$link_cpf_fpf[[cols$l_cf_cpf]]),
+        fpf_id = as.character(tabs$link_cpf_fpf[[cols$l_cf_fpf]])) |>
+        inner_join(tibble(
+            fpf_id = as.character(tabs$fpf[[cols$fpf_id]]),
+            ion = as.character(tabs$fpf[[cols$ion]]),
+            ion_rt = as.numeric(optional(tabs$fpf, "rt")),
+            ion_area = as.numeric(optional(tabs$fpf, "feature_area"))),
+            by = "fpf_id") |>
+        inner_join(tibble(
+            cpf_id = as.character(tabs$cpf[[cols$cpf_id]]),
+            ref_ion = as.character(tabs$cpf[[cols$ref_ion]])),
+            by = "cpf_id") |>
+        filter(.data$ion == .data$ref_ion) |>
+        arrange(.data$cpf_id, desc(.data$ion_area)) |>
+        filter(!duplicated(.data$cpf_id))
+
+    # The reference chromatogram peak of each of those ions.
+    peaks <- tibble(
+        fpf_id = as.character(tabs$link_fpf_peak[[cols$l_fp_fpf]]),
+        peak_id = as.character(tabs$link_fpf_peak[[cols$l_fp_peak]])) |>
+        inner_join(tibble(
+            peak_id = as.character(tabs$peaks[[cols$peak_id]]),
+            rtmin = as.numeric(tabs$peaks[[cols$rt_left]]),
+            rtmax = as.numeric(tabs$peaks[[cols$rt_right]]),
+            apex_rt = as.numeric(optional(tabs$peaks, "peak_apex_rt")),
+            is_ref = .cd_node_parse_checked(optional(tabs$peaks, "is_ref_peak")),
+            isotope = as.numeric(optional(tabs$peaks, "isotope_number"))),
+            by = "peak_id") |>
+        inner_join(ions, by = "fpf_id") |>
+        mutate(
+            is_ref = !is.na(.data$is_ref) & .data$is_ref,
+            is_iso0 = !is.na(.data$isotope) & .data$isotope == 0,
+            apex_dist = abs(.data$apex_rt - .data$ion_rt)) |>
+        group_by(.data$cpf_id) |>
+        # Without any of the three criteria, an ion's peak is taken only when
+        # it is the only one.
+        filter(n() == 1 | any(.data$is_ref) | any(.data$is_iso0) |
+                   any(!is.na(.data$apex_dist))) |>
+        arrange(desc(.data$is_ref), desc(.data$is_iso0), .data$apex_dist,
+                .by_group = TRUE) |>
+        slice(1) |>
+        ungroup()
+
+    peaks |>
+        transmute(
+            cpf_id = .data$cpf_id,
+            rt = .data$ion_rt,
+            rtmin = .data$rtmin,
+            rtmax = .data$rtmax)
+}
+
+#' Retention time window of a compound in a file
+#'
+#' Uses, in order: the reference chromatogram peak's integration bounds; the
+#' row's own Left/Right RT; the apex \eqn{\pm} half the FWHM; the apex alone.
+#'
+#' @param rt The apex retention time.
+#' @param ref A one-row `data.frame` from `.cd_node_reference_peaks()`, or
+#' `NULL`.
+#' @param left,right The row's own left and right retention times, or `NA`.
+#' @param fwhm The peak's full width at half maximum, or `NA`.
+#' @return A `list` with `rt`, `rtmin` and `rtmax`.
+#' @keywords internal
+.cd_node_rt_window <- function(rt, ref = NULL, left = NA, right = NA,
+                               fwhm = NA) {
+    if (!is.null(ref) && nrow(ref) == 1 && !is.na(ref$rtmin) &&
+        !is.na(ref$rtmax)) {
+        if (!is.na(ref$rt)) rt <- ref$rt
+        return(list(rt = rt, rtmin = ref$rtmin, rtmax = ref$rtmax))
+    }
+    if (!is.na(left)) {
+        return(list(rt = rt, rtmin = left,
+                    rtmax = if (!is.na(right)) right else rt))
+    }
+    if (!is.na(fwhm)) {
+        return(list(rt = rt, rtmin = rt - fwhm / 2, rtmax = rt + fwhm / 2))
+    }
+    list(rt = rt, rtmin = rt, rtmax = rt)
+}
+
 #' Feature-level compound builder (per-file feature topology)
 #' @keywords internal
 .cd_node_build_compounds_feature <- function(tabs) {
@@ -277,6 +441,11 @@
     feat_rt_c <- col(feats, "rt")
     feat_lrt_c <- col(feats, "rt_left")
     feat_rrt_c <- col(feats, "rt_right")
+    feat_fwhm_c <- col(feats, "fwhm")
+    cpf_fwhm_c <- col(cpf, "fwhm")
+
+    value <- function(df, column, i) if (is.na(column)) NA else df[[column]][i]
+    ref_peaks <- .cd_node_reference_peaks(tabs)
 
     rows <- list()
 
@@ -330,8 +499,17 @@
             } else {
                 NA_real_
             }
-            rtmin <- if (!is.na(feat_lrt_c)) f[[feat_lrt_c]][sel] else rt
-            rtmax <- if (!is.na(feat_rrt_c)) f[[feat_rrt_c]][sel] else rt
+            fwhm <- value(f, feat_fwhm_c, sel)
+            if (is.na(fwhm)) fwhm <- value(cpf_rows, cpf_fwhm_c, ri)
+            window <- .cd_node_rt_window(
+                rt,
+                ref = ref_peaks[ref_peaks$cpf_id == as.character(this_cpf_id), ],
+                left = value(f, feat_lrt_c, sel),
+                right = value(f, feat_rrt_c, sel),
+                fwhm = fwhm)
+            rt <- window$rt
+            rtmin <- window$rtmin
+            rtmax <- window$rtmax
 
             rows[[length(rows) + 1]] <- tibble(
                 compound_id = cid,
@@ -390,6 +568,9 @@
     lcc_cmp_c <- col(l_cc, "compound_id")
     lcc_cpf_c <- col(l_cc, "cpf_id")
 
+    value <- function(df, column, i) if (is.na(column)) NA else df[[column]][i]
+    ref_peaks <- .cd_node_reference_peaks(tabs)
+
     # Optional adduct lookup: prefer the compound's own "Reference Ion", else the
     # (molecular) ion label from the linked features table.
     adduct_for <- function(cid) NA_character_
@@ -447,21 +628,19 @@
 
         for (ri in seq_len(nrow(cpf_rows))) {
             sfid <- cpf_rows[[sfid_c]][ri]
-            rt <- if (!is.na(cpf_rt_c)) cpf_rows[[cpf_rt_c]][ri] else NA_real_
-            # Prefer explicit Left/Right RT bounds; otherwise derive the peak
-            # window from the FWHM around the apex; otherwise fall back to a
-            # single RT point (rt_extend later widens it for extraction).
-            if (!is.na(cpf_lrt_c)) {
-                rtmin <- cpf_rows[[cpf_lrt_c]][ri]
-                rtmax <- if (!is.na(cpf_rrt_c)) cpf_rows[[cpf_rrt_c]][ri] else rt
-            } else if (!is.na(cpf_fwhm_c)) {
-                fwhm <- cpf_rows[[cpf_fwhm_c]][ri]
-                rtmin <- rt - fwhm / 2
-                rtmax <- rt + fwhm / 2
-            } else {
-                rtmin <- rt
-                rtmax <- rt
-            }
+            # CD's integration bounds when the reference peak is exported;
+            # otherwise explicit Left/Right RT, the FWHM around the apex, or the
+            # apex alone (rt_extend later widens it for extraction).
+            window <- .cd_node_rt_window(
+                rt = value(cpf_rows, cpf_rt_c, ri),
+                ref = ref_peaks[ref_peaks$cpf_id ==
+                                    as.character(cpf_rows[[cpf_id_c]][ri]), ],
+                left = value(cpf_rows, cpf_lrt_c, ri),
+                right = value(cpf_rows, cpf_rrt_c, ri),
+                fwhm = value(cpf_rows, cpf_fwhm_c, ri))
+            rt <- window$rt
+            rtmin <- window$rtmin
+            rtmax <- window$rtmax
             area <- if (!is.na(cpf_area_c)) cpf_rows[[cpf_area_c]][ri] else NA_real_
             intensity <- if (!is.na(cpf_int_c)) {
                 cpf_rows[[cpf_int_c]][ri]
@@ -604,6 +783,14 @@ setMethod(
 #' File, and Features tables (with their link tables). For each compound and
 #' study file a representative ion is selected, preferring a molecular ion
 #' and otherwise the most abundant feature.
+#'
+#' The peak window of each compound in each file is Compound Discoverer's
+#' integration window when the export also holds the Features per File and
+#' Chromatogram Peaks tables: the left and right retention times of the
+#' reference chromatogram peak of the compound's reference ion, as the
+#' `.cdResult` reader uses. Without them, the window is taken from the
+#' exported Left/Right RT, else the apex \eqn{\pm} half the FWHM, else the
+#' apex alone.
 #'
 #' @param node_args A `character` path to the `node_args.json` file passed by
 #' Compound Discoverer or an already-parsed `list`.

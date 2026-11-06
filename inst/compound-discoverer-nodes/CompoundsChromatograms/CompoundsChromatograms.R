@@ -19,7 +19,7 @@
 #   Rscript CompoundsChromatograms.R <node_args.json>
 #
 # Requested Tables and Columns (set on the node):
-#   Compounds; Compounds per File; Input Files
+#   Compounds; Compounds per File; Features per File; Chromatogram Peaks; Input Files
 # =============================================================================
 
 # Directory of this script (from the --file= argument).
