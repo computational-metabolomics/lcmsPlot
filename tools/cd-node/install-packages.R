@@ -5,7 +5,8 @@
 #   Rscript install-packages.R <lcmsPlot version> [git ref]
 #
 # lcmsPlot is installed from the GitHub release tag v<version> that matches
-# the node (Bioconductor's release may be older than the node needs); its
+# the node (Bioconductor's release may be older than the node needs), as the
+# tag's source archive, which needs no GitHub API access or token; its
 # dependencies come from Bioconductor and CRAN. lcmsPlot has no compiled code,
 # so no build tools are needed. rawrr reads the Thermo .raw files; its
 # rawrr.exe (which includes the Thermo RawFileReader) is downloaded once.
@@ -54,8 +55,9 @@ if (!is.na(current) && utils::compareVersion(current, required) >= 0) {
     cat("lcmsPlot ", current, " is already installed.\n", sep = "")
 } else {
     tryCatch(
-        remotes::install_github(
-            paste0("computational-metabolomics/lcmsPlot@", ref),
+        remotes::install_url(
+            paste0("https://github.com/computational-metabolomics/lcmsPlot/",
+                   "archive/", ref, ".tar.gz"),
             lib = lib, upgrade = "never", dependencies = NA,
             repos = BiocManager::repositories()),
         error = function(e) fail("could not install lcmsPlot: ",

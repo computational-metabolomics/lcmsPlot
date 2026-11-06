@@ -137,7 +137,10 @@ if ($SkipRPackages) {
 } else {
     Invoke-Native {
         & $RscriptPath (Join-Path $here 'install-packages.R') $info.lcmsplot_version $LcmsPlotRef 2>&1 |
-            ForEach-Object { "$_" } | Tee-Object -FilePath $logFile -Append | Write-Host
+            ForEach-Object {
+                # R's stderr lines arrive as error records.
+                if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { "$_" }
+            } | Tee-Object -FilePath $logFile -Append | Write-Host
     }
     if ($LASTEXITCODE -ne 0) {
         Stop-Install 'The R packages could not be installed (see the messages above).'
