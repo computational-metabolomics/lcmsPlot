@@ -10,6 +10,7 @@
     file_names = c("ko15.mzML", "wt15.mzML"),
     include_study_files = TRUE,
     checked = NULL,
+    names = c("Betaine", "Creatine"),
     feature_window = c("bounds", "fwhm")
 ) {
     feature_window <- match.arg(feature_window)
@@ -25,7 +26,7 @@
     # Two compounds.
     compounds <- data.frame(
         "Compounds ID" = c(1, 2),
-        "Name" = c("Betaine", "Creatine"),
+        "Name" = names,
         "Formula" = c("C5 H11 N O2", "C4 H9 N3 O2"),
         check.names = FALSE
     )
@@ -813,6 +814,23 @@ test_that("the node source exposes the exported Checked column", {
 
     # The check state is compound metadata, not peak data.
     expect_false("checked" %in% colnames(res@peaks))
+})
+
+test_that("has_name flags the compounds Compound Discoverer named", {
+    # Creatine's name is blank, as for a CD "Unknown Compound": it is labelled
+    # with its formula, so only has_name tells it apart.
+    json_path <- .write_cd_node_export(names = c("Betaine", ""))
+    sample_paths <- file.path(tempdir(), c("ko15.mzML", "wt15.mzML"))
+
+    res <- CompoundDiscovererNodeSource(json_path, sample_paths)
+
+    expect_type(res@compounds$has_name, "logical")
+    expect_true(all(res@compounds$has_name[res@compounds$compound_id == 1]))
+    expect_false(any(res@compounds$has_name[res@compounds$compound_id == 2]))
+    expect_false("has_name" %in% colnames(res@peaks))
+
+    named <- dplyr::filter(res@compounds, has_name)
+    expect_equal(unique(named$compound_id), 1)
 })
 
 test_that("the node source omits checked when the export has no such column", {

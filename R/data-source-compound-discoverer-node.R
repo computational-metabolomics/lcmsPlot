@@ -255,8 +255,9 @@
 #' @return A `tibble` with one row per compound and study file, containing
 #' `compound_id` (the Compound Discoverer "Compounds ID" primary key),
 #' `study_file_id`, `name`, `formula`, `adduct`, `mz`, `rt`, `rtmin`, `rtmax`,
-#' `into`, `maxo`, and `compound_rank` (a dense rank of compounds by descending
-#' total area, for top-N selection).
+#' `into`, `maxo`, `has_name` (whether Compound Discoverer gave the compound a
+#' name; unnamed ones get a synthesized `name`) and `compound_rank` (a dense rank
+#' of compounds by descending total area, for top-N selection).
 #' @details Dispatches on the export topology: when a per-file `features` table
 #' and its Compounds-per-File link are present the feature-level builder is used;
 #' otherwise the Compound-centric builder is used (m/z from the compound, per-file
@@ -268,7 +269,31 @@
     } else {
         .cd_node_build_compounds_compound(tabs)
     }
-    add_compound_rank(rows)
+    add_compound_rank(.cd_node_add_has_name(rows, tabs$compounds))
+}
+
+#' Flag compounds that Compound Discoverer has named
+#'
+#' Unnamed ("Unknown") compounds are labelled with their formula or ID (see
+#' `.cd_node_compound_labels()`), so `name` alone cannot tell them apart. This
+#' adds a logical `has_name` column, `TRUE` where the Compounds table's `Name`
+#' is non-empty, for use in compound queries such as `has_name`.
+#'
+#' @param rows The consolidated compound table.
+#' @param cmp The exported Compounds table.
+#' @return `rows` with a `has_name` column.
+#' @keywords internal
+.cd_node_add_has_name <- function(rows, cmp) {
+    col <- function(field) first_matching_column(cmp, .cd_node_cols[[field]])
+    name_c <- col("name")
+    named <- if (is.na(name_c)) {
+        rep(FALSE, nrow(cmp))
+    } else {
+        nm <- as.character(cmp[[name_c]])
+        !is.na(nm) & nzchar(trimws(nm))
+    }
+    rows$has_name <- named[match(rows$compound_id, cmp[[col("compound_id")]])]
+    rows
 }
 
 #' Synthesize unique, non-empty compound labels
@@ -791,6 +816,11 @@ setMethod(
 #' `.cdResult` reader uses. Without them, the window is taken from the
 #' exported Left/Right RT, else the apex \eqn{\pm} half the FWHM, else the
 #' apex alone.
+#'
+#' Compounds Compound Discoverer has not named are labelled with their formula,
+#' else `Compound <id>`. The compound table's logical `has_name` column tells
+#' them apart, so `lp_compound_discoverer(compounds_query = "has_name")` plots
+#' only the named ones.
 #'
 #' @param node_args A `character` path to the `node_args.json` file passed by
 #' Compound Discoverer or an already-parsed `list`.

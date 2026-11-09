@@ -125,7 +125,7 @@ unconfigured.
 
 | Parameter | Default | Purpose |
 |---|---|---|
-| Compounds Query | `compound_rank <= 20` | which compounds to plot (a filter over the compound table; `compound_rank` 1 = most abundant by area). Empty or `NULL` plots all. See *Checked compounds* below. |
+| Compounds Query | `compound_rank <= 20` | which compounds to plot (a filter over the compound table; `compound_rank` 1 = most abundant by area). Empty or `NULL` plots all. `has_name` keeps only compounds CD has named. See *Checked compounds* below. |
 | Output Directory | next to the `.cdResult` | directory for the PNGs |
 | Plot Width | `8` | plot width (inches) |
 | Plot Height | `5` | plot height (inches) |

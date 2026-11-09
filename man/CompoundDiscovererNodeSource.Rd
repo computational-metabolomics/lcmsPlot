@@ -41,6 +41,11 @@ reference chromatogram peak of the compound's reference ion, as the
 \code{.cdResult} reader uses. Without them, the window is taken from the
 exported Left/Right RT, else the apex \eqn{\pm} half the FWHM, else the
 apex alone.
+
+Compounds Compound Discoverer has not named are labelled with their formula,
+else \verb{Compound <id>}. The compound table's logical \code{has_name} column tells
+them apart, so \code{lp_compound_discoverer(compounds_query = "has_name")} plots
+only the named ones.
 }
 \examples{
 ## Inside a real Compound Discoverer Scripting Node the JSON path arrives as

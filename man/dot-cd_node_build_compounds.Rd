@@ -13,8 +13,9 @@
 A \code{tibble} with one row per compound and study file, containing
 \code{compound_id} (the Compound Discoverer "Compounds ID" primary key),
 \code{study_file_id}, \code{name}, \code{formula}, \code{adduct}, \code{mz}, \code{rt}, \code{rtmin}, \code{rtmax},
-\code{into}, \code{maxo}, and \code{compound_rank} (a dense rank of compounds by descending
-total area, for top-N selection).
+\code{into}, \code{maxo}, \code{has_name} (whether Compound Discoverer gave the compound a
+name; unnamed ones get a synthesized \code{name}) and \code{compound_rank} (a dense rank
+of compounds by descending total area, for top-N selection).
 }
 \description{
 Associate each compound, in each study file, with a representative ion

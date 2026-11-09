@@ -1,3 +1,11 @@
+# lcmsPlot 1.1.29
+
+- The Compound Discoverer node's compound table has a logical `has_name`
+  column, `TRUE` for compounds Compound Discoverer has named. Unnamed
+  compounds are labelled with their formula or ID, so a `Compounds Query` of
+  `has_name` (or `has_name & compound_rank <= 20`) plots only the named ones.
+  Released as node 1.1.0, which needs lcmsPlot 1.1.29 or later.
+
 # lcmsPlot 1.1.28
 
 - **Compound Discoverer node released with an installer**: each version of
