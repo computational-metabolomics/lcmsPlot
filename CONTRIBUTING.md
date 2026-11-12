@@ -233,11 +233,14 @@ Before requesting a review, make sure that:
       `codemeta.json` is regenerated.
 - [ ] New exported functions have runnable examples and tests.
 
-Continuous integration (`.github/workflows/R-CMD-check.yaml`) runs the tests
-and `R CMD check` in the `bioconductor/bioconductor_docker` image on every pull
-request into `devel`, and must pass before merging. Vignettes are built only in
-the weekly scheduled run, so build them locally
-(`devtools::build_vignettes()`) if you change one.
+Continuous integration (`.github/workflows/R-CMD-check.yaml`) runs the full
+`R CMD check`, including the vignettes and tests, followed by `BiocCheck`, on
+every push and pull request into `devel` or a `RELEASE_X_Y` branch, and must
+pass before merging. It runs in the `bioconductor/bioconductor_docker` image
+matching the target branch: `devel` for `devel`, `RELEASE_X_Y` for release
+branches. Any `R CMD check` WARNING or `BiocCheck` ERROR fails the run; the
+full `BiocCheck` report is attached to the run as the `bioccheck-report`
+artifact.
 
 Pull requests are reviewed by the maintainers and squash- or rebase-merged into
 `devel`.
