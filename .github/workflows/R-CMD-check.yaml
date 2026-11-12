@@ -1,12 +1,16 @@
 name: R CMD CHECK
 
+# Runs R CMD check (with vignettes and tests) and BiocCheck in the
+# Bioconductor Docker image that matches the branch, as the Bioconductor build
+# system does: bioconductor_docker:devel for devel, :RELEASE_X_Y for the
+# RELEASE_X_Y branches. Follows the practices of the official
+# Bioconductor/workflows bioccheck.yml.
+
 on:
   push:
-    branches: [devel]
+    branches: [devel, 'RELEASE_*']
   pull_request:
-    branches: [devel]
-  schedule:
-    - cron: '0 3 * * 1'   # Mondays 03:00 UTC - full check including vignettes
+    branches: [devel, 'RELEASE_*']
   workflow_dispatch:
 
 concurrency:
@@ -14,120 +18,118 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  R-CMD-check:
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      bioc-tag: ${{ steps.tag.outputs.bioc_tag }}
+    steps:
+      # A pull request is checked against the image of the branch it targets.
+      - name: Resolve the Bioconductor image tag
+        id: tag
+        env:
+          REF: ${{ github.base_ref || github.ref_name }}
+        run: |
+          if [[ "$REF" =~ ^RELEASE_[0-9]+_[0-9]+$ ]]; then
+            tag="$REF"
+          else
+            tag=devel
+          fi
+          echo "bioc_tag=$tag" | tee -a "$GITHUB_OUTPUT"
 
+  R-CMD-check:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    # The image ships the system libraries (netcdf, hdf5, ...) and the
+    # Bioconductor build system's Renviron.bioc check settings.
     container:
-      image: bioconductor/bioconductor_docker:3.23
+      image: bioconductor/bioconductor_docker:${{ needs.setup.outputs.bioc-tag }}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       # Bump to discard a poisoned package cache.
-      CACHE_VERSION: v1
-      # Vignettes and the test suite are only re-run by R CMD check on
-      # scheduled and manually dispatched runs.
-      FULL_CHECK: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      CACHE_VERSION: v2
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Resolve library path and version key
-        id: rinfo
+      # Checks the raw clone for files that should not be tracked; cheap, so it
+      # runs before the dependencies are installed.
+      - name: Run BiocCheckGitClone
+        shell: Rscript {0}
         run: |
-          Rscript -e '
-            con <- file(Sys.getenv("GITHUB_OUTPUT"), open = "at")
-            writeLines(c(paste0("lib=", .libPaths()[1]),
-                         paste0("vkey=R", as.character(getRversion()),
-                                "-Bioc", as.character(BiocManager::version()))),
-                       con)
-            close(con)
-            message("Library path: ", .libPaths()[1])
-          '
+          BiocManager::install("BiocCheck", ask = FALSE, update = FALSE)
+          BiocCheck::BiocCheckGitClone(".", `quit-with-status` = TRUE)
+
+      - name: Resolve library path and cache key
+        id: rinfo
+        shell: Rscript {0}
+        run: |
+          if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+          options(repos = BiocManager::repositories())
+          # The dependency tree with the versions available, so the cache key
+          # changes when a dependency is added or updated upstream.
+          saveRDS(remotes::dev_package_deps(".", dependencies = TRUE), ".github/depends.Rds")
+          con <- file(Sys.getenv("GITHUB_OUTPUT"), open = "at")
+          writeLines(c(paste0("lib=", .libPaths()[1]),
+                       paste0("vkey=R", as.character(getRversion()),
+                              "-Bioc", as.character(BiocManager::version()))),
+                     con)
+          close(con)
+          message("Library path: ", .libPaths()[1])
 
       - name: Cache R packages
         uses: actions/cache@v4
         with:
           path: ${{ steps.rinfo.outputs.lib }}
-          key: ${{ runner.os }}-${{ env.CACHE_VERSION }}-${{ steps.rinfo.outputs.vkey }}-${{ hashFiles('DESCRIPTION') }}
+          key: ${{ runner.os }}-${{ env.CACHE_VERSION }}-${{ steps.rinfo.outputs.vkey }}-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: |
             ${{ runner.os }}-${{ env.CACHE_VERSION }}-${{ steps.rinfo.outputs.vkey }}-
 
-      - name: Install system dependencies
-        run: |
-          apt-get update -y
-          apt-get install -y libnetcdf-dev libhdf5-dev
-
-      # A restored cache can hold packages compiled against a different R.
-      # They look installed to remotes::install_deps() but fail to load, which
-      # is how the "packages are required" failure used to surface 40 minutes in.
-      - name: Purge cached packages built under a different R
-        run: |
-          Rscript -e '
-            lib <- .libPaths()[1]
-            ip  <- installed.packages(lib.loc = lib)
-            if (nrow(ip)) {
-              built <- vapply(strsplit(ip[, "Built"], ";", fixed = TRUE),
-                              function(x) trimws(sub("R ", "", x[1], fixed = TRUE)),
-                              character(1))
-              built <- package_version(built, strict = FALSE)
-              cur   <- getRversion()
-              stale <- rownames(ip)[is.na(built) |
-                                    built$major != cur$major |
-                                    built$minor != cur$minor]
-              if (length(stale)) {
-                message("Removing ", length(stale),
-                        " package(s) not built under R ", as.character(cur), ": ",
-                        paste(stale, collapse = ", "))
-                remove.packages(stale, lib = lib)
-              } else {
-                message("All ", nrow(ip), " cached package(s) match R ",
-                        as.character(cur), ".")
-              }
-            }
-          '
-
+      # upgrade = "always" replaces packages preinstalled in the image (or
+      # restored from the cache) that are older than the repositories' versions.
+      # Installing lcmsPlot itself loads every import, so an unloadable
+      # dependency fails here rather than during the check.
       - name: Install R package dependencies
+        shell: Rscript {0}
         run: |
-          Rscript -e '
-            options(Ncpus = max(1L, parallel::detectCores()),
-                    repos  = BiocManager::repositories())
-            install.packages(c("remotes", "rcmdcheck"))
-            remotes::install_deps(".", dependencies = TRUE, upgrade = "never")
-          '
+          os <- readLines("/etc/os-release")
+          codename <- sub("^VERSION_CODENAME=", "", grep("^VERSION_CODENAME=", os, value = TRUE))
+          repos <- BiocManager::repositories()
+          repos["CRAN"] <- sprintf("https://p3m.dev/cran/__linux__/%s/latest", codename)
+          options(repos = repos, Ncpus = max(1L, parallel::detectCores()))
+          remotes::install_local(".", dependencies = TRUE, upgrade = "always", force = TRUE)
+          BiocManager::install(c("rcmdcheck", "BiocCheck"), ask = FALSE, update = FALSE)
 
-      - name: Verify dependencies load
+      - name: Run R CMD check
+        shell: Rscript {0}
         run: |
-          Rscript -e '
-            dcf  <- read.dcf("DESCRIPTION")
-            cols <- intersect(c("Depends", "Imports"), colnames(dcf))
-            pkgs <- unlist(strsplit(paste(dcf[1, cols], collapse = ","), ","))
-            pkgs <- trimws(vapply(strsplit(pkgs, "(", fixed = TRUE),
-                                  function(x) x[1], character(1)))
-            pkgs <- setdiff(pkgs[nzchar(pkgs)], c("R", "NA"))
-            bad  <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
-            if (length(bad)) {
-              stop("Missing or unloadable dependencies: ", paste(bad, collapse = ", "),
-                   " -- if these are present on disk the package cache is stale; ",
-                   "bump CACHE_VERSION in this workflow.")
-            }
-            message("All Depends/Imports load cleanly.")
-          '
+          rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "warning", check_dir = "check")
 
-      - name: Run tests
+      # Runs on the built tarball, as the Bioconductor build system does, so
+      # files excluded by .Rbuildignore are not checked.
+      - name: Run BiocCheck
+        shell: Rscript {0}
         run: |
-          Rscript -e 'testthat::test_local(reporter = "summary", stop_on_failure = TRUE)'
+          tarball <- dir("check", "\\.tar\\.gz$", full.names = TRUE)
+          if (length(tarball) != 1L) stop("Expected one package tarball in check/, found ", length(tarball))
+          BiocCheck::BiocCheck(tarball, checkDir = "check",
+                               `quit-with-status` = TRUE, `no-check-bioc-help` = TRUE)
 
-      - name: Run R CMD CHECK
-        run: |
-          Rscript -e '
-            full <- Sys.getenv("FULL_CHECK") == "true"
-            # --ignore-vignettes (not --no-vignettes) is required alongside
-            # --no-build-vignettes: without inst/doc, the vignette consistency
-            # checks warn, and error_on = "warning" would fail the run.
-            rcmdcheck::rcmdcheck(
-              args       = c("--no-manual", if (!full) c("--ignore-vignettes", "--no-tests")),
-              build_args = if (full) character() else "--no-build-vignettes",
-              error_on   = "warning")
-          '
+      - name: Upload R CMD check results
+        if: failure() && hashFiles('check/*.Rcheck/00check.log') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rcmdcheck-results
+          path: check/*.Rcheck
+
+      - name: Upload BiocCheck report
+        if: always() && hashFiles('check/lcmsPlot.BiocCheck/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: bioccheck-report
+          path: check/lcmsPlot.BiocCheck
